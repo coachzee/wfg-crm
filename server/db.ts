@@ -1,9 +1,12 @@
-import { eq } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+
+// Export types for use in procedures
+export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog } from "../drizzle/schema";
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -89,4 +92,155 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users);
+}
+
+// Agent queries
+export async function getAgents(filters?: { stage?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query: any = db.select().from(agents);
+  if (filters?.stage) {
+    query = query.where(eq(agents.currentStage, filters.stage as any));
+  }
+  if (filters?.isActive !== undefined) {
+    query = query.where(eq(agents.isActive, filters.isActive));
+  }
+  return query;
+}
+
+export async function getAgentById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createAgent(data: InsertAgent) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(agents).values(data);
+  return result;
+}
+
+export async function updateAgent(id: number, data: Partial<InsertAgent>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(agents).set(data).where(eq(agents.id, id));
+}
+
+// Client queries
+export async function getClients(agentId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  let query: any = db.select().from(clients);
+  if (agentId) {
+    query = query.where(eq(clients.agentId, agentId));
+  }
+  return query;
+}
+
+export async function getClientById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createClient(data: InsertClient) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(clients).values(data);
+}
+
+export async function updateClient(id: number, data: Partial<InsertClient>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(clients).set(data).where(eq(clients.id, id));
+}
+
+// Workflow task queries
+export async function getWorkflowTasks(filters?: { agentId?: number; clientId?: number; completed?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query: any = db.select().from(workflowTasks);
+  if (filters?.agentId) {
+    query = query.where(eq(workflowTasks.agentId, filters.agentId));
+  }
+  if (filters?.clientId) {
+    query = query.where(eq(workflowTasks.clientId, filters.clientId));
+  }
+  if (filters?.completed !== undefined) {
+    if (filters.completed) {
+      query = query.where(sql`${workflowTasks.completedAt} IS NOT NULL`);
+    } else {
+      query = query.where(sql`${workflowTasks.completedAt} IS NULL`);
+    }
+  }
+  return query;
+}
+
+export async function createWorkflowTask(data: InsertWorkflowTask) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(workflowTasks).values(data);
+}
+
+export async function updateWorkflowTask(id: number, data: Partial<InsertWorkflowTask>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(workflowTasks).set(data).where(eq(workflowTasks.id, id));
+}
+
+// Production record queries
+export async function getProductionRecords(agentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(productionRecords).where(eq(productionRecords.agentId, agentId));
+}
+
+export async function createProductionRecord(data: InsertProductionRecord) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(productionRecords).values(data);
+}
+
+// Credential queries
+export async function getCredentialsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(credentials).where(eq(credentials.userId, userId)).limit(1);
+  return result[0];
+}
+
+export async function createOrUpdateCredential(data: InsertCredential) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(credentials).values(data).onDuplicateKeyUpdate({
+    set: {
+      encryptedUsername: data.encryptedUsername,
+      encryptedPassword: data.encryptedPassword,
+      encryptedApiKey: data.encryptedApiKey,
+      isActive: data.isActive,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+// MyWFG sync log queries
+export async function createSyncLog(data: InsertMywfgSyncLog) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(mywfgSyncLogs).values(data);
+}
+
+export async function getLatestSyncLog() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(mywfgSyncLogs).orderBy(desc(mywfgSyncLogs.syncDate)).limit(1);
+  return result[0];
+}
