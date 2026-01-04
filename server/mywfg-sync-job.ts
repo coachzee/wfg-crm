@@ -1,4 +1,4 @@
-import { myWFGService } from "./mywfg-service";
+// Imported dynamically in runMyWFGSync
 import { getCredentialsByUserId, createSyncLog, updateAgent, createAgent, createProductionRecord } from "./db";
 import { getDb } from "./db";
 import { eq } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { agents } from "../drizzle/schema";
  * Run the MyWFG sync job for a specific user
  * Extracts agent and production data and updates the local database
  */
-export async function runMyWFGSync(userId: number): Promise<{
+export async function runMyWFGSync(userId: number, validationCode?: string): Promise<{
   success: boolean;
   message: string;
   agentsProcessed: number;
@@ -24,7 +24,12 @@ export async function runMyWFGSync(userId: number): Promise<{
     }
 
     // Extract data from mywfg.com
-    const syncResult = await myWFGService.extractData(creds.encryptedUsername, creds.encryptedPassword);
+    const { myWFGServiceV3 } = await import("./mywfg-service-v3");
+    const syncResult = await myWFGServiceV3.extractData(
+      creds.encryptedUsername,
+      creds.encryptedPassword,
+      validationCode
+    );
 
     // Log the sync attempt
     await createSyncLog({
@@ -148,7 +153,8 @@ export async function runMyWFGSync(userId: number): Promise<{
     };
   } finally {
     // Cleanup browser resources
-    await myWFGService.cleanup();
+    const { myWFGServiceV3 } = await import("./mywfg-service-v3");
+    await myWFGServiceV3.cleanup();
   }
 }
 

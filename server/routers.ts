@@ -290,8 +290,12 @@ export const appRouter = router({
       return getLatestSyncLog();
     }),
 
-    testSync: protectedProcedure.mutation(async ({ ctx }) => {
-      const { myWFGService } = await import("./mywfg-service");
+    testSync: protectedProcedure.input(
+      z.object({
+        validationCode: z.string().optional(),
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const { myWFGServiceV3 } = await import("./mywfg-service-v3");
       const creds = await getCredentialsByUserId(ctx.user.id);
       
       if (!creds) {
@@ -299,21 +303,30 @@ export const appRouter = router({
       }
 
       try {
-        const result = await myWFGService.extractData(creds.encryptedUsername, creds.encryptedPassword);
+        const result = await myWFGServiceV3.extractData(
+          creds.encryptedUsername,
+          creds.encryptedPassword,
+          input.validationCode
+        );
         return {
           success: result.success,
           agentsExtracted: result.agentsExtracted,
           productionRecordsExtracted: result.productionRecordsExtracted,
           error: result.error,
+          requiresValidation: result.requiresValidation,
         };
       } catch (error) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Test sync failed" });
       }
     }),
 
-    manualSync: protectedProcedure.mutation(async ({ ctx }) => {
+    manualSync: protectedProcedure.input(
+      z.object({
+        validationCode: z.string().optional(),
+      })
+    ).mutation(async ({ ctx, input }) => {
       const { runMyWFGSync } = await import("./mywfg-sync-job");
-      return runMyWFGSync(ctx.user.id);
+      return runMyWFGSync(ctx.user.id, input.validationCode);
     }),
   }),
 

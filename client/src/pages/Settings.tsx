@@ -51,9 +51,11 @@ export default function Settings() {
 
   const handleTestSync = async () => {
     try {
-      const result = await testSyncMutation.mutateAsync();
+      const result = await testSyncMutation.mutateAsync({});
       if (result.success) {
         toast.success(`Test sync successful! Extracted ${result.agentsExtracted} agents`);
+      } else if (result.requiresValidation) {
+        toast.info("Validation code required. Please check your email for the code.");
       } else {
         toast.error(`Test sync failed: ${result.error}`);
       }
@@ -65,7 +67,7 @@ export default function Settings() {
 
   const handleManualSync = async () => {
     try {
-      const result = await manualSyncMutation.mutateAsync();
+      const result = await manualSyncMutation.mutateAsync({});
       if (result.success) {
         toast.success(`Sync completed! Processed ${result.agentsProcessed} agents and ${result.productionProcessed} production records`);
       } else {
