@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
+import Clients from "./pages/Clients";
+import Production from "./pages/Production";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import DashboardLayout from "./components/DashboardLayout";
@@ -35,6 +37,20 @@ function Router() {
             <div className="text-center py-12">
               <p className="text-muted-foreground">Agent detail page coming soon</p>
             </div>
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/clients"}>
+        {() => (
+          <DashboardLayout>
+            <Clients />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/production"}>
+        {() => (
+          <DashboardLayout>
+            <Production />
           </DashboardLayout>
         )}
       </Route>

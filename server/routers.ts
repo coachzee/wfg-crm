@@ -21,10 +21,12 @@ import {
   createOrUpdateCredential,
   getLatestSyncLog,
   getAllUsers,
+  getDb,
   type Agent,
   type Client,
   type WorkflowTask,
 } from "./db";
+import { productionRecords } from "../drizzle/schema";
 import { encryptCredential, decryptCredential } from "./encryption";
 import { TRPCError } from "@trpc/server";
 
@@ -192,6 +194,12 @@ export const appRouter = router({
 
   // Production records
   production: router({
+    list: protectedProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(productionRecords);
+    }),
+
     getByAgent: protectedProcedure
       .input(z.number())
       .query(async ({ input }) => {
