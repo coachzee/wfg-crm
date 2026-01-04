@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
+import AgentDetail from "./pages/AgentDetail";
 import Clients from "./pages/Clients";
 import Production from "./pages/Production";
 import Tasks from "./pages/Tasks";
@@ -35,9 +36,7 @@ function Router() {
       <Route path={"/agents/:id"}>
         {() => (
           <DashboardLayout>
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Agent detail page coming soon</p>
-            </div>
+            <AgentDetail />
           </DashboardLayout>
         )}
       </Route>

@@ -19,12 +19,12 @@
 ## Agent Management Features
 - [x] Create agent list view with filtering by stage
 - [x] Build agent creation form with initial recruitment stage
-- [ ] Implement agent detail view with full lifecycle tracking
+- [x] Implement agent detail view with full lifecycle tracking
 - [x] Add agent code assignment and management
 - [x] Build stage transition workflow (manual and automatic)
 - [ ] Create exam tracking with date and result recording
 - [ ] Implement license verification workflow
-- [ ] Add production milestone tracking ($1,000 threshold)
+- [x] Add production milestone tracking ($1,000 threshold)
 - [x] Build agent notes and internal comments system
 
 ## Client Management Features

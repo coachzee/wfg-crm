@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit2, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -186,11 +187,9 @@ export default function Agents() {
                   <p className="text-sm text-muted-foreground truncate">{agent.email}</p>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStageColor(agent.currentStage)}`}>
-                    {getStageLabel(agent.currentStage)}
-                  </span>
-                </div>
+                <Badge className={getStageColor(agent.currentStage)}>
+                  {getStageLabel(agent.currentStage)}
+                </Badge>
 
                 {agent.licenseNumber && (
                   <p className="text-sm">
