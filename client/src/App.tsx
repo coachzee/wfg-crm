@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Tasks from "./pages/Tasks";
+import Settings from "./pages/Settings";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -41,6 +42,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <Tasks />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/settings"}>
+        {() => (
+          <DashboardLayout>
+            <Settings />
           </DashboardLayout>
         )}
       </Route>

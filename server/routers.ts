@@ -284,6 +284,39 @@ export const appRouter = router({
     }),
   }),
 
+  // MyWFG Integration
+  mywfg: router({
+    getLatestSync: protectedProcedure.query(async () => {
+      return getLatestSyncLog();
+    }),
+
+    testSync: protectedProcedure.mutation(async ({ ctx }) => {
+      const { myWFGService } = await import("./mywfg-service");
+      const creds = await getCredentialsByUserId(ctx.user.id);
+      
+      if (!creds) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No credentials configured" });
+      }
+
+      try {
+        const result = await myWFGService.extractData(creds.encryptedUsername, creds.encryptedPassword);
+        return {
+          success: result.success,
+          agentsExtracted: result.agentsExtracted,
+          productionRecordsExtracted: result.productionRecordsExtracted,
+          error: result.error,
+        };
+      } catch (error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Test sync failed" });
+      }
+    }),
+
+    manualSync: protectedProcedure.mutation(async ({ ctx }) => {
+      const { runMyWFGSync } = await import("./mywfg-sync-job");
+      return runMyWFGSync(ctx.user.id);
+    }),
+  }),
+
   // Team management (admin only)
   team: router({
     listUsers: protectedProcedure.query(async ({ ctx }) => {
