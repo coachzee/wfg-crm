@@ -33,6 +33,7 @@ const menuItems = [
   { icon: FileText, label: "Clients", path: "/clients" },
   { icon: BarChart3, label: "Production", path: "/production" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks" },
+  { icon: Users, label: "Team", path: "/team" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 

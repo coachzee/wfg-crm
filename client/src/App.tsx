@@ -9,10 +9,12 @@ import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import AgentDetail from "./pages/AgentDetail";
 import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
 import Production from "./pages/Production";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
+import TeamMembers from "./pages/TeamMembers";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -47,6 +49,13 @@ function Router() {
           </DashboardLayout>
         )}
       </Route>
+      <Route path={"/clients/:id"}>
+        {() => (
+          <DashboardLayout>
+            <ClientDetail />
+          </DashboardLayout>
+        )}
+      </Route>
       <Route path={"/production"}>
         {() => (
           <DashboardLayout>
@@ -72,6 +81,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <NotificationSettings />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/team"}>
+        {() => (
+          <DashboardLayout>
+            <TeamMembers />
           </DashboardLayout>
         )}
       </Route>

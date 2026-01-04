@@ -80,6 +80,9 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    listUsers: protectedProcedure.query(async () => {
+      return getAllUsers();
+    }),
   }),
 
   // Agent management

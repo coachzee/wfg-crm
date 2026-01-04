@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Mail, Phone, Calendar } from "lucide-react";
+import { Plus, Mail, Phone, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export default function Clients() {
+  const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
@@ -191,10 +193,11 @@ export default function Clients() {
       {filteredClients && filteredClients.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClients.map((client: any) => (
-            <Card key={client.id} className="hover:shadow-lg transition-shadow">
+            <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation(`/clients/${client.id}`)}>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">
-                  {client.firstName} {client.lastName}
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span>{client.firstName} {client.lastName}</span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
