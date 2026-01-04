@@ -22,6 +22,8 @@ import {
   getLatestSyncLog,
   getAllUsers,
   getDb,
+  getDashboardMetrics,
+  getAllProductionRecords,
   type Agent,
   type Client,
   type WorkflowTask,
@@ -295,6 +297,16 @@ export const appRouter = router({
         taskStats,
         lastSyncDate: latestSync?.syncDate,
       };
+    }),
+    
+    // Get face amount and families protected metrics
+    metrics: protectedProcedure.query(async () => {
+      return getDashboardMetrics();
+    }),
+    
+    // Get all production records for the production page
+    allProduction: protectedProcedure.query(async () => {
+      return getAllProductionRecords();
     }),
   }),
 

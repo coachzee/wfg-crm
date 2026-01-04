@@ -227,3 +227,12 @@
 - [x] Add payment cycle tracking (Tuesdays/Fridays, 9x/month)
 - [x] Add Team Chart hierarchy extraction
 - [x] Add WFG rank mapping from display names to internal codes
+
+
+## Policy Face Amount & Families Protected Tracking (New)
+- [x] Add faceAmount field to production_records table
+- [x] Add familyId/householdId field to clients table for family grouping
+- [x] Create dashboard metrics for total face amount issued
+- [x] Create dashboard metrics for total families protected
+- [ ] Add face amount input to production record creation form
+- [ ] Display face amount in production records list

@@ -215,3 +215,40 @@ describe("commission structure", () => {
     expect(executivePool).toBe(2.5);
   });
 });
+
+
+describe("dashboard metrics", () => {
+  it("returns face amount and families protected metrics", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.dashboard.metrics();
+
+    expect(result).toBeDefined();
+    expect(typeof result.totalFaceAmount).toBe("number");
+    expect(typeof result.totalPolicies).toBe("number");
+    expect(typeof result.familiesProtected).toBe("number");
+    expect(typeof result.totalClients).toBe("number");
+    
+    // Values should be non-negative
+    expect(result.totalFaceAmount).toBeGreaterThanOrEqual(0);
+    expect(result.totalPolicies).toBeGreaterThanOrEqual(0);
+    expect(result.familiesProtected).toBeGreaterThanOrEqual(0);
+    expect(result.totalClients).toBeGreaterThanOrEqual(0);
+  });
+
+  it("returns dashboard stats", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.dashboard.stats();
+
+    expect(result).toBeDefined();
+    expect(typeof result.totalAgents).toBe("number");
+    expect(result.agentsByStage).toBeDefined();
+    expect(result.taskStats).toBeDefined();
+    expect(result.taskStats.total).toBeGreaterThanOrEqual(0);
+    expect(result.taskStats.completed).toBeGreaterThanOrEqual(0);
+    expect(result.taskStats.pending).toBeGreaterThanOrEqual(0);
+  });
+});

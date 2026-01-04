@@ -128,8 +128,11 @@ export const clients = mysqlTable("clients", {
   policyNumbers: json("policyNumbers"),
   policyTypes: json("policyTypes"),
   totalPremium: decimal("totalPremium", { precision: 12, scale: 2 }),
+  totalFaceAmount: decimal("totalFaceAmount", { precision: 15, scale: 2 }), // Total face amount of all policies for this client
   renewalDate: date("renewalDate"),
   lastContactDate: timestamp("lastContactDate"),
+  householdId: varchar("householdId", { length: 64 }), // Group family members together
+  isHeadOfHousehold: boolean("isHeadOfHousehold").default(true), // Primary contact for the family
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -169,10 +172,12 @@ export type InsertWorkflowTask = typeof workflowTasks.$inferInsert;
 export const productionRecords = mysqlTable("productionRecords", {
   id: int("id").autoincrement().primaryKey(),
   agentId: int("agentId").references(() => agents.id).notNull(),
+  clientId: int("clientId").references(() => clients.id), // Link to client for family tracking
   policyNumber: varchar("policyNumber", { length: 100 }).notNull(),
   policyType: varchar("policyType", { length: 50 }).notNull(),
   productCompany: varchar("productCompany", { length: 100 }), // e.g., "Transamerica", "Nationwide"
   customerName: varchar("customerName", { length: 255 }),
+  faceAmount: decimal("faceAmount", { precision: 15, scale: 2 }), // Policy face amount (death benefit)
   commissionAmount: decimal("commissionAmount", { precision: 12, scale: 2 }),
   premiumAmount: decimal("premiumAmount", { precision: 12, scale: 2 }),
   basePoints: decimal("basePoints", { precision: 12, scale: 2 }), // Points for advancement tracking

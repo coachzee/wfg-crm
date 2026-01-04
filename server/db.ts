@@ -261,3 +261,41 @@ export async function getLatestSyncLog() {
   const result = await db.select().from(mywfgSyncLogs).orderBy(desc(mywfgSyncLogs.syncDate)).limit(1);
   return result[0] || null;
 }
+
+// Dashboard metrics for face amount and families protected
+export async function getDashboardMetrics() {
+  const db = await getDb();
+  if (!db) return {
+    totalFaceAmount: 0,
+    totalPolicies: 0,
+    familiesProtected: 0,
+    totalClients: 0,
+  };
+
+  // Get total face amount from production records
+  const faceAmountResult = await db.select({
+    totalFaceAmount: sql<string>`COALESCE(SUM(${productionRecords.faceAmount}), 0)`,
+    totalPolicies: sql<number>`COUNT(*)`,
+  }).from(productionRecords);
+
+  // Get unique families (households) protected
+  // Count unique householdIds where isHeadOfHousehold = true, or count clients without householdId
+  const familiesResult = await db.select({
+    familiesProtected: sql<number>`COUNT(DISTINCT CASE WHEN ${clients.householdId} IS NOT NULL THEN ${clients.householdId} ELSE ${clients.id} END)`,
+    totalClients: sql<number>`COUNT(*)`,
+  }).from(clients);
+
+  return {
+    totalFaceAmount: parseFloat(faceAmountResult[0]?.totalFaceAmount || '0'),
+    totalPolicies: Number(faceAmountResult[0]?.totalPolicies || 0),
+    familiesProtected: Number(familiesResult[0]?.familiesProtected || 0),
+    totalClients: Number(familiesResult[0]?.totalClients || 0),
+  };
+}
+
+// Get all production records with face amount
+export async function getAllProductionRecords() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(productionRecords).orderBy(desc(productionRecords.issueDate));
+}
