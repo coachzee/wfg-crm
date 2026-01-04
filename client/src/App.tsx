@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import Production from "./pages/Production";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
+import NotificationSettings from "./pages/NotificationSettings";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -65,6 +66,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <Settings />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/settings/notifications"}>
+        {() => (
+          <DashboardLayout>
+            <NotificationSettings />
           </DashboardLayout>
         )}
       </Route>
