@@ -1,32 +1,205 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { trpc } from "@/lib/trpc";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useLocation } from "wouter";
-import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { 
+  UserPlus, Search, Filter, ChevronRight, Phone, Mail, 
+  Calendar, Award, MoreHorizontal, Eye, Edit, Trash2,
+  Users, TrendingUp, Clock, CheckCircle
+} from "lucide-react";
+import { format } from "date-fns";
+import { useLocation } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const STAGES = [
-  { value: "RECRUITMENT", label: "Recruitment", color: "bg-red-100 text-red-800" },
-  { value: "EXAM_PREP", label: "Exam Prep", color: "bg-orange-100 text-orange-800" },
-  { value: "LICENSED", label: "Licensed", color: "bg-yellow-100 text-yellow-800" },
-  { value: "PRODUCT_TRAINING", label: "Product Training", color: "bg-blue-100 text-blue-800" },
-  { value: "BUSINESS_LAUNCH", label: "Business Launch", color: "bg-purple-100 text-purple-800" },
-  { value: "NET_LICENSED", label: "Net Licensed", color: "bg-green-100 text-green-800" },
-  { value: "CLIENT_TRACKING", label: "Client Tracking", color: "bg-cyan-100 text-cyan-800" },
-  { value: "CHARGEBACK_PROOF", label: "Chargeback Proof", color: "bg-indigo-100 text-indigo-800" },
-];
+// Workflow stages configuration
+const WORKFLOW_STAGES = {
+  RECRUITMENT: { color: "bg-red-500", bgLight: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-300", label: "Recruitment" },
+  EXAM_PREP: { color: "bg-orange-500", bgLight: "bg-orange-50 dark:bg-orange-950", text: "text-orange-700 dark:text-orange-300", label: "Exam Prep" },
+  LICENSED: { color: "bg-yellow-500", bgLight: "bg-yellow-50 dark:bg-yellow-950", text: "text-yellow-700 dark:text-yellow-300", label: "Licensed" },
+  PRODUCT_TRAINING: { color: "bg-blue-500", bgLight: "bg-blue-50 dark:bg-blue-950", text: "text-blue-700 dark:text-blue-300", label: "Product Training" },
+  BUSINESS_LAUNCH: { color: "bg-violet-500", bgLight: "bg-violet-50 dark:bg-violet-950", text: "text-violet-700 dark:text-violet-300", label: "Business Launch" },
+  NET_LICENSED: { color: "bg-emerald-500", bgLight: "bg-emerald-50 dark:bg-emerald-950", text: "text-emerald-700 dark:text-emerald-300", label: "Net Licensed" },
+  CLIENT_TRACKING: { color: "bg-cyan-500", bgLight: "bg-cyan-50 dark:bg-cyan-950", text: "text-cyan-700 dark:text-cyan-300", label: "Client Tracking" },
+  CHARGEBACK_PROOF: { color: "bg-indigo-500", bgLight: "bg-indigo-50 dark:bg-indigo-950", text: "text-indigo-700 dark:text-indigo-300", label: "Chargeback Proof" },
+} as const;
+
+type WorkflowStage = keyof typeof WORKFLOW_STAGES;
+
+// Memoized stage badge component
+const StageBadge = memo(function StageBadge({ stage }: { stage: WorkflowStage }) {
+  const config = WORKFLOW_STAGES[stage];
+  return (
+    <Badge variant="secondary" className={`${config.bgLight} ${config.text} border-0 font-medium`}>
+      <span className={`w-2 h-2 rounded-full ${config.color} mr-2`} />
+      {config.label}
+    </Badge>
+  );
+});
+
+// Memoized agent card component
+const AgentCard = memo(function AgentCard({ 
+  agent, 
+  onView,
+  onEdit,
+  onDelete
+}: { 
+  agent: any;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Card className="card-hover group cursor-pointer" onClick={onView}>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-primary font-semibold text-lg">
+              {agent.firstName?.charAt(0)}{agent.lastName?.charAt(0)}
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-semibold text-base group-hover:text-primary transition-colors">
+                {agent.firstName} {agent.lastName}
+              </h3>
+              {agent.agentCode && (
+                <p className="text-xs text-muted-foreground font-mono">
+                  Code: {agent.agentCode}
+                </p>
+              )}
+              <StageBadge stage={agent.currentStage as WorkflowStage} />
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(); }}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Agent
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-3 text-sm">
+          {agent.email && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" />
+              <span className="truncate">{agent.email}</span>
+            </div>
+          )}
+          {agent.phone && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Phone className="h-3.5 w-3.5" />
+              <span>{agent.phone}</span>
+            </div>
+          )}
+          {agent.examDate && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{format(new Date(agent.examDate), "MMM d, yyyy")}</span>
+            </div>
+          )}
+          {agent.licenseNumber && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Award className="h-3.5 w-3.5" />
+              <span>{agent.licenseNumber}</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Added {format(new Date(agent.createdAt), "MMM d, yyyy")}
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+// Loading skeleton
+function AgentsSkeleton() {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex justify-between items-center">
+        <div className="h-8 w-32 shimmer rounded-lg" />
+        <div className="h-10 w-32 shimmer rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 shimmer rounded-xl" />
+              <div className="space-y-2 flex-1">
+                <div className="h-5 w-32 shimmer rounded" />
+                <div className="h-4 w-24 shimmer rounded" />
+                <div className="h-6 w-28 shimmer rounded-full" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Stats card component
+const StatsCard = memo(function StatsCard({ 
+  icon: Icon, 
+  label, 
+  value, 
+  color 
+}: { 
+  icon: React.ElementType; 
+  label: string; 
+  value: number; 
+  color: string;
+}) {
+  return (
+    <div className={`flex items-center gap-3 p-3 rounded-xl ${color}`}>
+      <div className="h-10 w-10 rounded-lg bg-white/80 dark:bg-black/20 flex items-center justify-center">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs opacity-80">{label}</p>
+      </div>
+    </div>
+  );
+});
 
 export default function Agents() {
   const [, setLocation] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState<string>("all");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -36,84 +209,115 @@ export default function Agents() {
     notes: "",
   });
 
-  const { data: agents, isLoading, refetch } = trpc.agents.list.useQuery();
-  const createMutation = trpc.agents.create.useMutation();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createMutation.mutateAsync(formData);
-      toast.success("Agent created successfully");
+  const { data: agents, isLoading, refetch } = trpc.agents.list.useQuery(undefined, {
+    staleTime: 30000,
+  });
+  
+  const createAgent = trpc.agents.create.useMutation({
+    onSuccess: () => {
+      toast.success("Agent created successfully!");
+      setIsDialogOpen(false);
       setFormData({ firstName: "", lastName: "", email: "", phone: "", agentCode: "", notes: "" });
-      setIsOpen(false);
       refetch();
-    } catch (error) {
-      toast.error("Failed to create agent");
-    }
-  };
+    },
+    onError: (error) => {
+      toast.error(`Failed to create agent: ${error.message}`);
+    },
+  });
 
-  const getStageColor = (stage: string) => {
-    return STAGES.find((s) => s.value === stage)?.color || "bg-gray-100 text-gray-800";
-  };
+  // Memoized filtered agents
+  const filteredAgents = useMemo(() => {
+    if (!agents) return [];
+    return agents.filter((agent: any) => {
+      const matchesSearch = searchQuery === "" || 
+        `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.agentCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStage = stageFilter === "all" || agent.currentStage === stageFilter;
+      return matchesSearch && matchesStage;
+    });
+  }, [agents, searchQuery, stageFilter]);
 
-  const getStageLabel = (stage: string) => {
-    return STAGES.find((s) => s.value === stage)?.label || stage;
-  };
+  // Memoized stats
+  const stats = useMemo(() => {
+    if (!agents) return { total: 0, netLicensed: 0, inTraining: 0, newThisMonth: 0 };
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return {
+      total: agents.length,
+      netLicensed: agents.filter((a: any) => a.currentStage === "NET_LICENSED").length,
+      inTraining: agents.filter((a: any) => ["EXAM_PREP", "PRODUCT_TRAINING"].includes(a.currentStage)).length,
+      newThisMonth: agents.filter((a: any) => new Date(a.createdAt) >= startOfMonth).length,
+    };
+  }, [agents]);
+
+  // Callbacks
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    createAgent.mutate(formData);
+  }, [formData, createAgent]);
+
+  const handleViewAgent = useCallback((id: number) => {
+    setLocation(`/agents/${id}`);
+  }, [setLocation]);
+
+  const handleEditAgent = useCallback((id: number) => {
+    toast.info("Edit functionality coming soon");
+  }, []);
+
+  const handleDeleteAgent = useCallback((id: number) => {
+    toast.info("Delete functionality coming soon");
+  }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading agents...</p>
-        </div>
-      </div>
-    );
+    return <AgentsSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between border-b pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Agents</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your recruited agents and track their progress through the workflow.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">Agents</h1>
+          <p className="text-muted-foreground">Manage your team's recruits and track their progress</p>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Agent
+            <Button className="gap-2 shadow-lg hover:shadow-xl transition-all">
+              <UserPlus className="h-4 w-4" />
+              Add Agent
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Agent</DialogTitle>
+              <DialogDescription>
+                Enter the details for the new recruit. They'll start in the Recruitment stage.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    placeholder="John"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    placeholder="Doe"
                     required
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -121,105 +325,145 @@ export default function Agents() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="john@example.com"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="agentCode">Agent Code</Label>
+                  <Input
+                    id="agentCode"
+                    value={formData.agentCode}
+                    onChange={(e) => setFormData({ ...formData, agentCode: e.target.value })}
+                    placeholder="ABC123"
+                  />
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="agentCode">Agent Code (Optional)</Label>
-                <Input
-                  id="agentCode"
-                  value={formData.agentCode}
-                  onChange={(e) => setFormData({ ...formData, agentCode: e.target.value })}
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Any additional notes..."
                   rows={3}
                 />
               </div>
-
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create Agent"}
-              </Button>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createAgent.isPending}>
+                  {createAgent.isPending ? "Creating..." : "Create Agent"}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Agents Grid */}
-      {agents && agents.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {agents.map((agent: any) => (
-            <Card
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard 
+          icon={Users} 
+          label="Total Agents" 
+          value={stats.total} 
+          color="bg-primary/10 text-primary"
+        />
+        <StatsCard 
+          icon={CheckCircle} 
+          label="Net Licensed" 
+          value={stats.netLicensed} 
+          color="bg-emerald-500/10 text-emerald-600"
+        />
+        <StatsCard 
+          icon={Clock} 
+          label="In Training" 
+          value={stats.inTraining} 
+          color="bg-amber-500/10 text-amber-600"
+        />
+        <StatsCard 
+          icon={TrendingUp} 
+          label="New This Month" 
+          value={stats.newThisMonth} 
+          color="bg-blue-500/10 text-blue-600"
+        />
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, code, or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={stageFilter} onValueChange={setStageFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by stage" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stages</SelectItem>
+                {Object.entries(WORKFLOW_STAGES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${config.color}`} />
+                      {config.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Agent Grid */}
+      {filteredAgents.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+          {filteredAgents.map((agent: any) => (
+            <AgentCard
               key={agent.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setLocation(`/agents/${agent.id}`)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {agent.firstName} {agent.lastName}
-                    </CardTitle>
-                    {agent.agentCode && (
-                      <p className="text-sm text-muted-foreground mt-1">Code: {agent.agentCode}</p>
-                    )}
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {agent.email && (
-                  <p className="text-sm text-muted-foreground truncate">{agent.email}</p>
-                )}
-
-                <Badge className={getStageColor(agent.currentStage)}>
-                  {getStageLabel(agent.currentStage)}
-                </Badge>
-
-                {agent.licenseNumber && (
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">License:</span> {agent.licenseNumber}
-                  </p>
-                )}
-
-                {agent.productionMilestoneDate && (
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Net Licensed:</span>{" "}
-                    {format(new Date(agent.productionMilestoneDate), "MMM d, yyyy")}
-                  </p>
-                )}
-
-                {agent.notes && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{agent.notes}</p>
-                )}
-              </CardContent>
-            </Card>
+              agent={agent}
+              onView={() => handleViewAgent(agent.id)}
+              onEdit={() => handleEditAgent(agent.id)}
+              onDelete={() => handleDeleteAgent(agent.id)}
+            />
           ))}
         </div>
       ) : (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No agents yet. Create your first recruit to get started.</p>
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button>Add First Agent</Button>
-              </DialogTrigger>
-            </Dialog>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="icon-container-lg bg-muted mb-4">
+              <Users className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-lg">No agents found</h3>
+            <p className="text-muted-foreground text-center mt-1 max-w-sm">
+              {searchQuery || stageFilter !== "all" 
+                ? "Try adjusting your search or filter criteria"
+                : "Get started by adding your first agent to the system"}
+            </p>
+            {!searchQuery && stageFilter === "all" && (
+              <Button className="mt-4 gap-2" onClick={() => setIsDialogOpen(true)}>
+                <UserPlus className="h-4 w-4" />
+                Add Your First Agent
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

@@ -278,10 +278,13 @@ export const appRouter = router({
         CHARGEBACK_PROOF: allAgents.filter((a: Agent) => a.currentStage === "CHARGEBACK_PROOF").length,
       };
       
+      const now = new Date();
+      const overdueTasks = allTasks.filter((t: WorkflowTask) => !t.completedAt && t.dueDate && new Date(t.dueDate) < now);
       const taskStats = {
         total: allTasks.length,
         completed: allTasks.filter((t: WorkflowTask) => t.completedAt).length,
         pending: allTasks.filter((t: WorkflowTask) => !t.completedAt).length,
+        overdue: overdueTasks.length,
       };
       
       const latestSync = await getLatestSyncLog();
