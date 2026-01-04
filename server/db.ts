@@ -240,7 +240,7 @@ export async function createSyncLog(data: InsertMywfgSyncLog) {
 
 export async function getLatestSyncLog() {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(mywfgSyncLogs).orderBy(desc(mywfgSyncLogs.syncDate)).limit(1);
-  return result[0];
+  return result[0] || null;
 }
