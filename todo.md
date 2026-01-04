@@ -188,3 +188,42 @@
 - [x] Add logo to sidebar header
 - [x] Add logo to landing page header
 - [x] Add logo to landing page footer
+
+
+## MyWFG Crawler Analysis (Completed)
+- [x] Build crawler to login and explore mywfg.com account
+- [x] Capture screenshots of key pages
+- [x] Analyze HTML structure and data tables
+- [x] Document available data fields
+- [x] Recommend extraction strategy
+- [x] Explore Team Chart hierarchy visualization
+- [x] Document Advancement Guidelines (TA to EC)
+- [x] Document Commission Guidelines and compensation grid
+
+## WFG Rank Hierarchy & Advancement (New)
+- [x] Add WFG rank hierarchy enum to database schema (TA, A, SA, MD, SMD, EMD, CEO_MD, EVC, SEVC, FC, EC)
+- [x] Add advancement requirements tracking table
+- [x] Add upline/downline relationship tracking to agents table
+- [x] Add commission payments table
+- [x] Add production record enhancements (company, generation, override %)
+- [x] Enhance agent detail page with rank progression visualization
+- [x] Add hierarchy tree view component for team visualization
+- [x] Build advancement progress tracker showing requirements vs current status
+
+## Commission Structure Integration (New)
+- [x] Add commission structure table with generational overrides
+- [x] Build commission calculator based on WFG grid (65% base shop payout)
+- [x] Track generational overrides (1st: 12%, 2nd: 6%, 3rd: 3.5%, etc.)
+- [x] Add bonus pool tracking (6.5% bonus pool, 2.5% executive pools)
+- [x] Implement production multiplier calculations for EVCs+
+
+## MyWFG Sync Enhancement (New)
+- [x] Update MyWFG sync service with actual report URLs
+- [x] Add data parsers for Downline Status report
+- [x] Add data parsers for Commissions Summary report
+- [x] Add data parsers for Payment Report
+- [x] Add data parsers for Total Cash Flow report
+- [x] Implement semi-automated sync with OTP code support
+- [x] Add payment cycle tracking (Tuesdays/Fridays, 9x/month)
+- [x] Add Team Chart hierarchy extraction
+- [x] Add WFG rank mapping from display names to internal codes

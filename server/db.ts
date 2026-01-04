@@ -115,22 +115,39 @@ export async function getAgents(filters?: { stage?: string; isActive?: boolean }
 
 export async function getAgentById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
-  return result[0];
+  return result[0] || null;
 }
 
 export async function createAgent(data: InsertAgent) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(agents).values(data);
-  return result;
+  
+  // Insert the agent
+  const insertResult = await db.insert(agents).values(data);
+  
+  // Get the inserted ID from the result
+  const insertId = (insertResult as any)[0]?.insertId;
+  
+  if (!insertId) {
+    throw new Error("Failed to get inserted agent ID");
+  }
+  
+  // Fetch and return the created agent
+  const created = await db.select().from(agents).where(eq(agents.id, insertId)).limit(1);
+  return created[0];
 }
 
 export async function updateAgent(id: number, data: Partial<InsertAgent>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.update(agents).set(data).where(eq(agents.id, id));
+  
+  await db.update(agents).set(data).where(eq(agents.id, id));
+  
+  // Return the updated agent
+  const updated = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+  return updated[0];
 }
 
 // Client queries

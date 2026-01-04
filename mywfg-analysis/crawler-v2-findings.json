@@ -1,0 +1,19 @@
+{
+  "loginSuccess": false,
+  "requiresOTP": true,
+  "pagesExplored": [],
+  "dataSourcesFound": [],
+  "navigationMenu": [],
+  "recommendations": [
+    "System requires 2FA verification code"
+  ],
+  "errors": [],
+  "summary": {
+    "loginSuccess": false,
+    "requiresOTP": true,
+    "totalPagesExplored": 0,
+    "totalDataSources": 0,
+    "totalTables": 0,
+    "errorCount": 0
+  }
+}

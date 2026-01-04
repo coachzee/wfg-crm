@@ -15,6 +15,7 @@ import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
 import TeamMembers from "./pages/TeamMembers";
+import Team from "./pages/Team";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -85,6 +86,13 @@ function Router() {
         )}
       </Route>
       <Route path={"/team"}>
+        {() => (
+          <DashboardLayout>
+            <Team />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/team/members"}>
         {() => (
           <DashboardLayout>
             <TeamMembers />

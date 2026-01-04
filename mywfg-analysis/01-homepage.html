@@ -1,0 +1,418 @@
+<!DOCTYPE html><html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>MyWFG - Login</title>
+    <script type="text/javascript" src="/mga/sps/ac/js/info.js"></script>
+    <script type="text/javascript" src="/mga/sps/static/wfg/scripts/isam-page-setup.js"></script><meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" name="viewport"><script src="/mga/sps/static/wfg/scripts/jquery-1.9.1.js" type="text/javascript"></script><script src="/mga/sps/static/wfg/scripts/vendor-main.min.js" type="text/javascript"></script><link href="/mga/sps/static/wfg/css/style-layout.min.css" rel="stylesheet" type="text/css">
+
+    <style type="text/css">
+        .hidden {
+            display: none;
+        }
+
+        #mywfgManageLoginDiv a {
+            color: #3baeda;
+        }
+
+        div.password-wrapper {
+            position: relative;
+        }
+
+        a.show-password {
+            position: absolute;
+        }
+
+        #myWfgLogin a.show-password {
+            right: 2px;
+            top: 4px;
+        }
+
+        #launchLogin a.show-password {
+            right: 4px;
+            top: 8px;
+        }
+
+        #pulseContainer a.show-password {
+            right: 4px;
+            top: 8px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        $(function () {
+
+            var hostname = window.location.hostname
+            if (hostname != "www.mywfg.com" && hostname != "www.wfglaunch.com") {
+                document.getElementById("appmywfgwarningMsgId").style.display = "block";
+                document.getElementById("applaunchwarningMsgId").style.display = "block";
+                document.getElementById("apppulsewarningMsgId").style.display = "block";
+                document.getElementById("wfglaunchId").href = "https://m-registration.wfglaunch.com";
+            }
+            else {
+                document.getElementById("appmywfgwarningMsgId").style.display = "none";
+                document.getElementById("applaunchwarningMsgId").style.display = "none";
+                document.getElementById("apppulsewarningMsgId").style.display = "none";
+                document.getElementById("wfglaunchId").href = "https://registration.wfglaunch.com";
+            }
+
+
+            var errorMessage = replaceMessage('');
+            if (errorMessage !== null && errorMessage !== '') {
+                var errDivId = 'errDiv';
+                if (isLaunch) {
+                    errDivId = 'launchErrDiv';
+                }
+                else if (isPulse) {
+                    errDivId = 'pulse-error';
+                }
+                if (isPulse && errorMessage != "") {
+                    document.getElementById(errDivId).style.display = 'block';
+                }
+
+                $('#' + errDivId).html(errorMessage);
+            }
+
+            setCookie('isLoginOtp', 'true');
+        });
+    </script>
+<style></style></head>
+
+<body class="login-page">
+    <!-- BEGIN MYWFG LOGIN -->
+    <div id="myWfgLogin" class="body-container" style="zoom: 1.25;">
+        <div class="modal wfg-modal">
+            <div class="modal-header-content">
+                <div class="modal-nav-header">
+                    <a href="#" class="logo">
+                        <img class="logo" src="/mga/sps/static/wfg/images/WFG_logo.png">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div id="appmywfgwarningMsgId" style="width: 50%; min-width: 400px; color: rgb(255, 255, 255); background-color: red; text-align: center; padding: 20px; font-family: Arial; font-weight: bold; margin: auto; display: none;">
+                This website is for QA verification (authorized home-agents only)
+            </div>
+            <div class="dropup login-dropup text-left static">
+                <div class="dropup-dialog">
+                    <div class="dp-header">
+                        <div class="tabs-group">
+                            <h3 id="login-tab-title" class="tab active">login</h3>
+                        </div>
+                    </div>
+                    <div class="dp-body">
+                        <div class="tabs-group">
+                            <div id="password-tab" class="tab active">
+                                <form id="ctl01" action="/pkmslogin.form" method="post" autocomplete="off">
+                                    <input name="login-form-type" type="hidden" value="pwd" style="">
+                                    <input name="token" type="hidden" value="Unknown" style="">
+                                    <p>
+                                        Enter your Agent ID and Password.
+                                        <span id="mywfgCreatePasswordTop" class="">
+                                            <br>
+                                            First-time user? <a href="/ua/users/account/verifyagent">Create a
+                                                Password</a>
+                                        </span>
+                                    </p>
+                                    <p> </p>
+                                    <div class="errorText validation-summary-errors red" id="errDiv"></div>
+                                    <div class="wfg-form-control">
+                                        <label class="login-id" for="associate_id">
+                                            Agent ID
+                                            <span class="red">*</span>
+                                            <a class="wfg-popover" href="javascript:void(0);" data-toggle="popover" data-trigger="focus" data-placement="top" data-html="true" data-content="An Agent ID is provided to all WFG licensed agents" data-original-title="" title="">?</a>
+                                        </label>
+                                        <input name="usernameDisplay" class="form-control" id="myWfgUsernameDisplay" type="text" autofocus="" placeholder="User ID" value="" style="">
+                                        <input name="username" id="myWfgUsername" type="hidden" value="" style="">
+                                    </div>
+                                    <div class="wfg-form-control">
+                                        <label for="password">Password</label>
+                                        <div class="password-wrapper">
+                                            <input name="password" class="form-control" id="myWfgPassword" type="password" placeholder="Password" value="" style="">
+                                            <a class="show-password" href="javascript:void(0);" title="Show password">
+                                                <img src="/mga/sps/static/wfg/images/show-password-30.png" width="20" height="20">
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    <div class="wfg-form-control">
+                                        <label for="agentAssistant">
+                                            <span class="jcf-checkbox jcf-unchecked"><span></span><input type="checkbox" id="agentAssistant" name="agentAssistant" style="position: absolute; height: 100%; width: 100%; opacity: 0; margin: 0px;"></span>
+                                            I'm an Agent Assistant
+                                        </label>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn-wfg btn-block btn-primary" id="btnLogin" type="submit" onclick="javascript:return ValidateMyWfg();">Log in</button>
+                                        <div id="mywfgCreatePasswordDiv" class="">
+                                            <div class="buttons-separator">
+                                                <span class="text">or</span>
+                                            </div>
+                                            <a class="btn-wfg btn-block btn-gray" id="btnCreatePassword" href="/ua/users/account/verifyagent">Create Password</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <!--// #password-tab -->
+                        </div>
+
+                        <!--// .tabs-group -->
+                        <div id="mywfgManageLoginDiv" class="login-links">
+                            <a href="/mga/sps/authsvc?PolicyId=urn:ibm:security:authentication:asf:wfgResetPasswordWithMacOtp" id="btnManageLogin">Reset Password</a>
+                        </div>
+                    </div>
+                    <!--// .dp-body -->
+                </div>
+                <!-- Make Payment section added by JR Mayhew -->
+                <div id="mywfgMakePaymentDiv" class="dropup-dialog">
+                    <div class="dp-header">
+                        <div class="tabs-group">
+                            <h3 id="payment-tab-title" class="tab active">payment</h3>
+                        </div>
+                    </div>
+                    <div class="dp-body">
+                        <div class="tabs-group">
+                            <div id="payment-tab" class="tab active">
+                                <div style="height: 20px;"></div>
+                                <a class="btn-wfg btn-block btn-gray" id="btnMakePayment" href="/ua/users/account/VerifyDebtPaymentUser">Make a Payment</a>
+                            </div>
+                        </div>
+                        <!--// .dp-body -->
+                    </div>
+                </div>
+                <!-- end Make Payment section -->
+                <!-- .dropup-dialog -->
+            </div>
+            <p id="pwelId" style="color: #fff; position: relative; bottom: 550px; text-align: center;">Welcome to MyWFG
+            </p>
+
+        </div>
+    </div>
+    <!-- END MYWFG LOGIN -->
+    <!-- BEGIN LAUNCH LOGIN -->
+    <div id="launchLogin" class="hidden wfg-login-form">
+        <div class="hidden-xs col-sm-8 wfg-image-holder" style="padding-left: 0px;">
+            <div class="wfg-login-image">
+                &nbsp;
+            </div>
+        </div>
+        <div class="wfg-login-form-holder">
+            <div class="col-xs-12 col-sm-4 text-center wfg-line-space">
+                <img src="/mga/sps/static/wfg/launch/css/Images/wfg_launch_logo.png" alt="home">
+            </div>
+            <div class="col-xs-12 col-sm-4 col-md-4 wfg-login-form-col">
+                <div id="applaunchwarningMsgId" style="width: 50%; min-width: 400px; color: rgb(255, 255, 255); background-color: red; text-align: center; padding: 20px; font-family: Arial; font-weight: bold; margin: auto; display: none;">
+                    This website is for QA verification (authorized home-agents only)
+                </div>
+                <form action="/pkmslogin.form" method="post" autocomplete="off">
+                    <input name="login-form-type" type="hidden" value="pwd" style="">
+                    <input name="token" type="hidden" value="Unknown" style="">
+                    <div class="alert alert-danger hidden" id="launchErrDiv"></div>
+                    <div class="form-group">
+                        <label class="wfg-float-label" for="associate_id">
+                            WFG ID<span class="red">*</span>
+                            <a class="wfg-popover" href="javascript:void(0);" data-toggle="popover" data-trigger="focus" data-placement="top" data-html="true" data-content="An Associate ID is provided to WFG associates who have signed an AMA" data-original-title="" title="">?</a>
+                        </label>
+                        <input name="username" id="launchUsername" type="text" value="" autofocus="autofocus" class="form-control" style="">
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="wfg-float-label">PASSWORD</label>
+                        <div class="password-wrapper">
+                            <input name="password" class="form-control" id="launchPassword" type="password" autocomplete="off" style="">
+                            <a class="show-password" href="javascript:void(0);" title="Show password">
+                                <img src="/mga/sps/static/wfg/images/show-password-30.png" width="20" height="20">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="form-group pull-right wfg-login-form-group-pwd">
+                        <a href="/mga/sps/authsvc?PolicyId=urn:ibm:security:authentication:asf:wfgResetPasswordWithMacOtp" class="wfg-pwd-link">Reset Password</a>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-default wfg-btn-form-logon" id="Button1" type="submit" onclick="javascript:return ValidateLaunch();">Log in</button>
+                    </div>
+                    <div class="text-center wfg-login-form-group-pwd">
+                        <p>&nbsp;</p>
+                        New User?
+                        <a href="/ua/users/account/verifyagent" class="wfg-pwd-link">Create Password</a>
+                    </div>
+                    <div class="form-group text-center wfg-login-form-group-pwd">
+                        Don't have an account?
+                        <a id="wfglaunchId" href="https://registration.wfglaunch.com" class="wfg-pwd-link">Sign Up</a>
+                    </div>
+
+
+                </form>
+                <div class="text-center wfg-login-footer">&nbsp;©&nbsp;
+                    <script>document.write(new Date().getFullYear())</script>2026 World Financial Group, Inc.
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END LAUNCH LOGIN -->
+    <!-- BEGIN PULSE LOGIN -->
+    <div id="pulseContainer" class="hidden pls-login-wrapper">
+        <div>
+            <div id="apppulsewarningMsgId" style="width: 50%; min-width: 400px; color: rgb(255, 255, 255); background-color: red; text-align: center; padding: 20px; font-family: Arial; font-weight: bold; margin: auto; display: none;">
+                This website is for QA verification (authorized home-agents only)
+            </div>
+
+            <form action="/pkmslogin.form" method="post" autocomplete="off">
+                <div class="text-center login-form-secion">
+                    <img src="/mga/sps/static/wfg/pulse/img/wfg-pulse-logo.png" alt="Logo" class="pls-wfg-logo">
+                    <input name="login-form-type" type="hidden" value="pwd" style="">
+                    <input name="token" type="hidden" value="Unknown" style="">
+                    <div class="alert alert-danger" id="pulse-error" style="display:none"></div>
+
+                    <div class="form-group">
+                        <input type="text" placeholder="Agent Code" id="pulseUsername" name="username" class="agent-code-icon" style="">
+                    </div>
+                    <div class="form-group">
+                        <div class="password-wrapper">
+                            <input type="password" placeholder="Password" id="pulsePassword" name="password" class="password-icon" style="">
+                            <a class="show-password" href="javascript:void(0);" title="Show password">
+                                <img src="/mga/sps/static/wfg/images/show-password-30.png" width="20" height="20">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary login-btn" onclick="javascript:return ValidatePulse();">Login</button>
+                    </div>
+                    <a href="/mga/sps/authsvc?PolicyId=urn:ibm:security:authentication:asf:wfgResetPasswordWithMacOtp">Reset
+                        Password</a>
+                </div>
+                <div class="push"></div>
+            </form>
+        </div>
+        <div class="login-footer">
+            <a href="/macotp/pulseTerms.html">Terms of Use</a> | <a href="/macotp/pulsePrivacy.html"> Privacy
+                Statement</a>
+            <p><img class="pls-foot-wfg-logo" alt="WFG-Logo" src="/mga/sps/static/wfg/pulse/img/wfg-logo.png">©
+                <script>document.write(new Date().getFullYear())</script>2026 World Financial Group, Inc
+            </p>
+        </div>
+    </div>
+    <!-- END PULSE LOGIN -->
+    
+
+    <script type="text/javascript">
+        //To fix cross frame scripting issue.
+        if (self === top) {
+            var antiClickjack = document.getElementById("antiClickjack");
+            antiClickjack.parentNode.removeChild(antiClickjack);
+        } else {
+            top.location = self.location;
+        }
+
+        ValidateMyWfg = function () {
+            var username = document.getElementById("myWfgUsernameDisplay").value;
+            if (username != null && username.trim() != '') {
+                username = username.toUpperCase();
+            }
+            if (username != null && username.trim() != '') {
+                var isAssistant = $('#agentAssistant:checked').length > 0;
+                if (isAssistant) {
+                    username = username.trim() + '-AA';
+                }
+            }
+            document.getElementById("myWfgUsername").value = username;
+            if (document.getElementById("myWfgUsername").value == "") {
+                alert("Please enter the Associate ID.");
+                document.getElementById("myWfgUsernameDisplay").focus();
+                return false;
+            }
+            if (document.getElementById("myWfgPassword").value == "") {
+                alert("Please enter the Password");
+                document.getElementById("myWfgPassword").focus();
+                return false;
+            }
+            return true;
+        };
+        ValidateLaunch = function () {
+            if (document.getElementById("launchUsername").value == "") {
+                alert("Please enter the Associate ID.");
+                document.getElementById("launchUsername").focus();
+                return false;
+            }
+            if (document.getElementById("launchPassword").value == "") {
+                alert("Please enter the Password");
+                document.getElementById("launchPassword").focus();
+                return false;
+            }
+            return true;
+        };
+        ValidatePulse = function () {
+            var usernameField = document.getElementById("pulseUsername");
+            var passwordField = document.getElementById("pulsePassword");
+            if (usernameField.value == "") {
+                alert("Please enter the Associate ID.");
+                usernameField.focus();
+                return false;
+            }
+            if (passwordField.value == "") {
+                alert("Please enter the Password");
+                passwordField.focus();
+                return false;
+            }
+
+            if (window.localStorage) {
+                localStorage.setItem('lastLoginUsername', usernameField.value);
+                localStorage.setItem('lastLoginPassword', passwordField.value);
+            }
+            return true;
+        };
+
+        if (isMyWfg) {
+            $(function () {
+                $('body').addClass('login-page');
+                $('#myWfgLogin').removeClass('hidden');
+
+                $('[data-toggle="popover"]').popover();
+
+                if (!hasRelayState()) {
+                    $('#mywfgCreatePasswordTop').removeClass('hidden');
+                    $('#mywfgCreatePasswordDiv').removeClass('hidden');
+                    $('#mywfgManageLoginDiv').removeClass('hidden');
+                    $('#mywfgMakePaymentDiv').removeClass('hidden');
+                }
+            });
+        }
+        else if (isLaunch) {
+            $(function () {
+                var errorMsg = $('#launchErrDiv').html();
+                if (errorMsg != null && errorMsg != '') {
+                    $('#launchErrDiv').removeClass('hidden');
+                }
+
+                $('#launchLogin').removeClass('hidden');
+            });
+        }
+        else if (isPulse) {
+            $(document).ready(function () {
+                $('#pulseContainer').removeClass('hidden');
+            });
+        }
+
+        var setPasswordType = function (type) {
+            $('div.password-wrapper input').attr('type', type);
+        };
+        $('a.show-password')
+            .on('mousedown keydown', function (e) {
+                if (e.button === 0 || e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPasswordType('text');
+                }
+            })
+            .on('touchstart', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setPasswordType('text');
+            });
+        $(document)
+            .on('mouseup keyup touchend', function (e) {
+                setPasswordType('password');
+            });
+    </script>
+
+
+</body></html>

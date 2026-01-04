@@ -23,6 +23,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// WFG Rank configuration
+const RANK_CONFIG: Record<string, { label: string; icon: string; color: string }> = {
+  TRAINING_ASSOCIATE: { label: "TA", icon: "🎓", color: "bg-gray-100 text-gray-700" },
+  ASSOCIATE: { label: "A", icon: "📋", color: "bg-blue-100 text-blue-700" },
+  SENIOR_ASSOCIATE: { label: "SA", icon: "📊", color: "bg-indigo-100 text-indigo-700" },
+  MARKETING_DIRECTOR: { label: "MD", icon: "🎯", color: "bg-green-100 text-green-700" },
+  SENIOR_MARKETING_DIRECTOR: { label: "SMD", icon: "⭐", color: "bg-emerald-100 text-emerald-700" },
+  EXECUTIVE_MARKETING_DIRECTOR: { label: "EMD", icon: "💎", color: "bg-purple-100 text-purple-700" },
+  CEO_MARKETING_DIRECTOR: { label: "CEO", icon: "👑", color: "bg-pink-100 text-pink-700" },
+  EXECUTIVE_VICE_CHAIRMAN: { label: "EVC", icon: "🏆", color: "bg-amber-100 text-amber-700" },
+  SENIOR_EXECUTIVE_VICE_CHAIRMAN: { label: "SEVC", icon: "🌟", color: "bg-orange-100 text-orange-700" },
+  FIELD_CHAIRMAN: { label: "FC", icon: "🔥", color: "bg-red-100 text-red-700" },
+  EXECUTIVE_CHAIRMAN: { label: "EC", icon: "👔", color: "bg-yellow-100 text-yellow-800" },
+};
+
 // Workflow stages configuration
 const WORKFLOW_STAGES = {
   RECRUITMENT: { color: "bg-red-500", bgLight: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-300", label: "Recruitment" },
@@ -77,7 +92,15 @@ const AgentCard = memo(function AgentCard({
                   Code: {agent.agentCode}
                 </p>
               )}
-              <StageBadge stage={agent.currentStage as WorkflowStage} />
+              <div className="flex items-center gap-2">
+                <StageBadge stage={agent.currentStage as WorkflowStage} />
+                {agent.currentRank && RANK_CONFIG[agent.currentRank] && (
+                  <Badge variant="outline" className={`${RANK_CONFIG[agent.currentRank].color} border-0 text-xs`}>
+                    <span className="mr-1">{RANK_CONFIG[agent.currentRank].icon}</span>
+                    {RANK_CONFIG[agent.currentRank].label}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           <DropdownMenu>

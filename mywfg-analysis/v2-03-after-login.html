@@ -1,0 +1,616 @@
+<!DOCTYPE html><html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="GENERATOR" content="IBM Software Development Platform">
+    <title>MyWFG - One-Time Password Login</title>
+
+
+    <script type="text/javascript" src="/mga/sps/static/wfg/scripts/isam-page-setup.js"></script><meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" name="viewport"><script src="/mga/sps/static/wfg/scripts/jquery-1.9.1.js" type="text/javascript"></script><script src="/mga/sps/static/wfg/scripts/vendor-main.min.js" type="text/javascript"></script><link href="/mga/sps/static/wfg/css/style-layout.min.css" rel="stylesheet" type="text/css">
+
+    <script type="text/javascript" src="/mga/sps/ac/js/info.js"></script>
+
+
+    <style type="text/css">
+        .text-center {
+            text-align: center;
+        }
+
+        .otp-form-input input {
+            padding-left: 3.7em;
+        }
+
+        .hidden {
+            display: none;
+            font-weight: bold;
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        .visible {
+            font-weight: bold;
+            position: static;
+            width: auto;
+            height: auto;
+        }
+
+        @media(min-width: 768px) {
+        }
+
+        input.otppswd {
+            width: auto;
+        }
+
+        #otpHintSpan, #otpHintDashSpan {
+            display: inline-block;
+        }
+
+        .otp-dropup form {
+            min-height: auto;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var params;
+
+        function getCookie(name) {
+            function escape(s) {
+                return s.replace(/([.*+?\^${}()|\[\]\/\\])/g, '\\$1');
+            };
+            var match = document.cookie.match(RegExp('(?:^|;\\s*)' + escape(name) + '=([^;]*)'));
+            return match ? match[1] : null;
+        }
+
+        function setCookie(name, value) {
+            document.cookie = name + "=" + value + ";path=/";
+        }
+
+        function windowStart() {
+            setFormAction();
+            disableSubmitButton();
+            displayError();
+            displayRememberDevice();
+            displayMappingRuleData();
+            displayDeliveryAttr();
+            displayHintAttr();
+            updateLoginURL();
+        }
+
+        function updateLoginURL() {
+
+            if (document.cookie.indexOf('relayState=') > 0) {
+                document.getElementById("loginUrl").href = "/pkmslogout?filename=deeplink.html";
+            }
+            else {
+                document.getElementById("loginUrl").href = "/pkmslogout?filename=MYWFG.html";
+            }
+
+        }
+
+        function oldParsing(search) {
+            var params = {};
+            var vars = search.split("&");
+            for (var i in vars) {
+                var pair = vars[i].split("=");
+                var key = decodeURIComponent(pair[0]);
+                var value = decodeURIComponent(pair[1]);
+                // If first entry with this name
+                if (typeof params[key] === "undefined") {
+                    params[key] = decodeURIComponent(value);
+                    // If second entry with this name
+                } else if (typeof params[key] === "string") {
+                    var arr = [params[key], decodeURIComponent(value)];
+                    params[key] = arr;
+                    // If third or later entry with this name
+                } else {
+                    params[key].push(decodeURIComponent(value));
+                }
+            }
+            return params;
+        }
+
+        function getParam(param) {
+            var retval;
+            // If we support the nice way, use it
+            if ('URLSearchParams' in window) {
+                if (!params) {
+                    var search = location.search.substr(1);
+                    params = new URLSearchParams(search);
+                }
+
+                retval = params.has(param) ? params.get(param) : "";
+            } else {
+                if (!params) {
+                    var search = location.search.substr(1);
+                    params = oldParsing(search);
+                }
+                retval = params[param];
+            }
+
+            return retval;
+        }
+
+        function setFormAction() {
+            var fact = getParam("OTPACTION");
+            var forms;
+            if (isMyWfg) {
+                forms = ["mywfgotpform", "mywfgregenform", "mywfgreselform"];
+            }
+            else if (isLaunch) {
+                forms = ["launchotpform", "launchregenform", "launchreselform"];
+            }
+            else if (isPulse) {
+                forms = ["pulseotpform", "pulseregenform", "pulsereselform"];
+            }
+
+            if (fact) {
+                if (fact.indexOf("/mga") == -1) {
+                    fact = "/mga" + fact;
+                }
+
+                for (var idx in forms) {
+                    var elem = document.getElementById(forms[idx]);
+
+                    if (elem) {
+                        elem.action = fact;
+                    }
+                }
+            }
+        }
+
+        function displayError() {
+            var errorDivId = 'mywfgErrorDiv';
+            if (isLaunch) {
+                errorDivId = 'launchErrorDiv';
+            }
+            else if (isPulse) {
+                errorDivId = 'pulseErrorDiv';
+            }
+
+            var errorDiv = document.getElementById(errorDivId);
+            var errorStr = getParam("OTPERROR");
+
+            if (errorStr != "") {
+                errorStr = replaceMessage(errorStr);
+                errorDiv.innerHTML = "<b>Error: <\/b>" + errorStr + "<br><br>";
+                errorDiv.className = "errorMessage visible";
+            }
+        }
+
+        function displayRememberDevice() {
+
+		
+		var userAgent = navigator.userAgent;
+		//alert(userAgent.toLowerCase().indexOf("applewebkit") + '---' + userAgent.toLowerCase());
+		
+            if (getCookie('isLoginOtp') == null || getCookie('isLoginOtp') == '' || (userAgent != null && userAgent.toLowerCase().indexOf("salesforcemobilesdk") >= 0 )) 
+	    {
+
+		
+                var rememberDiv = 'mywfgRememberDeviceDiv';
+                if (isLaunch) {
+                    rememberDiv = 'launchRememberDeviceDiv';
+                }
+                else if (isPulse) {
+                    rememberDiv = 'pulseRememberDeviceDiv';
+                }
+
+                document.getElementById(rememberDiv).className = 'hidden';
+            }
+        }
+
+        function displayMappingRuleData() {
+            var mappingRuleDataDivId = 'mywfgMappingRuleDataDiv',
+                otpInputId = 'mywfgOtpInput';
+            submitButtonId = 'mywfgTheylive';
+            regenerateButtonDivId = 'mywfgRegenerateButtonDiv',
+            reselectButtonDivId = 'mywfgReselectButtonDiv';
+
+            if (isLaunch) {
+                mappingRuleDataDivId = 'launchMappingRuleDataDiv';
+                otpInputId = 'launchOtpInput';
+                submitButtonId = 'launchTheylive';
+                regenerateButtonDivId = 'launchRegenerateButtonDiv';
+                reselectButtonDivId = 'launchReselectButtonDiv';
+            }
+            else if (isPulse) {
+                mappingRuleDataDivId = 'pulseMappingRuleDataDiv';
+                otpInputId = 'pulseOtpInput';
+                submitButtonId = 'pulseTheylive';
+                regenerateButtonDivId = 'pulseRegenerateButtonDiv';
+                reselectButtonDivId = 'pulseReselectButtonDiv';
+            }
+
+            var mappingRuleDataDiv = document.getElementById(mappingRuleDataDivId);
+            /*
+			var mappingRuleDataStr = getParam("OTPMAPPINGRULE");
+
+            if (typeof mappingRuleDataStr !== 'undefined' && mappingRuleDataStr != null && mappingRuleDataStr != "") {
+                mappingRuleDataDiv.innerHTML = "<b>Mapping rule data: <\/b>" + mappingRuleDataStr + "<br><br>";
+                mappingRuleDataDiv.className = "visible";
+            }
+			*/
+
+            //var mappingRuleDataStr = getParam("OTPMAPPINGRULE"); or
+            var mappingRuleDataStr = getParam("OTPMAPPING");
+            /*supplied
+            if (mappingRuleDataStr) {
+               $('#errorDiv').html(mappingRuleDataStr);
+               $('#theylive').hide();
+            } below should merge well with custom themes */
+            if (mappingRuleDataStr) {
+                mappingRuleDataDiv.innerHTML = "<b>Mapping rule data: <\/b>" + mappingRuleDataStr + "<br><br>";
+                mappingRuleDataDiv.className = "visible";
+                $('#' + otpInputId).hide();
+                $('#' + submitButtonId).hide();
+                $('#' + regenerateButtonDivId).hide();
+                $('#' + reselectButtonDivId).hide();
+            }
+        }
+
+        function displayDeliveryAttr() {
+            var deliveryAttrSpanId = 'mywfgDelivery_attr',
+                redeliverId = 'mywfgRedeliver',
+                regenerateId = 'mywfgRegenerate',
+                reselectId = 'mywfgReselectButtonDiv';
+            if (isLaunch) {
+                deliveryAttrSpanId = 'launchDelivery_attr';
+                redeliverId = 'launchRedeliver';
+                regenerateId = 'launchRegenerate';
+                reselectId = 'launchReselectButtonDiv';
+            }
+            else if (isPulse) {
+                deliveryAttrSpanId = 'pulseDelivery_attr';
+                redeliverId = 'pulseRedeliver';
+                regenerateId = 'pulseRegenerate';
+                reselectId = 'pulseReselectButtonDiv';
+            }
+
+            var deliveryAttrSpan = document.getElementById(deliveryAttrSpanId);
+            var deliverAttrTxt = getParam("OTPDELIVERY");
+            var redelMsg;
+            var regenMsg;
+
+            // this helps the messaging stay constant
+            var beenhere = getCookie("deliveryaddress");
+            if (!beenhere) {
+                beenhere = deliverAttrTxt;
+                document.cookie = "deliveryaddress=" + beenhere;
+            }
+
+            if (deliverAttrTxt != "") {
+                deliveryAttrSpan.innerHTML = " sent to " + deliverAttrTxt;
+
+                if (beenhere.indexOf("@") > -1) {
+                    regenMsg = "Click on the Resend Email button to deliver a new Security Validation Code via Email";
+                    redelMsg = "Click on the Resend SMS button to deliver a new Security Validation Code via SMS/TEXT to your Cell phone";
+                } else {
+                    regenMsg = "Click on the Resend SMS button to deliver a new Security Validation Code via SMS/TEXT to your Cell phone";
+                    redelMsg = "Click on the Resend Email button to deliver a new Security Validation Code via Email";
+                }
+
+                // NOTE: Commenting out next line until SMS capabilities are available in Production
+                var allowBoth = getParam("ALLOWBOTH");
+                //var allowBoth = 'no';
+                if (allowBoth === null || allowBoth === '' || allowBoth.toLowerCase() === 'no') {
+                    document.getElementById(reselectId).setAttribute('class', 'hidden');
+                }
+
+                document.getElementById(redeliverId).innerHTML = redelMsg;
+                document.getElementById(regenerateId).innerHTML = regenMsg;
+            }
+        }
+
+        function displayHintAttr() {
+            var hintAttrSpanId = 'mywfgOtpHintSpan',
+                hintHiddenId = 'mywfgOtphint';
+            if (isLaunch) {
+                hintAttrSpanId = 'launchOtpHintSpan';
+                hintHiddenId = 'launchOtphint';
+            }
+            else if (isPulse) {
+                hintAttrSpanId = 'pulseOtpHintSpan';
+                hintHiddenId = 'pulseOtphint';
+            }
+
+            var hintAttrSpan = document.getElementById(hintAttrSpanId);
+            var hintHidden = document.getElementById(hintHiddenId);
+            var hintAttrTxt = getParam("OTPHINT");
+
+            if (hintAttrTxt != "") {
+                hintAttrSpan.innerHTML = hintAttrTxt;
+                hintHidden.value = hintAttrTxt;
+            }
+        }
+
+        function disableSubmitButton() {
+            var buttonId = "mywfgTheylive";
+            if (isLaunch) {
+                buttonId = "launchTheylive";
+            }
+            else if (isPulse) {
+                buttonId = "pulseTheylive";
+            }
+
+            var button = document.getElementById(buttonId);
+            var disable = getParam("OTPDISABLED");
+
+            if (disable) {
+                button.setAttribute("hidden");
+            }
+        }
+
+        function setRegistrationCookie() {
+            var rememberDeviceId = 'mywfgRememberDevice';
+            if (isLaunch) {
+                rememberDeviceId = 'launchRememberDevice';
+            }
+            else if (isPulse) {
+                rememberDeviceId = 'pulseRememberDevice';
+            }
+
+            //var myDate = new Date();
+            //Add a year
+            //myDate.setMonth(myDate.getMonth() + 12);
+
+            var elem = document.getElementById(rememberDeviceId);
+            if (elem && elem.value == "checked") {
+                //document.cookie = "dfsRegisterDevice=yes;secure;expires=" + myDate + ";path=/;";
+                document.cookie = "dfsRegisterDevice=yes;secure;path=/;";
+            }
+            else {
+                //document.cookie = "dfsRegisterDevice=no;secure;expires=" + myDate + ";path=/;";
+                document.cookie = "dfsRegisterDevice=yes;secure;path=/;";
+            }
+        }
+
+        window.onload = windowStart;
+    </script>
+<style></style></head>
+
+<body class="login-page">
+    <!-- BEGIN MYWFG CONTAINER -->
+    <div id="myWfgContainer" class="body-container" style="zoom: 1.25;">
+        <div class="modal wfg-modal">
+            <div class="modal-header-content">
+                <div class="modal-nav-header">
+                    <a href="#" class="logo">
+                        <img class="logo" src="/mga/sps/static/wfg/images/WFG_logo.png">
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="dropup login-dropup otp-dropup text-left static">
+                <div class="dropup-dialog">
+                    <div class="dp-header">
+                        <div class="tabs-group">
+                            <h3 id="login-tab-title" class="tab active">One Time Security Validation Code</h3>
+                        </div>
+                    </div>
+                    <div class="dp-body">
+                        <div class="tabs-group">
+                            <div id="password-tab" class="tab active">
+                                <p>
+                                    Enter the one time security validation code
+                                    <span id="mywfgDelivery_attr"> sent to ZAIDSHOPEJUWBH@GMAIL.COM</span>. Validation code expires in 15 minutes.
+                                </p>
+
+                                <div class="hidden errorMessage" id="mywfgErrorDiv"> </div>
+
+                                <form id="mywfgotpform" method="POST" action="/mga/sps/authsvc?StateId=Gp9K1Ob6tjW1yXvORrEHDKOmQKre96ZMAZasmtjLgttJHHRzflVo5UV3TKgjUdpVUQH1yZ04JAOpYetoxBUSPTu7q1t7vqT9yJvNmXbcXkbYIDzYusumRvXCQ0qrIWOu" autocomplete="off">
+                                    <input type="hidden" name="otp.user.otp-hint" class="short" id="mywfgOtphint" value="4163" style="">
+                                    <input type="hidden" name="operation" value="verify" style="">
+                                    <div class="hidden" id="mywfgMappingRuleDataDiv"> </div>
+
+                                    <div id="mywfgOtpInput">
+                                        <div class="wfg-form-control">
+                                            <label class="vertical" for="mywfgOtppswd">Security Validation Code</label>
+                                            <span id="mywfgOtpHintSpan">4163</span>
+                                            <span id="mywfgOtpHintDashSpan">-</span>
+                                            <input type="password" name="otp.user.otp" class="form-control short otppswd" id="mywfgOtppswd" maxlength="40" style="">
+                                        </div>
+                                        <div class="wfg-form-control" id="mywfgRememberDeviceDiv">
+                                            <label class="vertical" for="mywfgRememberDevice">
+                                                <span class="jcf-checkbox jcf-unchecked"><span></span><input name="rememberDevice" id="mywfgRememberDevice" onclick="setRegistrationCookie()" value="checked" type="checkbox" style="position: absolute; height: 100%; width: 100%; opacity: 0; margin: 0px;"></span>
+                                                Remember this device
+                                            </label>
+                                        </div>
+                                        <div class="btn-group">
+                                            <button class="btn-wfg btn-block btn-primary" type="submit" name="Submit" id="mywfgTheylive">Submit</button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div id="mywfgRegenerateButtonDiv">
+                                    <form id="mywfgregenform" method="POST" action="/mga/sps/authsvc?StateId=Gp9K1Ob6tjW1yXvORrEHDKOmQKre96ZMAZasmtjLgttJHHRzflVo5UV3TKgjUdpVUQH1yZ04JAOpYetoxBUSPTu7q1t7vqT9yJvNmXbcXkbYIDzYusumRvXCQ0qrIWOu">
+                                        <input type="hidden" name="operation" value="generate" style="">
+                                        <span id="mywfgRegenerate">Click on the Resend Email button to deliver a new Security Validation Code via Email</span>
+                                        <button type="submit" name="Regenerate" class="btn-wfg btn-block btn-gray">Resend Email</button>
+                                    </form>
+                                </div>
+
+                                <div id="mywfgReselectButtonDiv">
+                                    <form id="mywfgreselform" method="POST" action="/mga/sps/authsvc?StateId=Gp9K1Ob6tjW1yXvORrEHDKOmQKre96ZMAZasmtjLgttJHHRzflVo5UV3TKgjUdpVUQH1yZ04JAOpYetoxBUSPTu7q1t7vqT9yJvNmXbcXkbYIDzYusumRvXCQ0qrIWOu">
+                                        <input type="hidden" name="operation" value="select" style="">
+                                        <span id="mywfgRedeliver">Click on the Resend SMS button to deliver a new Security Validation Code via SMS/TEXT to your Cell phone</span>
+                                        <button type="submit" name="Reselect" class="btn-wfg btn-block btn-gray">Resend SMS/TEXT</button>
+                                    </form>
+                                </div>
+
+                                <div class="text-center">
+                                    <br>
+                                    <p>
+                                        <a id="loginUrl" href="/pkmslogout?filename=MYWFG.html">Return to Login</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END MYWFG CONTAINER -->
+    <!-- BEGIN LAUNCH CONTAINER -->
+    <div id="launchContainer" class="hidden wfg-login-form">
+        <div class="hidden-xs col-sm-8 wfg-image-holder" style="padding-left: 0px;">
+            <div class="wfg-login-image">
+                &nbsp;
+            </div>
+        </div>
+        <div class="wfg-login-form-holder">
+            <div class="col-xs-12 col-sm-4 text-center wfg-line-space">
+                <img src="/mga/sps/static/wfg/launch/css/Images/wfg_launch_logo.png" alt="home">
+            </div>
+            <div class="col-xs-12 col-sm-4 col-md-4 wfg-login-form-col">
+                <p>
+                    Enter the one time security validation code
+                    <span id="launchDelivery_attr"></span>. Validation code expires in 15 minutes.
+                </p>
+
+                <div class="hidden errorMessage" id="launchErrorDiv"> </div>
+
+                <form id="launchotpform" method="POST" action="" autocomplete="off">
+                    <input type="hidden" name="otp.user.otp-hint" class="short" id="launchOtphint" value="" style="">
+                    <input type="hidden" name="operation" value="verify" style="">
+                    <div class="hidden" id="launchMappingRuleDataDiv"> </div>
+                    <div id="launchOtpInput">
+                        <div class="form-group">
+                            <label class="wfg-float-label" for="launchOtppswd">
+                                Security Validation Code<span class="red">*</span>
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span id="launchOtpHintSpan"></span>
+                                    <span id="launchOtpHintDashSpan">-</span>
+                                </div>
+                                <input name="otp.user.otp" id="launchOtppswd" type="password" autofocus="autofocus" class="form-control otppswd" style="">
+                            </div>
+                        </div>
+                        <div class="form-group" id="launchRememberDeviceDiv">
+                            <label class="vertical" for="launchRememberDevice">Remember this device</label>
+                            <span class="jcf-checkbox jcf-unchecked"><span></span><input name="rememberDevice" id="launchRememberDevice" onclick="setRegistrationCookie()" value="checked" type="checkbox" style="position: absolute; height: 100%; width: 100%; opacity: 0; margin: 0px;"></span>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-default wfg-btn-form-logon" id="launchTheylive" type="submit" name="Submit">Submit</button>
+                    </div>
+                </form>
+                <p>&nbsp;</p>
+                <div id="launchRegenerateButtonDiv" class="text-center">
+                    <form id="launchregenform" method="POST" action="">
+                        <input type="hidden" name="operation" value="generate" style="">
+                        <span id="launchRegenerate"> </span>
+                        <button type="submit" name="Regenerate" class="btn btn-default wfg-btn-form-logon">Resend Email</button>
+                    </form>
+                </div>
+
+                <p>&nbsp;</p>
+                <div id="launchReselectButtonDiv" class="text-center">
+                    <form id="launchreselform" method="POST" action="">
+                        <input type="hidden" name="operation" value="select" style="">
+                        <span id="launchRedeliver"> </span>
+                        <button type="submit" name="Reselect" class="btn btn-default wfg-btn-form-logon">Resend SMS/TEXT</button>
+                    </form>
+                </div>
+
+                <div class="text-center">
+                    <p>&nbsp;</p>
+                    <p>
+                        <a href="/pkmslogout?filename=MYWFG.html">Return to Login</a>
+                    </p>
+                </div>
+
+                <div class="text-center wfg-login-footer">&nbsp;©&nbsp;<script>document.write(new Date().getFullYear())</script>2026 World Financial Group, Inc.</div>
+            </div>
+        </div>
+    </div>
+    <!-- END LAUNCH CONTAINER -->
+    <!-- BEGIN PULSE CONTAINER -->
+    <div id="pulseContainer" class="hidden pls-login-wrapper">
+        <div class="pls-login-wrapper">
+            <div class="text-center login-form-secion otp-from-section">
+                <form id="pulseotpform" method="POST" action="" autocomplete="off">
+                    <input type="hidden" name="otp.user.otp-hint" class="short" id="pulseOtphint" value="" style="">
+                    <input type="hidden" name="operation" value="verify" style="">
+                    <div class="hidden" id="pulseMappingRuleDataDiv"> </div>
+
+                    <img src="/mga/sps/static/wfg/pulse/img/wfg-pulse-logo.png" alt="Logo" class="pls-wfg-logo">
+
+                    <p>Enter the one time security validation code <span id="pulseDelivery_attr"></span>. Validation code expires in 15 minutes.</p>
+
+                    <div class="hidden errorMessage" id="pulseErrorDiv"> </div>
+
+                    <div id="pulseOtpInput" class="form-group otp-form-input">
+                        <span class="auto-gen-code">
+                            <span id="pulseOtpHintSpan"></span>
+                            <span id="pulseOtpHintDashSpan">-</span>
+                        </span>
+                        <input type="number" placeholder="Security Validation Code" id="pulseOtppswd" name="otp.user.otp" autocomplete="off" style="">
+                    </div>
+                    <div class="form-group text-left" id="pulseRememberDeviceDiv">
+                        <label class="checkbox-container" for="pulseRememberDevice">
+                            Remember this device?
+                            <span class="jcf-checkbox jcf-unchecked"><span></span><input name="rememberDevice" id="pulseRememberDevice" onclick="setRegistrationCookie()" value="checked" type="checkbox" style="position: absolute; height: 100%; width: 100%; opacity: 0; margin: 0px;"></span>
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn-primary login-btn" id="pulseTheylive">Submit</button>
+                    </div>
+                </form>
+
+                <div id="pulseRegenerateButtonDiv">
+                    <form id="pulseregenform" method="POST" action="">
+                        <input type="hidden" name="operation" value="generate" style="">
+                        <p><span id="pulseRegenerate"> </span></p>
+                        <button type="submit" name="Regenerate" class="btn-primary login-btn">Resend Email</button>
+                    </form>
+                </div>
+
+                <div id="pulseReselectButtonDiv">
+                    <form id="pulsereselform" method="POST" action="">
+                        <input type="hidden" name="operation" value="select" style="">
+                        <p><span id="pulseRedeliver"> </span></p>
+                        <button type="submit" name="Reselect" class="btn-primary login-btn">Resend SMS/TEXT</button>
+                    </form>
+                </div>
+
+                <div class="text-center">
+                    <p>
+                        <a href="/pkmslogout?filename=PULSE.html">Return to Login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PULSE CONTAINER -->
+
+
+    <script type="text/javascript">
+        if (isMyWfg) {
+            $(function () {
+                $('body').addClass('login-page');
+                $('#myWfgContainer').removeClass('hidden');
+            });
+        }
+        else if (isLaunch) {
+            $(function () {
+                $('#launchContainer').removeClass('hidden');
+            });
+        }
+        else if (isPulse) {
+            $(function () {
+                $('#pulseContainer').removeClass('hidden');
+            });
+        }
+    </script>
+
+
+</body></html>
