@@ -230,6 +230,7 @@ export default function Agents() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
+  const [rankFilter, setRankFilter] = useState<string>("all");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -268,6 +269,7 @@ export default function Agents() {
         agent.agentCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         agent.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStage = stageFilter === "all" || agent.currentStage === stageFilter;
+      const matchesRank = rankFilter === "all" || agent.currentRank === rankFilter;
       
       // Quick filter logic
       let matchesQuickFilter = true;
@@ -281,9 +283,9 @@ export default function Agents() {
         matchesQuickFilter = new Date(agent.createdAt) >= startOfMonth;
       }
       
-      return matchesSearch && matchesStage && matchesQuickFilter;
+      return matchesSearch && matchesStage && matchesRank && matchesQuickFilter;
     });
-  }, [agents, searchQuery, stageFilter, quickFilter]);
+  }, [agents, searchQuery, stageFilter, rankFilter, quickFilter]);
 
   // Memoized stats
   const stats = useMemo(() => {
@@ -484,6 +486,23 @@ export default function Agents() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={rankFilter} onValueChange={setRankFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <Award className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by rank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ranks</SelectItem>
+                {Object.entries(RANK_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      <span>{config.icon}</span>
+                      {config.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -509,11 +528,11 @@ export default function Agents() {
             </div>
             <h3 className="font-semibold text-lg">No agents found</h3>
             <p className="text-muted-foreground text-center mt-1 max-w-sm">
-              {searchQuery || stageFilter !== "all" 
+              {searchQuery || stageFilter !== "all" || rankFilter !== "all"
                 ? "Try adjusting your search or filter criteria"
                 : "Get started by adding your first agent to the system"}
             </p>
-            {!searchQuery && stageFilter === "all" && (
+            {!searchQuery && stageFilter === "all" && rankFilter === "all" && (
               <Button className="mt-4 gap-2" onClick={() => setIsDialogOpen(true)}>
                 <UserPlus className="h-4 w-4" />
                 Add Your First Agent

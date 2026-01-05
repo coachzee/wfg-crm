@@ -1,0 +1,30 @@
+{
+  "query": "SELECT currentRank, COUNT(*) as count FROM agents GROUP BY currentRank",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT currentRank, COUNT(*) as count FROM agents GROUP BY currentRank",
+  "rows": [
+    {
+      "currentRank": "ASSOCIATE",
+      "count": "2"
+    },
+    {
+      "currentRank": "TRAINING_ASSOCIATE",
+      "count": "39"
+    },
+    {
+      "currentRank": "MARKETING_DIRECTOR",
+      "count": "2"
+    },
+    {
+      "currentRank": "SENIOR_MARKETING_DIRECTOR",
+      "count": "1"
+    },
+    {
+      "currentRank": "SENIOR_ASSOCIATE",
+      "count": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "currentRank\tcount\nASSOCIATE\t2\nTRAINING_ASSOCIATE\t39\nMARKETING_DIRECTOR\t2\nSENIOR_MARKETING_DIRECTOR\t1\nSENIOR_ASSOCIATE\t5\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

@@ -479,3 +479,15 @@
 ## Data Cleanup (Completed)
 - [x] Delete test agents (Stage Update deleted)
 - [x] Fix incorrect agent ranks (Armstrong=SMD, Adepitan=MD, Okulaja=MD, 5 SAs, 2 As, 35 TAs)
+
+
+## Agent Rank Filter (In Progress)
+- [ ] Add rank filter dropdown to Agents page
+- [ ] Filter agents by selected rank (SMD, MD, SA, A, TA, etc.)
+
+
+## Agent Rank Filter (Completed)
+- [x] Add rank filter dropdown to Agents page
+- [x] Filter agents by selected rank (SMD, MD, SA, A, TA, etc.)
+- [x] Fixed test cleanup to prevent test agents from persisting in database
+- [x] Updated agents.test.ts with afterEach cleanup hook
