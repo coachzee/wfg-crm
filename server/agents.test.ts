@@ -218,7 +218,7 @@ describe("commission structure", () => {
 
 
 describe("dashboard metrics", () => {
-  it("returns face amount, families protected, and cash flow metrics", async () => {
+  it("returns face amount, families protected, cash flow, and team metrics", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -231,6 +231,8 @@ describe("dashboard metrics", () => {
     expect(typeof result.totalClients).toBe("number");
     expect(typeof result.superTeamCashFlow).toBe("number");
     expect(typeof result.personalCashFlow).toBe("number");
+    expect(typeof result.activeAssociates).toBe("number");
+    expect(typeof result.licensedAgents).toBe("number");
     
     // Values should be non-negative
     expect(result.totalFaceAmount).toBeGreaterThanOrEqual(0);
@@ -242,6 +244,8 @@ describe("dashboard metrics", () => {
     expect(result.familiesProtected).toBe(77);
     expect(result.superTeamCashFlow).toBe(290099.22);
     expect(result.personalCashFlow).toBe(189931.39);
+    expect(result.activeAssociates).toBe(91);
+    expect(result.licensedAgents).toBe(27);
   });
 
   it("returns dashboard stats", async () => {

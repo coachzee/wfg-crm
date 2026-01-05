@@ -267,13 +267,16 @@ export async function getLatestSyncLog() {
 export async function getDashboardMetrics() {
   const db = await getDb();
   
-  // MyWFG extracted data (from Total Cash Flow and Commissions Summary reports)
+  // MyWFG extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
   // These are the actual values from the MyWFG account as of Jan 4, 2026
   const mywfgData = {
     superTeamCashFlow: 290099.22, // Super Team Total Cash Flow (Jan-Dec 2025)
     personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
     familiesProtected: 77, // Unique policies from Commissions Summary
     totalPolicies: 77, // Total policies written in 2025
+    activeAssociates: 91, // Active Associates from Team Summary - Base (as of 12/30/25)
+    licensedAgents: 27, // Life Licensed Associates from Team Summary (as of 12/30/25)
+    securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
   };
   
   if (!db) return {
@@ -283,6 +286,8 @@ export async function getDashboardMetrics() {
     totalClients: 0,
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
+    activeAssociates: mywfgData.activeAssociates,
+    licensedAgents: mywfgData.licensedAgents,
   };
 
   // Get total face amount from production records (manual entries)
@@ -308,6 +313,8 @@ export async function getDashboardMetrics() {
     totalClients: Number(familiesResult[0]?.totalClients || 0),
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
+    activeAssociates: mywfgData.activeAssociates,
+    licensedAgents: mywfgData.licensedAgents,
   };
 }
 

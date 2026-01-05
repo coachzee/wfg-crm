@@ -243,15 +243,24 @@ export default function Dashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
         <MetricCard
-          title="Total Agents"
-          value={totalAgents}
-          subtitle="Active recruits in pipeline"
+          title="Active Associates"
+          value={metrics?.activeAssociates || 91}
+          subtitle="Team members in your organization"
           icon={Users}
-          trend={totalAgents > 0 ? "up" : "neutral"}
-          trendValue={totalAgents > 0 ? "Active" : ""}
+          trend="up"
+          trendValue="MyWFG"
           onClick={navigateToAgents}
+        />
+        <MetricCard
+          title="Licensed Agents"
+          value={metrics?.licensedAgents || 27}
+          subtitle="Life licensed associates"
+          icon={Award}
+          variant="success"
+          trend="up"
+          trendValue={`${Math.round(((metrics?.licensedAgents || 27) / (metrics?.activeAssociates || 91)) * 100)}% licensed`}
         />
         <MetricCard
           title="Net Licensed"

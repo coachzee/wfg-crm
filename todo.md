@@ -258,3 +258,9 @@
 - [x] Add sync status indicator to dashboard API
 - [x] Create sync history log for audit trail
 - [x] Note: Full automation blocked by OTP requirement - semi-automated sync with manual trigger implemented
+
+
+## Dashboard MyWFG Team Metrics (Completed)
+- [x] Update Active Agents to show MyWFG Active Associates (91) instead of local DB count
+- [x] Add new Licensed Agents card showing Life Licensed Associates (27)
+- [x] Update getDashboardMetrics to include activeAssociates and licensedAgents from MyWFG data
