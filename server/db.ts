@@ -279,6 +279,25 @@ export async function getDashboardMetrics() {
     securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
   };
   
+  // Compliance data from MyWFG reports (as of Jan 4, 2026)
+  // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
+  const complianceData = {
+    missingLicenses: 11, // Missing Licenses and Appointments report (11 state jurisdictions)
+    notEnrolledRecurring: 15, // Platform Fee Recurring Enrollment (Recurring = No)
+    complianceFirstNotice: 3, // Platform Fee First Notice (Stanley Ejime, Joy Ejime, Bukola Kolawole - $30 each)
+    complianceFinalNotice: 3, // Platform Fee Final Notice - Commissions On Hold (Stephen Monye $45, Esther Aikens $45, Ese Moses $30.58)
+    commissionsOnHold: [
+      { agentCode: 'C8U78', name: 'STEPHEN MONYE', balance: 45.00, email: 'STEVEN.MONYE@GMAIL.COM' },
+      { agentCode: 'D3Y01', name: 'Esther Aikens', balance: 45.00, email: 'estherunba111@gmail.com' },
+      { agentCode: 'D3U63', name: 'ESE MOSES', balance: 30.58, email: 'ESEMOSES2001@GMAIL.COM' },
+    ],
+    firstNoticeAgents: [
+      { agentCode: 'D3C5U', name: 'STANLEY EJIME', balance: 30.00, email: 'EJIMSTAN@YAHOO.COM' },
+      { agentCode: 'D3C69', name: 'JOY EJIME', balance: 30.00, email: 'JOYEJIME@YAHOO.COM' },
+      { agentCode: 'E1U8L', name: 'BUKOLA JUMOKE KOLAWOLE', balance: 30.00, email: 'JUMOK2018@GMAIL.COM' },
+    ],
+  };
+  
   if (!db) return {
     totalFaceAmount: 0,
     totalPolicies: mywfgData.totalPolicies,
@@ -288,6 +307,13 @@ export async function getDashboardMetrics() {
     personalCashFlow: mywfgData.personalCashFlow,
     activeAssociates: mywfgData.activeAssociates,
     licensedAgents: mywfgData.licensedAgents,
+    // Compliance metrics
+    missingLicenses: complianceData.missingLicenses,
+    notEnrolledRecurring: complianceData.notEnrolledRecurring,
+    complianceFirstNotice: complianceData.complianceFirstNotice,
+    complianceFinalNotice: complianceData.complianceFinalNotice,
+    commissionsOnHold: complianceData.commissionsOnHold,
+    firstNoticeAgents: complianceData.firstNoticeAgents,
   };
 
   // Get total face amount from production records (manual entries)
@@ -315,6 +341,13 @@ export async function getDashboardMetrics() {
     personalCashFlow: mywfgData.personalCashFlow,
     activeAssociates: mywfgData.activeAssociates,
     licensedAgents: mywfgData.licensedAgents,
+    // Compliance metrics
+    missingLicenses: complianceData.missingLicenses,
+    notEnrolledRecurring: complianceData.notEnrolledRecurring,
+    complianceFirstNotice: complianceData.complianceFirstNotice,
+    complianceFinalNotice: complianceData.complianceFinalNotice,
+    commissionsOnHold: complianceData.commissionsOnHold,
+    firstNoticeAgents: complianceData.firstNoticeAgents,
   };
 }
 

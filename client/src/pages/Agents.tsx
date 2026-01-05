@@ -198,15 +198,22 @@ const StatsCard = memo(function StatsCard({
   icon: Icon, 
   label, 
   value, 
-  color 
+  color,
+  onClick,
+  active = false
 }: { 
   icon: React.ElementType; 
   label: string; 
   value: number; 
   color: string;
+  onClick?: () => void;
+  active?: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl ${color}`}>
+    <div 
+      className={`flex items-center gap-3 p-3 rounded-xl ${color} ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''} ${active ? 'ring-2 ring-primary' : ''}`}
+      onClick={onClick}
+    >
       <div className="h-10 w-10 rounded-lg bg-white/80 dark:bg-black/20 flex items-center justify-center">
         <Icon className="h-5 w-5" />
       </div>
@@ -223,6 +230,7 @@ export default function Agents() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -251,15 +259,31 @@ export default function Agents() {
   // Memoized filtered agents
   const filteredAgents = useMemo(() => {
     if (!agents) return [];
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
     return agents.filter((agent: any) => {
       const matchesSearch = searchQuery === "" || 
         `${agent.firstName} ${agent.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
         agent.agentCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         agent.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStage = stageFilter === "all" || agent.currentStage === stageFilter;
-      return matchesSearch && matchesStage;
+      
+      // Quick filter logic
+      let matchesQuickFilter = true;
+      if (quickFilter === "total") {
+        matchesQuickFilter = true; // Show all
+      } else if (quickFilter === "licensed") {
+        matchesQuickFilter = agent.currentStage === "LICENSED" || agent.currentStage === "NET_LICENSED" || agent.currentStage === "PRODUCT_TRAINING" || agent.currentStage === "BUSINESS_LAUNCH" || agent.currentStage === "CLIENT_TRACKING" || agent.currentStage === "CHARGEBACK_PROOF";
+      } else if (quickFilter === "training") {
+        matchesQuickFilter = ["EXAM_PREP", "PRODUCT_TRAINING"].includes(agent.currentStage);
+      } else if (quickFilter === "newThisMonth") {
+        matchesQuickFilter = new Date(agent.createdAt) >= startOfMonth;
+      }
+      
+      return matchesSearch && matchesStage && matchesQuickFilter;
     });
-  }, [agents, searchQuery, stageFilter]);
+  }, [agents, searchQuery, stageFilter, quickFilter]);
 
   // Memoized stats
   const stats = useMemo(() => {
@@ -401,24 +425,32 @@ export default function Agents() {
           label="Total Agents" 
           value={stats.total} 
           color="bg-primary/10 text-primary"
+          onClick={() => setQuickFilter(quickFilter === "total" ? null : "total")}
+          active={quickFilter === "total"}
         />
         <StatsCard 
           icon={CheckCircle} 
           label="Net Licensed" 
           value={stats.netLicensed} 
           color="bg-emerald-500/10 text-emerald-600"
+          onClick={() => setQuickFilter(quickFilter === "licensed" ? null : "licensed")}
+          active={quickFilter === "licensed"}
         />
         <StatsCard 
           icon={Clock} 
           label="In Training" 
           value={stats.inTraining} 
           color="bg-amber-500/10 text-amber-600"
+          onClick={() => setQuickFilter(quickFilter === "training" ? null : "training")}
+          active={quickFilter === "training"}
         />
         <StatsCard 
           icon={TrendingUp} 
           label="New This Month" 
           value={stats.newThisMonth} 
           color="bg-blue-500/10 text-blue-600"
+          onClick={() => setQuickFilter(quickFilter === "newThisMonth" ? null : "newThisMonth")}
+          active={quickFilter === "newThisMonth"}
         />
       </div>
 

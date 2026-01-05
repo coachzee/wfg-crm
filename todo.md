@@ -273,3 +273,18 @@
 - [x] Import real agents into CRM with correct WFG ranks
 - [x] Verify agents display correctly in Agents page
 - Note: 45 agents imported from Base Shop; remaining 46 are in Super Team hierarchy (under other SMDs)
+
+
+## Clickable Dashboard Metrics & Compliance Tracking (Completed)
+- [x] Make "Total Agents" card clickable to navigate to Agents page
+- [x] Make "Licensed Agents" card clickable to filter agents by licensed status
+- [x] Make "In Training" card clickable to filter agents by training stage
+- [x] Make "New This Month" card clickable to filter agents by date
+- [x] Add compliance tracking from MyWFG reports:
+  - [x] Missing Licenses and Appointments report (11 state jurisdictions)
+  - [x] Platform Fee Recurring Enrollment report (15 agents not enrolled)
+  - [x] Platform Fee First Notice report (3 agents: Stanley Ejime, Joy Ejime, Bukola Kolawole)
+  - [x] Platform Fee Final Notice report (3 agents: Stephen Monye, Esther Aikens, Ese Moses)
+- [x] Display agents with commissions on hold with balance owed and email
+- [x] Display agents with first notice warning with balance owed and email
+- [x] Show "6 pending" badge on Compliance section
