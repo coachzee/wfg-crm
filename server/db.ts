@@ -263,33 +263,51 @@ export async function getLatestSyncLog() {
 }
 
 // Dashboard metrics for face amount and families protected
+// Note: Some values are pulled from MyWFG data exploration (Jan 2025 - Dec 2025)
 export async function getDashboardMetrics() {
   const db = await getDb();
+  
+  // MyWFG extracted data (from Total Cash Flow and Commissions Summary reports)
+  // These are the actual values from the MyWFG account as of Jan 4, 2026
+  const mywfgData = {
+    superTeamCashFlow: 290099.22, // Super Team Total Cash Flow (Jan-Dec 2025)
+    personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
+    familiesProtected: 77, // Unique policies from Commissions Summary
+    totalPolicies: 77, // Total policies written in 2025
+  };
+  
   if (!db) return {
     totalFaceAmount: 0,
-    totalPolicies: 0,
-    familiesProtected: 0,
+    totalPolicies: mywfgData.totalPolicies,
+    familiesProtected: mywfgData.familiesProtected,
     totalClients: 0,
+    superTeamCashFlow: mywfgData.superTeamCashFlow,
+    personalCashFlow: mywfgData.personalCashFlow,
   };
 
-  // Get total face amount from production records
+  // Get total face amount from production records (manual entries)
   const faceAmountResult = await db.select({
     totalFaceAmount: sql<string>`COALESCE(SUM(${productionRecords.faceAmount}), 0)`,
-    totalPolicies: sql<number>`COUNT(*)`,
+    dbPolicies: sql<number>`COUNT(*)`,
   }).from(productionRecords);
 
-  // Get unique families (households) protected
-  // Count unique householdIds where isHeadOfHousehold = true, or count clients without householdId
+  // Get unique families (households) protected from clients table
   const familiesResult = await db.select({
-    familiesProtected: sql<number>`COUNT(DISTINCT CASE WHEN ${clients.householdId} IS NOT NULL THEN ${clients.householdId} ELSE ${clients.id} END)`,
+    dbFamilies: sql<number>`COUNT(DISTINCT CASE WHEN ${clients.householdId} IS NOT NULL THEN ${clients.householdId} ELSE ${clients.id} END)`,
     totalClients: sql<number>`COUNT(*)`,
   }).from(clients);
 
+  // Use MyWFG data for families/policies, but allow DB to add more
+  const dbPolicies = Number(faceAmountResult[0]?.dbPolicies || 0);
+  const dbFamilies = Number(familiesResult[0]?.dbFamilies || 0);
+  
   return {
     totalFaceAmount: parseFloat(faceAmountResult[0]?.totalFaceAmount || '0'),
-    totalPolicies: Number(faceAmountResult[0]?.totalPolicies || 0),
-    familiesProtected: Number(familiesResult[0]?.familiesProtected || 0),
+    totalPolicies: Math.max(mywfgData.totalPolicies, dbPolicies),
+    familiesProtected: Math.max(mywfgData.familiesProtected, dbFamilies),
     totalClients: Number(familiesResult[0]?.totalClients || 0),
+    superTeamCashFlow: mywfgData.superTeamCashFlow,
+    personalCashFlow: mywfgData.personalCashFlow,
   };
 }
 

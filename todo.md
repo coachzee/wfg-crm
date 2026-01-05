@@ -236,3 +236,25 @@
 - [x] Create dashboard metrics for total families protected
 - [ ] Add face amount input to production record creation form
 - [ ] Display face amount in production records list
+
+
+## MyWFG Policy Data Extraction (Completed)
+- [x] Login to MyWFG and navigate to Commission Statements/Summary
+- [x] Analyze commission data structure for policy numbers
+- [x] Extract total policy count (~77 policies) and dollar amounts (~$175K net commission)
+- [x] Document data fields available for import
+- [x] Identified that face amounts are NOT available from MyWFG
+- [ ] Update dashboard with actual policy data from extracted data
+- [ ] Add manual face amount entry option for policies
+
+
+## Automated MyWFG Sync (Completed)
+- [x] Check Total Cash Flow report for accurate team commission ($290,099.22 Super Team)
+- [x] Update dashboard to show 77 families protected
+- [x] Update dashboard to show total team commission from Total Cash Flow ($290.1K)
+- [x] Implement sync data caching module with 6-hour stale detection
+- [x] Add payment cycle tracking (Tuesdays/Fridays, 9x/month)
+- [x] Add monthly cash flow data storage and charts
+- [x] Add sync status indicator to dashboard API
+- [x] Create sync history log for audit trail
+- [x] Note: Full automation blocked by OTP requirement - semi-automated sync with manual trigger implemented

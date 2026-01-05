@@ -308,6 +308,27 @@ export const appRouter = router({
     allProduction: protectedProcedure.query(async () => {
       return getAllProductionRecords();
     }),
+    
+    // Get sync status and monthly cash flow data
+    syncStatus: protectedProcedure.query(async () => {
+      const { getSyncStatus, getPaymentCycleInfo } = await import("./mywfg-sync-data");
+      return {
+        ...getSyncStatus(),
+        paymentCycle: getPaymentCycleInfo(),
+      };
+    }),
+    
+    // Get monthly cash flow data for charts
+    monthlyCashFlow: protectedProcedure.query(async () => {
+      const { getMonthlyCashFlowData } = await import("./mywfg-sync-data");
+      return getMonthlyCashFlowData();
+    }),
+    
+    // Get recent sync logs
+    syncLogs: protectedProcedure.query(async () => {
+      const { getRecentSyncLogs } = await import("./mywfg-sync-data");
+      return getRecentSyncLogs(10);
+    }),
   }),
 
   // MyWFG Integration

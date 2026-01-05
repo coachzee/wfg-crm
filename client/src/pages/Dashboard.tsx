@@ -323,13 +323,13 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Total Policies</p>
+                <p className="text-sm font-medium text-muted-foreground">Super Team Cash Flow</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold tracking-tight text-blue-600">
-                    {metrics?.totalPolicies || 0}
+                    ${((metrics?.superTeamCashFlow || 0) / 1000).toFixed(1)}K
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">Active policies in force</p>
+                <p className="text-xs text-muted-foreground">Total team commission (YTD)</p>
               </div>
               <div className="icon-container bg-blue-500/10 text-blue-600">
                 <DollarSign className="h-5 w-5" />

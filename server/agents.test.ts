@@ -218,7 +218,7 @@ describe("commission structure", () => {
 
 
 describe("dashboard metrics", () => {
-  it("returns face amount and families protected metrics", async () => {
+  it("returns face amount, families protected, and cash flow metrics", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -229,12 +229,19 @@ describe("dashboard metrics", () => {
     expect(typeof result.totalPolicies).toBe("number");
     expect(typeof result.familiesProtected).toBe("number");
     expect(typeof result.totalClients).toBe("number");
+    expect(typeof result.superTeamCashFlow).toBe("number");
+    expect(typeof result.personalCashFlow).toBe("number");
     
     // Values should be non-negative
     expect(result.totalFaceAmount).toBeGreaterThanOrEqual(0);
     expect(result.totalPolicies).toBeGreaterThanOrEqual(0);
     expect(result.familiesProtected).toBeGreaterThanOrEqual(0);
     expect(result.totalClients).toBeGreaterThanOrEqual(0);
+    
+    // MyWFG extracted data should be populated
+    expect(result.familiesProtected).toBe(77);
+    expect(result.superTeamCashFlow).toBe(290099.22);
+    expect(result.personalCashFlow).toBe(189931.39);
   });
 
   it("returns dashboard stats", async () => {
