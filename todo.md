@@ -337,3 +337,25 @@
 - [x] Send email alert when automated sync is triggered
 
 - [x] Fix branding in email alerts: change "WFG CRM" to "Wealth Builders Haven CRM"
+
+
+## Local/Self-Hosted Deployment
+- [ ] Fix MyWFG login URL in auto-login-mywfg.ts (correct URL: https://www.mywfg.com)
+- [ ] Verify Transamerica login URL is correct
+- [ ] Create comprehensive deployment guide (DEPLOYMENT.md)
+- [ ] Document all required environment variables
+- [ ] Include Puppeteer/Chrome setup instructions
+
+## Net Licensed Feature Fix - COMPLETED
+
+- [x] Explore MyWFG Custom Report for agent payment data (YTD Cash Flow)
+- [x] Extract cash flow data for all agents from Custom Reports
+- [x] Calculate net licensed status ($1,000+ total cash flow)
+- [x] Exclude Senior Associate (SA) and above from Net Licensed count
+- [x] Create clickable Net Licensed modal with detailed agent info
+- [x] Show "Working Toward Net Licensed" section with progress bars
+- [ ] Create clickable Net Licensed card with detail view
+- [ ] Show agent name, net licensed date, payment dates, and totals
+
+- [ ] Make login automation smarter with better error handling and efficient OTP retrieval
+- [ ] Exclude Senior Associate (SA) and above from Net Licensed count (only TA and A count)

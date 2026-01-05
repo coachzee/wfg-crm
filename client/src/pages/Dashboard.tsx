@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -158,6 +159,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+ const [notificationSent, setNotificationSent] = useState(false);
+  const [showNetLicensedModal, setShowNetLicensedModal] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   
@@ -301,12 +304,13 @@ export default function Dashboard() {
         />
         <MetricCard
           title="Net Licensed"
-          value={netLicensed}
-          subtitle="$1,000+ milestone achieved"
+          value={metrics?.netLicensedData?.totalNetLicensed || netLicensed}
+          subtitle="$1,000+ milestone achieved (TA/A only)"
           icon={Target}
           variant="success"
-          trend={netLicensed > 0 ? "up" : "neutral"}
+          trend={(metrics?.netLicensedData?.totalNetLicensed || netLicensed) > 0 ? "up" : "neutral"}
           trendValue={conversionRate > 0 ? `${conversionRate}% rate` : ""}
+          onClick={() => setShowNetLicensedModal(true)}
         />
         <MetricCard
           title="Task Completion"
@@ -951,6 +955,123 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Net Licensed Detail Modal */}
+      <Dialog open={showNetLicensedModal} onOpenChange={setShowNetLicensedModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-emerald-600" />
+              Net Licensed Agents
+            </DialogTitle>
+            <DialogDescription>
+              Agents who have earned $1,000+ in total cash flow (Training Associates and Associates only)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Net Licensed Agents */}
+            <div>
+              <h3 className="text-lg font-semibold text-emerald-600 mb-3 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Net Licensed ({metrics?.netLicensedData?.netLicensedAgents?.length || 0})
+              </h3>
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-emerald-50 dark:bg-emerald-950/20">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Rank</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Agent Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Code</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Total Cash Flow</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Upline SMD</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {metrics?.netLicensedData?.netLicensedAgents?.map((agent: any, index: number) => (
+                      <tr key={agent.code} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant="outline" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                            #{agent.rank}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium">{agent.name}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{agent.code}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant="secondary">{agent.titleLevel}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right font-semibold text-emerald-600">
+                          ${agent.totalCashFlow.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{agent.uplineSMD}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Not Yet Net Licensed */}
+            <div>
+              <h3 className="text-lg font-semibold text-amber-600 mb-3 flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Working Toward Net Licensed ({metrics?.netLicensedData?.notNetLicensedAgents?.length || 0})
+              </h3>
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-amber-50 dark:bg-amber-950/20">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Agent Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Code</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Current Cash Flow</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Amount Needed</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Progress</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {metrics?.netLicensedData?.notNetLicensedAgents?.map((agent: any) => {
+                      const progress = (agent.totalCashFlow / 1000) * 100;
+                      return (
+                        <tr key={agent.code} className="hover:bg-muted/50">
+                          <td className="px-4 py-3 text-sm font-medium">{agent.name}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{agent.code}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <Badge variant="secondary">{agent.titleLevel}</Badge>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            ${agent.totalCashFlow.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-amber-600 font-medium">
+                            ${agent.amountToNetLicensed.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Progress value={progress} className="h-2 w-20" />
+                              <span className="text-xs text-muted-foreground">{progress.toFixed(1)}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Report Info */}
+            <div className="text-sm text-muted-foreground border-t pt-4">
+              <p><strong>Report Period:</strong> {metrics?.netLicensedData?.reportPeriod || 'N/A'}</p>
+              <p><strong>Last Sync:</strong> {metrics?.netLicensedData?.lastSyncDate ? format(new Date(metrics.netLicensedData.lastSyncDate), 'PPpp') : 'N/A'}</p>
+              <p className="mt-2 text-xs">
+                <strong>Note:</strong> Net Licensed status only applies to Training Associates (TA) and Associates (A). 
+                Senior Associates (SA) and above are excluded from this metric.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -392,3 +392,40 @@ export const credentialsRelations = relations(credentials, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// Agent Cash Flow History - Track individual cash flow payments for Net Licensed tracking
+export const agentCashFlowHistory = mysqlTable("agentCashFlowHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  agentId: int("agentId").references(() => agents.id),
+  agentCode: varchar("agentCode", { length: 64 }).notNull(),
+  agentName: varchar("agentName", { length: 255 }).notNull(),
+  titleLevel: varchar("titleLevel", { length: 50 }),
+  uplineSMD: varchar("uplineSMD", { length: 255 }),
+  
+  // Cash flow data
+  cashFlowAmount: decimal("cashFlowAmount", { precision: 15, scale: 2 }).notNull(),
+  cumulativeCashFlow: decimal("cumulativeCashFlow", { precision: 15, scale: 2 }).notNull(),
+  paymentDate: date("paymentDate"),
+  paymentCycle: varchar("paymentCycle", { length: 100 }),
+  
+  // Net Licensed tracking
+  isNetLicensed: boolean("isNetLicensed").default(false).notNull(),
+  netLicensedDate: date("netLicensedDate"), // Date when agent reached $1,000
+  
+  // Sync metadata
+  reportPeriod: varchar("reportPeriod", { length: 100 }), // e.g., "January 2025 - December 2025"
+  syncedAt: timestamp("syncedAt").defaultNow().notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentCashFlowHistory = typeof agentCashFlowHistory.$inferSelect;
+export type InsertAgentCashFlowHistory = typeof agentCashFlowHistory.$inferInsert;
+
+export const agentCashFlowHistoryRelations = relations(agentCashFlowHistory, ({ one }) => ({
+  agent: one(agents, {
+    fields: [agentCashFlowHistory.agentId],
+    references: [agents.id],
+  }),
+}));

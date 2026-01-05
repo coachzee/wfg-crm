@@ -304,6 +304,26 @@ export async function getDashboardMetrics() {
     lastSyncDate: '2026-01-04T23:58:00Z',
   };
   
+  // Net Licensed data from MyWFG Custom Reports - Cash Flow YTD (as of Jan 5, 2026)
+  // Net Licensed = Agent with $1,000+ total cash flow AND title level TA or A
+  // Excludes Senior Associate (SA) and above
+  const netLicensedData = {
+    netLicensedAgents: [
+      { rank: 3, name: 'Chinonyerem Nkemere', code: 'E0D89', titleLevel: 'A', totalCashFlow: 15071.31, uplineSMD: 'Augustina Armstrong' },
+      { rank: 4, name: 'Oluwatosin Adetona', code: 'C9U9S', titleLevel: 'A', totalCashFlow: 6488.12, uplineSMD: 'Zaid Shopeju' },
+      { rank: 5, name: 'Nonso Humphrey', code: 'D6W3S', titleLevel: 'A', totalCashFlow: 4993.62, uplineSMD: 'Zaid Shopeju' },
+      { rank: 6, name: 'Odion Imasuen', code: 'D3Y16', titleLevel: 'A', totalCashFlow: 3361.35, uplineSMD: 'Zaid Shopeju' },
+    ],
+    notNetLicensedAgents: [
+      { name: 'Ese Moses', code: 'D3U63', titleLevel: 'TA', totalCashFlow: 155.96, uplineSMD: 'Zaid Shopeju', amountToNetLicensed: 844.04 },
+      { name: 'Clive Henry', code: 'D6W4T', titleLevel: 'A', totalCashFlow: 9.84, uplineSMD: 'Zaid Shopeju', amountToNetLicensed: 990.16 },
+      { name: 'Folashade Olaiya', code: 'D3Y2D', titleLevel: 'A', totalCashFlow: 0.64, uplineSMD: 'Zaid Shopeju', amountToNetLicensed: 999.36 },
+    ],
+    totalNetLicensed: 4, // Only TA and A with $1,000+ (excludes SMD Zaid and Augustina)
+    reportPeriod: 'January 2025 - December 2025',
+    lastSyncDate: '2026-01-05T02:00:00Z',
+  };
+  
   // Compliance data from MyWFG reports (as of Jan 4, 2026)
   // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
   const complianceData = {
@@ -341,6 +361,8 @@ export async function getDashboardMetrics() {
     firstNoticeAgents: complianceData.firstNoticeAgents,
     // Transamerica alerts
     transamericaAlerts: transamericaAlerts,
+    // Net Licensed data
+    netLicensedData: netLicensedData,
   };
 
   // Get total face amount from production records (manual entries)
@@ -380,6 +402,8 @@ export async function getDashboardMetrics() {
     firstNoticeAgents: complianceData.firstNoticeAgents,
     // Transamerica alerts
     transamericaAlerts: transamericaAlerts,
+    // Net Licensed data
+    netLicensedData: netLicensedData,
   };
 }
 
