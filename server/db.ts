@@ -287,6 +287,23 @@ export async function getDashboardMetrics() {
     totalPolicies: 52, // Writing agent policies (Zaid Shopeju: 73DXR)
   };
   
+  // Transamerica Policy Alerts - Unread Notifications (as of Jan 4, 2026)
+  // Source: Transamerica Life Access portal - Policy Alerts section
+  // These are critical alerts requiring immediate attention
+  const transamericaAlerts = {
+    totalUnreadAlerts: 39,
+    reversedPremiumPayments: [
+      { policyNumber: '6602249306', ownerName: 'OLUWAMUYIWA ONAMUTI', alertDate: '01/01/2026', alertType: 'Reversed premium payment' },
+      { policyNumber: '6602037542', ownerName: 'OLATUNDE OYEWANDE', alertDate: '12/27/2025', alertType: 'Reversed premium payment' },
+      { policyNumber: '6602103743', ownerName: 'BEN WALKER', alertDate: '12/25/2025', alertType: 'Reversed premium payment' },
+    ],
+    eftRemovals: [
+      { policyNumber: '6602249306', ownerName: 'OLUWAMUYIWA ONAMUTI', alertDate: '01/01/2026', alertType: 'Policy removed from Electronic Funds Transfer' },
+      { policyNumber: '6602122713', ownerName: 'OLUWAKEMISOLA OYEWANDE', alertDate: '01/01/2026', alertType: 'Policy removed from Electronic Funds Transfer' },
+    ],
+    lastSyncDate: '2026-01-04T23:58:00Z',
+  };
+  
   // Compliance data from MyWFG reports (as of Jan 4, 2026)
   // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
   const complianceData = {
@@ -322,6 +339,8 @@ export async function getDashboardMetrics() {
     complianceFinalNotice: complianceData.complianceFinalNotice,
     commissionsOnHold: complianceData.commissionsOnHold,
     firstNoticeAgents: complianceData.firstNoticeAgents,
+    // Transamerica alerts
+    transamericaAlerts: transamericaAlerts,
   };
 
   // Get total face amount from production records (manual entries)
@@ -359,6 +378,8 @@ export async function getDashboardMetrics() {
     complianceFinalNotice: complianceData.complianceFinalNotice,
     commissionsOnHold: complianceData.commissionsOnHold,
     firstNoticeAgents: complianceData.firstNoticeAgents,
+    // Transamerica alerts
+    transamericaAlerts: transamericaAlerts,
   };
 }
 

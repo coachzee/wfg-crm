@@ -13,10 +13,10 @@ import {
   Users, Target, CheckCircle, Clock, TrendingUp, 
   ArrowUpRight, ArrowDownRight, Activity, Zap,
   UserPlus, Award, Calendar, RefreshCw, DollarSign, Heart, Shield,
-  AlertTriangle, AlertCircle, FileWarning, CreditCard
+  AlertTriangle, AlertCircle, FileWarning, CreditCard, Bell, Send
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
-import { useMemo, useCallback, memo } from "react";
+import { useMemo, useCallback, memo, useState } from "react";
 import { useLocation } from "wouter";
 
 // Stage configuration with colors and labels
@@ -158,6 +158,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [notificationStatus, setNotificationStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  
   const { data: stats, isLoading, refetch, isRefetching } = trpc.dashboard.stats.useQuery(undefined, {
     staleTime: 30000, // Cache for 30 seconds
     refetchOnWindowFocus: false,
@@ -167,6 +169,19 @@ export default function Dashboard() {
   const { data: metrics } = trpc.dashboard.metrics.useQuery(undefined, {
     staleTime: 30000,
     refetchOnWindowFocus: false,
+  });
+  
+  // Chargeback notification mutation
+  const sendNotification = trpc.dashboard.sendChargebackNotification.useMutation({
+    onMutate: () => setNotificationStatus('sending'),
+    onSuccess: (data) => {
+      setNotificationStatus('success');
+      setTimeout(() => setNotificationStatus('idle'), 3000);
+    },
+    onError: () => {
+      setNotificationStatus('error');
+      setTimeout(() => setNotificationStatus('idle'), 3000);
+    },
   });
 
   // Memoized calculations
@@ -467,6 +482,120 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Transamerica Chargeback Alerts */}
+      {metrics?.transamericaAlerts && (
+        <Card className="card-hover border-red-500/30 bg-gradient-to-br from-red-500/5 to-orange-500/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  Transamerica Chargeback Alerts
+                </CardTitle>
+                <CardDescription>Critical policy alerts requiring immediate attention</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive" className="font-mono">
+                  {metrics.transamericaAlerts.reversedPremiumPayments?.length || 0} chargebacks
+                </Badge>
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  Last sync: {metrics.transamericaAlerts.lastSyncDate ? format(new Date(metrics.transamericaAlerts.lastSyncDate), 'MMM d, h:mm a') : 'Never'}
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Reversed Premium Payments */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-red-600 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Reversed Premium Payments ({metrics.transamericaAlerts.reversedPremiumPayments?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {metrics.transamericaAlerts.reversedPremiumPayments?.map((alert: { policyNumber: string; ownerName: string; alertDate: string; alertType: string }) => (
+                    <div key={`${alert.policyNumber}-${alert.alertDate}`} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{alert.ownerName}</p>
+                          <p className="text-xs text-muted-foreground">Policy #{alert.policyNumber}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-red-600">Reversed</p>
+                        <p className="text-xs text-muted-foreground">{alert.alertDate}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* EFT Removals */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-orange-600 flex items-center gap-2">
+                  <FileWarning className="h-4 w-4" />
+                  Removed from EFT ({metrics.transamericaAlerts.eftRemovals?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {metrics.transamericaAlerts.eftRemovals?.map((alert: { policyNumber: string; ownerName: string; alertDate: string; alertType: string }) => (
+                    <div key={`${alert.policyNumber}-eft-${alert.alertDate}`} className="flex items-center justify-between p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                          <FileWarning className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{alert.ownerName}</p>
+                          <p className="text-xs text-muted-foreground">Policy #{alert.policyNumber}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-orange-600">EFT Removed</p>
+                        <p className="text-xs text-muted-foreground">{alert.alertDate}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Action Required Notice */}
+            <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-sm text-amber-700 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                <strong>Action Required:</strong> Contact these clients immediately to prevent policy lapse and commission chargebacks.
+              </p>
+            </div>
+            
+            {/* Send Notification Button */}
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Click to send a notification alert about these chargebacks
+              </p>
+              <Button
+                variant={notificationStatus === 'success' ? 'outline' : 'destructive'}
+                size="sm"
+                onClick={() => sendNotification.mutate()}
+                disabled={notificationStatus === 'sending'}
+                className="gap-2"
+              >
+                {notificationStatus === 'sending' ? (
+                  <><RefreshCw className="h-4 w-4 animate-spin" /> Sending...</>
+                ) : notificationStatus === 'success' ? (
+                  <><CheckCircle className="h-4 w-4 text-green-600" /> Notification Sent!</>
+                ) : notificationStatus === 'error' ? (
+                  <><AlertTriangle className="h-4 w-4" /> Failed - Try Again</>
+                ) : (
+                  <><Bell className="h-4 w-4" /> Send Alert Notification</>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pipeline Progress */}
       <Card className="card-hover">

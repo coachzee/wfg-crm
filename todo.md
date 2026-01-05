@@ -310,3 +310,14 @@
 - [x] Confirmed: 52 policies represent complete book of business (Zaid is Writing Agent on all)
 - [x] Calculate total face amount for entire book of business: $26,025,000
 - [x] Update dashboard with complete book of business total ($26.02M)
+
+
+## Chargeback Notifications Feature (New)
+- [x] Log into Transamerica portal (session expired)
+- [x] Navigate to notifications/alerts section
+- [x] Extract impending chargeback data (3 reversed premium payments found)
+- [x] Extract premium payment reversal data (2 EFT removals found)
+- [x] Add chargeback alerts section to dashboard
+- [x] Implement Manus notifications for chargebacks (to project owner)
+- [x] Create notification trigger when new chargeback alerts are detected
+- [x] Test notification system - Send Alert Notification button added to dashboard

@@ -329,6 +329,14 @@ export const appRouter = router({
       const { getRecentSyncLogs } = await import("./mywfg-sync-data");
       return getRecentSyncLogs(10);
     }),
+    
+    // Send chargeback notification to owner
+    sendChargebackNotification: protectedProcedure.mutation(async () => {
+      const { sendChargebackNotification, getCurrentTransamericaAlerts } = await import("./chargeback-notification");
+      const alerts = getCurrentTransamericaAlerts();
+      const success = await sendChargebackNotification(alerts);
+      return { success, alertCount: alerts.reversedPremiumPayments.length + alerts.eftRemovals.length };
+    }),
   }),
 
   // MyWFG Integration
