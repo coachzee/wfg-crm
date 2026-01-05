@@ -1,0 +1,700 @@
+{
+  "query": "SELECT id, firstName, lastName, agentCode, currentRank, currentStage, email, phone FROM agents ORDER BY lastName, firstName LIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, firstName, lastName, agentCode, currentRank, currentStage, email, phone FROM agents ORDER BY lastName, firstName LIMIT 100;",
+  "rows": [
+    {
+      "id": "60003",
+      "firstName": "Adeyinka",
+      "lastName": "Adedire",
+      "agentCode": "E7X0L",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "YINKA4REEL007@YAHOO.COM",
+      "phone": "(317)416-9411"
+    },
+    {
+      "id": "60045",
+      "firstName": "Oluwaseyi",
+      "lastName": "Adepitan",
+      "agentCode": "C3D01",
+      "currentRank": "SENIOR_MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "mseyifunmiwfg@gmail.com",
+      "phone": "(908) 494-9772"
+    },
+    {
+      "id": "60004",
+      "firstName": "Adejare",
+      "lastName": "Adetona",
+      "agentCode": "D5L56",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "AADEJARE35@HOTMAIL.COM",
+      "phone": "(336)997-7513"
+    },
+    {
+      "id": "60038",
+      "firstName": "Oluwatosin",
+      "lastName": "Adetona",
+      "agentCode": "C9U9S",
+      "currentRank": "MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "omoiett@yahoo.com",
+      "phone": "(336)986-8033"
+    },
+    {
+      "id": "60005",
+      "firstName": "Sarah",
+      "lastName": "Agbettor",
+      "agentCode": "E3W78",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "SARAAGBE256@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "210005",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638222691",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "210009",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638269561",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "210017",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638451749",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "210021",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638617104",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "210013",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638343677",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "210001",
+      "firstName": "Test",
+      "lastName": "Agent",
+      "agentCode": "TEST-1767638169486",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "testagent@example.com",
+      "phone": "555-1234"
+    },
+    {
+      "id": "60006",
+      "firstName": "Rosette",
+      "lastName": "Aka",
+      "agentCode": "E6C17",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "ROSETTEAKA246@GMAIL.COM",
+      "phone": "(404) 593-8691"
+    },
+    {
+      "id": "60007",
+      "firstName": "Yvonne",
+      "lastName": "Akwue",
+      "agentCode": "E8D5H",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "YVONNEAKWUE@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60008",
+      "firstName": "Bukola",
+      "lastName": "Aleshe",
+      "agentCode": "D9I3O",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "BUKOLALESH007@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60009",
+      "firstName": "Ireoluwa",
+      "lastName": "Aloko",
+      "agentCode": "E7T7L",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "ALOKOIRE@GMAIL.COM",
+      "phone": "(404) 293-0712"
+    },
+    {
+      "id": "60010",
+      "firstName": "Jeftha",
+      "lastName": "Amoah",
+      "agentCode": "E6U2T",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "JEFTHAAMOAH80@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60001",
+      "firstName": "Augustina",
+      "lastName": "Armstrong-ogbonna",
+      "agentCode": "D0T7M",
+      "currentRank": "SENIOR_MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "tegogroups@gmail.com",
+      "phone": "(646) 369-9673"
+    },
+    {
+      "id": "60011",
+      "firstName": "Fredrick",
+      "lastName": "Chukwuedo",
+      "agentCode": "D3T9L",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "fredchukwuedo1@yahoo.com",
+      "phone": "(646)249-4983"
+    },
+    {
+      "id": "60012",
+      "firstName": "Modupeola",
+      "lastName": "Dada",
+      "agentCode": "E5R1E",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "DADADUPEOLA@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60013",
+      "firstName": "Shedrack",
+      "lastName": "Davies",
+      "agentCode": "E5C8X",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "SHEDDAVIES@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60014",
+      "firstName": "Somo",
+      "lastName": "Davies",
+      "agentCode": "E8X8M",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "SYBOYOU@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60015",
+      "firstName": "Tamacia",
+      "lastName": "Derricotte",
+      "agentCode": "E1J3Y",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "SYMONE3113@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60016",
+      "firstName": "Moussa",
+      "lastName": "Diallo",
+      "agentCode": "E9U6Q",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "MOUSSA9348@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60017",
+      "firstName": "Leyii",
+      "lastName": "Diginee",
+      "agentCode": "E2W8Y",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "LEYIIDIGINEE@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60018",
+      "firstName": "Funmilayo",
+      "lastName": "Eboda",
+      "agentCode": "F0J1Q",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "FUNMIEBODA@YAHOO.COM",
+      "phone": ""
+    },
+    {
+      "id": "60019",
+      "firstName": "Villard",
+      "lastName": "Egbe",
+      "agentCode": "E9G1B",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "VILLARDEGBE86@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60021",
+      "firstName": "Joy",
+      "lastName": "Ejime",
+      "agentCode": "D3C69",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "JOYEJIME@YAHOO.COM",
+      "phone": "(678)754-6658"
+    },
+    {
+      "id": "60020",
+      "firstName": "Stanley",
+      "lastName": "Ejime",
+      "agentCode": "D3C5U",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "EJIMSTAN@YAHOO.COM",
+      "phone": "(678)724-9301"
+    },
+    {
+      "id": "60022",
+      "firstName": "Margaret",
+      "lastName": "Ereba",
+      "agentCode": "E3J1B",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "MARGARETEREBA001@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60023",
+      "firstName": "Benjamin",
+      "lastName": "Eyenla",
+      "agentCode": "F0H2P",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "BENADE2001@GMAIL.COM",
+      "phone": "(401) 390-7481"
+    },
+    {
+      "id": "60024",
+      "firstName": "Omowunmi",
+      "lastName": "Fasakin",
+      "agentCode": "E6V0Z",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "OMOWUNMIOLUTAIWO@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60025",
+      "firstName": "Omolola",
+      "lastName": "Giwa",
+      "agentCode": "D9D09",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "VERYTRENDY1@GMAIL.COM",
+      "phone": "(404) 345-3078"
+    },
+    {
+      "id": "60026",
+      "firstName": "Jasmine",
+      "lastName": "Heckstall",
+      "agentCode": "E2O7K",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "MGG162004@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60039",
+      "firstName": "Clive",
+      "lastName": "Henry",
+      "agentCode": "42EBU",
+      "currentRank": "ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "CLIVE1HENRY@GMAIL.COM",
+      "phone": "(678) 637-6575"
+    },
+    {
+      "id": "60040",
+      "firstName": "Nonso",
+      "lastName": "Humphrey",
+      "agentCode": "D6W3S",
+      "currentRank": "MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "NONSOHUMPHREYLFH@GMAIL.COM",
+      "phone": "(404)990-2331"
+    },
+    {
+      "id": "60027",
+      "firstName": "Karis",
+      "lastName": "Iboro",
+      "agentCode": "D8Z51",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "KARIS.IBORO@YAHOO.COM",
+      "phone": ""
+    },
+    {
+      "id": "60041",
+      "firstName": "Odion",
+      "lastName": "Imasuen",
+      "agentCode": "D3Y16",
+      "currentRank": "MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "ODIONOSAMA@YAHOO.COM",
+      "phone": "(818) 269-7533"
+    },
+    {
+      "id": "60028",
+      "firstName": "Gloria",
+      "lastName": "Izu",
+      "agentCode": "E9I9A",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "IZUGLORIA@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60029",
+      "firstName": "Oluwaseun",
+      "lastName": "Kadiri",
+      "agentCode": "94ISM",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "EXTREMEPIANIST5@GMAIL.COM",
+      "phone": "(308) 216-0122"
+    },
+    {
+      "id": "60030",
+      "firstName": "Bukola jumoke",
+      "lastName": "Kolawole",
+      "agentCode": "E1U8L",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "JUMOK2018@GMAIL.COM",
+      "phone": "(862)888-6146"
+    },
+    {
+      "id": "60031",
+      "firstName": "Oluwatosin",
+      "lastName": "Kolawole",
+      "agentCode": "E2Y8M",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "EARTHVOICE1@GMAIL.COM",
+      "phone": "(862) 899-5746"
+    },
+    {
+      "id": "60032",
+      "firstName": "Damilola",
+      "lastName": "Kole",
+      "agentCode": "E2K6Q",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "KOLEDAMILOLA@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60033",
+      "firstName": "Helen",
+      "lastName": "Latimore",
+      "agentCode": "D8V8Q",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "KIKIOGUNNIWA@GMAIL.COM",
+      "phone": "(857) 499-3586"
+    },
+    {
+      "id": "60034",
+      "firstName": "Abiodun",
+      "lastName": "Ligali",
+      "agentCode": "E6I1E",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "TILEWABABE@GMAIL.COM",
+      "phone": "(918)495-5006"
+    },
+    {
+      "id": "60035",
+      "firstName": "Ujunwa",
+      "lastName": "Madububa mbachu",
+      "agentCode": "E9P5K",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "UJUNWA.MADUBUBA@GMAIL.COM",
+      "phone": ""
+    },
+    {
+      "id": "60036",
+      "firstName": "Millicent",
+      "lastName": "Maiko",
+      "agentCode": "F0H13",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "MIKEMILLY10@GMAIL.COM",
+      "phone": "(463) 312-8492"
+    },
+    {
+      "id": "60037",
+      "firstName": "Stephen",
+      "lastName": "Monye",
+      "agentCode": "C8U78",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "STEVEN.MONYE@GMAIL.COM",
+      "phone": "(404)604-9370"
+    },
+    {
+      "id": "60042",
+      "firstName": "Oluseyi",
+      "lastName": "Ogunlolu",
+      "agentCode": "49AEA",
+      "currentRank": "MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "SALVOBERG@GMAIL.COM",
+      "phone": "(201) 873-8581"
+    },
+    {
+      "id": "60043",
+      "firstName": "Mercy",
+      "lastName": "Okonofua",
+      "agentCode": "C9F3Z",
+      "currentRank": "MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "mercyoko1980@gmail.com",
+      "phone": "(470)638-8317"
+    },
+    {
+      "id": "60002",
+      "firstName": "Ayodele",
+      "lastName": "Okulaja",
+      "agentCode": "D3Y2G",
+      "currentRank": "SENIOR_MARKETING_DIRECTOR",
+      "currentStage": "LICENSED",
+      "email": "ayodeleokulaja.tegogroups@gmail.com",
+      "phone": "(646) 247-5412"
+    },
+    {
+      "id": "60044",
+      "firstName": "Folashade",
+      "lastName": "Olaiya",
+      "agentCode": "16CKG",
+      "currentRank": "ASSOCIATE",
+      "currentStage": "LICENSED",
+      "email": "SADEOLA465@YAHOO.COM",
+      "phone": "(678) 622-8877"
+    },
+    {
+      "id": "210015",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638343717",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210023",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638617140",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210003",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638169533",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210007",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638222735",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210011",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638269616",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210019",
+      "firstName": "GetById",
+      "lastName": "Test",
+      "agentCode": "GETID-1767638451788",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210006",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638222715",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210014",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638343700",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210018",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638451771",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210010",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638269590",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210002",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638169515",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210022",
+      "firstName": "Rank",
+      "lastName": "Test",
+      "agentCode": "RANK-1767638617124",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "RECRUITMENT",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210024",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638617203",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210008",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638222771",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210012",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638269660",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210004",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638169560",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210016",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638343750",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    },
+    {
+      "id": "210020",
+      "firstName": "Stage",
+      "lastName": "Update",
+      "agentCode": "STAGE-1767638451818",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "currentStage": "EXAM_PREP",
+      "email": "NULL",
+      "phone": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tagentCode\tcurrentRank\tcurrentStage\temail\tphone\n60003\tAdeyinka\tAdedire\tE7X0L\tTRAINING_ASSOCIATE\tLICENSED\tYINKA4REEL007@YAHOO.COM\t(317)416-9411\n60045\tOluwaseyi\tAdepitan\tC3D01\tSENIOR_MARKETING_DIRECTOR\tLICENSED\tmseyifunmiwfg@gmail.com\t(908) 494-9772\n60004\tAdejare\tAdetona\tD5L56\tTRAINING_ASSOCIATE\tLICENSED\tAADEJARE35@HOTMAIL.COM\t(336)997-7513\n60038\tOluwatosin\tAdetona\tC9U9S\tMARKETING_DIRECTOR\tLICENSED\tomoiett@yahoo.com\t(336)986-8033\n60005\tSarah\tAgbettor\tE3W78\tTRAINING_ASSOCIATE\tEXAM_PREP\tSARAAGBE256@GMAIL.COM\t\n210005\tTest\tAgent\tTEST-1767638222691\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n210009\tTest\tAgent\tTEST-1767638269561\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n210017\tTest\tAgent\tTEST-1767638451749\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n210021\tTest\tAgent\tTEST-1767638617104\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n210013\tTest\tAgent\tTEST-1767638343677\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n210001\tTest\tAgent\tTEST-1767638169486\tTRAINING_ASSOCIATE\tRECRUITMENT\ttestagent@example.com\t555-1234\n60006\tRosette\tAka\tE6C17\tTRAINING_ASSOCIATE\tEXAM_PREP\tROSETTEAKA246@GMAIL.COM\t(404) 593-8691\n60007\tYvonne\tAkwue\tE8D5H\tTRAINING_ASSOCIATE\tEXAM_PREP\tYVONNEAKWUE@GMAIL.COM\t\n60008\tBukola\tAleshe\tD9I3O\tTRAINING_ASSOCIATE\tEXAM_PREP\tBUKOLALESH007@GMAIL.COM\t\n60009\tIreoluwa\tAloko\tE7T7L\tTRAINING_ASSOCIATE\tEXAM_PREP\tALOKOIRE@GMAIL.COM\t(404) 293-0712\n60010\tJeftha\tAmoah\tE6U2T\tTRAINING_ASSOCIATE\tEXAM_PREP\tJEFTHAAMOAH80@GMAIL.COM\t\n60001\tAugustina\tArmstrong-ogbonna\tD0T7M\tSENIOR_MARKETING_DIRECTOR\tLICENSED\ttegogroups@gmail.com\t(646) 369-9673\n60011\tFredrick\tChukwuedo\tD3T9L\tTRAINING_ASSOCIATE\tLICENSED\tfredchukwuedo1@yahoo.com\t(646)249-4983\n60012\tModupeola\tDada\tE5R1E\tTRAINING_ASSOCIATE\tEXAM_PREP\tDADADUPEOLA@GMAIL.COM\t\n60013\tShedrack\tDavies\tE5C8X\tTRAINING_ASSOCIATE\tEXAM_PREP\tSHEDDAVIES@GMAIL.COM\t\n60014\tSomo\tDavies\tE8X8M\tTRAINING_ASSOCIATE\tEXAM_PREP\tSYBOYOU@GMAIL.COM\t\n60015\tTamacia\tDerricotte\tE1J3Y\tTRAINING_ASSOCIATE\tEXAM_PREP\tSYMONE3113@GMAIL.COM\t\n60016\tMoussa\tDiallo\tE9U6Q\tTRAINING_ASSOCIATE\tEXAM_PREP\tMOUSSA9348@GMAIL.COM\t\n60017\tLeyii\tDiginee\tE2W8Y\tTRAINING_ASSOCIATE\tEXAM_PREP\tLEYIIDIGINEE@GMAIL.COM\t\n60018\tFunmilayo\tEboda\tF0J1Q\tTRAINING_ASSOCIATE\tEXAM_PREP\tFUNMIEBODA@YAHOO.COM\t\n60019\tVillard\tEgbe\tE9G1B\tTRAINING_ASSOCIATE\tEXAM_PREP\tVILLARDEGBE86@GMAIL.COM\t\n60021\tJoy\tEjime\tD3C69\tTRAINING_ASSOCIATE\tLICENSED\tJOYEJIME@YAHOO.COM\t(678)754-6658\n60020\tStanley\tEjime\tD3C5U\tTRAINING_ASSOCIATE\tLICENSED\tEJIMSTAN@YAHOO.COM\t(678)724-9301\n60022\tMargaret\tEreba\tE3J1B\tTRAINING_ASSOCIATE\tEXAM_PREP\tMARGARETEREBA001@GMAIL.COM\t\n60023\tBenjamin\tEyenla\tF0H2P\tTRAINING_ASSOCIATE\tEXAM_PREP\tBENADE2001@GMAIL.COM\t(401) 390-7481\n60024\tOmowunmi\tFasakin\tE6V0Z\tTRAINING_ASSOCIATE\tEXAM_PREP\tOMOWUNMIOLUTAIWO@GMAIL.COM\t\n60025\tOmolola\tGiwa\tD9D09\tTRAINING_ASSOCIATE\tEXAM_PREP\tVERYTRENDY1@GMAIL.COM\t(404) 345-3078\n60026\tJasmine\tHeckstall\tE2O7K\tTRAINING_ASSOCIATE\tEXAM_PREP\tMGG162004@GMAIL.COM\t\n60039\tClive\tHenry\t42EBU\tASSOCIATE\tLICENSED\tCLIVE1HENRY@GMAIL.COM\t(678) 637-6575\n60040\tNonso\tHumphrey\tD6W3S\tMARKETING_DIRECTOR\tLICENSED\tNONSOHUMPHREYLFH@GMAIL.COM\t(404)990-2331\n60027\tKaris\tIboro\tD8Z51\tTRAINING_ASSOCIATE\tEXAM_PREP\tKARIS.IBORO@YAHOO.COM\t\n60041\tOdion\tImasuen\tD3Y16\tMARKETING_DIRECTOR\tLICENSED\tODIONOSAMA@YAHOO.COM\t(818) 269-7533\n60028\tGloria\tIzu\tE9I9A\tTRAINING_ASSOCIATE\tEXAM_PREP\tIZUGLORIA@GMAIL.COM\t\n60029\tOluwaseun\tKadiri\t94ISM\tTRAINING_ASSOCIATE\tLICENSED\tEXTREMEPIANIST5@GMAIL.COM\t(308) 216-0122\n60030\tBukola jumoke\tKolawole\tE1U8L\tTRAINING_ASSOCIATE\tLICENSED\tJUMOK2018@GMAIL.COM\t(862)888-6146\n60031\tOluwatosin\tKolawole\tE2Y8M\tTRAINING_ASSOCIATE\tEXAM_PREP\tEARTHVOICE1@GMAIL.COM\t(862) 899-5746\n60032\tDamilola\tKole\tE2K6Q\tTRAINING_ASSOCIATE\tEXAM_PREP\tKOLEDAMILOLA@GMAIL.COM\t\n60033\tHelen\tLatimore\tD8V8Q\tTRAINING_ASSOCIATE\tEXAM_PREP\tKIKIOGUNNIWA@GMAIL.COM\t(857) 499-3586\n60034\tAbiodun\tLigali\tE6I1E\tTRAINING_ASSOCIATE\tLICENSED\tTILEWABABE@GMAIL.COM\t(918)495-5006\n60035\tUjunwa\tMadububa mbachu\tE9P5K\tTRAINING_ASSOCIATE\tEXAM_PREP\tUJUNWA.MADUBUBA@GMAIL.COM\t\n60036\tMillicent\tMaiko\tF0H13\tTRAINING_ASSOCIATE\tEXAM_PREP\tMIKEMILLY10@GMAIL.COM\t(463) 312-8492\n60037\tStephen\tMonye\tC8U78\tTRAINING_ASSOCIATE\tLICENSED\tSTEVEN.MONYE@GMAIL.COM\t(404)604-9370\n60042\tOluseyi\tOgunlolu\t49AEA\tMARKETING_DIRECTOR\tLICENSED\tSALVOBERG@GMAIL.COM\t(201) 873-8581\n60043\tMercy\tOkonofua\tC9F3Z\tMARKETING_DIRECTOR\tLICENSED\tmercyoko1980@gmail.com\t(470)638-8317\n60002\tAyodele\tOkulaja\tD3Y2G\tSENIOR_MARKETING_DIRECTOR\tLICENSED\tayodeleokulaja.tegogroups@gmail.com\t(646) 247-5412\n60044\tFolashade\tOlaiya\t16CKG\tASSOCIATE\tLICENSED\tSADEOLA465@YAHOO.COM\t(678) 622-8877\n210015\tGetById\tTest\tGETID-1767638343717\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210023\tGetById\tTest\tGETID-1767638617140\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210003\tGetById\tTest\tGETID-1767638169533\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210007\tGetById\tTest\tGETID-1767638222735\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210011\tGetById\tTest\tGETID-1767638269616\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210019\tGetById\tTest\tGETID-1767638451788\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210006\tRank\tTest\tRANK-1767638222715\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210014\tRank\tTest\tRANK-1767638343700\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210018\tRank\tTest\tRANK-1767638451771\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210010\tRank\tTest\tRANK-1767638269590\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210002\tRank\tTest\tRANK-1767638169515\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210022\tRank\tTest\tRANK-1767638617124\tTRAINING_ASSOCIATE\tRECRUITMENT\tNULL\tNULL\n210024\tStage\tUpdate\tSTAGE-1767638617203\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n210008\tStage\tUpdate\tSTAGE-1767638222771\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n210012\tStage\tUpdate\tSTAGE-1767638269660\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n210004\tStage\tUpdate\tSTAGE-1767638169560\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n210016\tStage\tUpdate\tSTAGE-1767638343750\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n210020\tStage\tUpdate\tSTAGE-1767638451818\tTRAINING_ASSOCIATE\tEXAM_PREP\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

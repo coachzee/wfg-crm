@@ -1,0 +1,8 @@
+{
+  "query": "DELETE FROM agents WHERE agent_code LIKE 'TEST-%' OR agent_code LIKE 'RANK-%' OR agent_code LIKE 'GETID-%' OR agent_code LIKE 'STAGE-%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute DELETE FROM agents WHERE agent_code LIKE 'TEST-%' OR agent_code LIKE 'RANK-%' OR agent_code LIKE 'GETID-%' OR agent_code LIKE 'STAGE-%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'agent_code' in 'where clause'"
+  ]
+}

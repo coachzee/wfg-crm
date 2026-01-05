@@ -28,11 +28,11 @@ export type InsertUser = typeof users.$inferInsert;
 
 // WFG Rank Levels - Official hierarchy from Training Associate to Executive Chairman
 export const WFG_RANKS = [
-  "TRAINING_ASSOCIATE",  // TA - Level 1
-  "ASSOCIATE",           // A - Level 2
-  "SENIOR_ASSOCIATE",    // SA - Level 3
-  "MARKETING_DIRECTOR",  // MD - Level 10
-  "SENIOR_MARKETING_DIRECTOR", // SMD - Level 20
+  "TRAINING_ASSOCIATE",  // TA - MyWFG Level 01
+  "ASSOCIATE",           // A - MyWFG Level 10
+  "SENIOR_ASSOCIATE",    // SA - MyWFG Level 15
+  "MARKETING_DIRECTOR",  // MD - MyWFG Level 17
+  "SENIOR_MARKETING_DIRECTOR", // SMD - MyWFG Level 20
   "EXECUTIVE_MARKETING_DIRECTOR", // EMD - Level 65
   "CEO_MARKETING_DIRECTOR", // CEO MD - Level 75
   "EXECUTIVE_VICE_CHAIRMAN", // EVC - Level 87

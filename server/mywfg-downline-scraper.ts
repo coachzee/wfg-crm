@@ -175,53 +175,11 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
 }
 
 /**
- * Navigate to Downline Status report and extract data
+ * Helper function to extract agents from the current page
  */
-async function extractDownlineStatus(page: Page, agentId: string): Promise<DownlineStatusResult> {
-  const reportUrl = `https://www.mywfg.com/reports-downline-status?AgentID=${agentId}`;
-  
-  console.log(`[Downline Scraper] Navigating to Downline Status report...`);
-  await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 60000 });
-  
-  await new Promise(r => setTimeout(r, 3000));
-  
-  // Wait for report to load
-  await page.waitForSelector('#ReportViewer1_ctl09', { timeout: 30000 }).catch(() => {});
-  
-  // Click "Generate Report" button if present
-  const generateBtn = await page.evaluateHandle(() => {
-    const buttons = Array.from(document.querySelectorAll('input[type="button"], button'));
-    return buttons.find(el => el.textContent?.includes('Generate Report') || (el as HTMLInputElement).value?.includes('Generate Report'));
-  });
-  
-  if (generateBtn) {
-    await (generateBtn as any).click();
-    await new Promise(r => setTimeout(r, 5000));
-  }
-  
-  // Wait for report data to load
-  await new Promise(r => setTimeout(r, 3000));
-  
-  // Extract report data from the page
+async function extractAgentsFromPage(page: Page): Promise<any[]> {
   const reportData = await page.evaluate(() => {
-    const result: any = {
-      runDate: '',
-      reportInfo: '',
-      agents: [],
-    };
-    
-    // Try to find report header info
-    const headerText = document.body.innerText;
-    const runDateMatch = headerText.match(/Run Date and Time:\s*([^\n]+)/);
-    if (runDateMatch) {
-      result.runDate = runDateMatch[1].trim();
-    }
-    
-    // Try to find report info line
-    const infoMatch = headerText.match(/Shopeju,\s*Zaid[^\n]+/);
-    if (infoMatch) {
-      result.reportInfo = infoMatch[0].trim();
-    }
+    const agents: any[] = [];
     
     // Find the data table - look for table with agent data
     const tables = Array.from(document.querySelectorAll('table'));
@@ -249,7 +207,7 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
             continue;
           }
           
-          result.agents.push({
+          agents.push({
             firstName,
             lastName,
             bulletinName,
@@ -269,19 +227,15 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
       }
     }
     
-    return result;
+    return agents;
   });
   
   // If no agents found in table, try parsing from text content
-  if (reportData.agents.length === 0) {
-    console.log('[Downline Scraper] No table data found, trying text parsing...');
-    
+  if (reportData.length === 0) {
     const pageText = await page.evaluate(() => document.body.innerText);
     const lines = pageText.split('\n');
     
     for (const line of lines) {
-      // Look for lines that match agent data pattern
-      // Format: FirstName LastName BulletinName AgentCode TitleLevel CommLevel LLFlag LLEndDate ...
       const parts = line.split(/\s{2,}|\t/);
       if (parts.length >= 8 && parts[3]?.match(/^[A-Z0-9]{5}$/)) {
         const firstName = parts[0]?.trim();
@@ -294,7 +248,7 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
         const llEndDate = parts[7]?.trim();
         
         if (firstName && lastName && agentCode && !firstName.includes('First')) {
-          reportData.agents.push({
+          reportData.push({
             firstName,
             lastName,
             bulletinName,
@@ -315,8 +269,121 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
     }
   }
   
-  // Map title levels to WFG ranks
-  const agents: DownlineAgent[] = reportData.agents.map((agent: any) => ({
+  return reportData;
+}
+
+/**
+ * Navigate to Downline Status report and extract data for ALL title levels
+ */
+async function extractDownlineStatus(page: Page, agentId: string): Promise<DownlineStatusResult> {
+  const reportUrl = `https://www.mywfg.com/reports-downline-status?AgentID=${agentId}`;
+  
+  console.log(`[Downline Scraper] Navigating to Downline Status report...`);
+  await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+  
+  await new Promise(r => setTimeout(r, 3000));
+  
+  // Wait for report to load
+  await page.waitForSelector('#ReportViewer1_ctl09', { timeout: 30000 }).catch(() => {});
+  
+  // Title levels to iterate through: TA, A, SA, MD, SMD
+  const titleLevels = ['TA', 'A', 'SA', 'MD', 'SMD'];
+  const allAgents: any[] = [];
+  const seenAgentCodes = new Set<string>();
+  let runDate = '';
+  let reportInfo = '';
+  
+  for (const titleLevel of titleLevels) {
+    console.log(`[Downline Scraper] Fetching agents with title level: ${titleLevel}`);
+    
+    // Set the title level dropdown
+    const levelSet = await page.evaluate((targetLevel) => {
+      const selects = Array.from(document.querySelectorAll('select'));
+      
+      for (const select of selects) {
+        const options = Array.from(select.options);
+        const optionTexts = options.map(o => o.text.trim());
+        
+        // Check if this looks like a title level dropdown (has TA and MD options)
+        const hasTitleLevelOptions = optionTexts.includes('TA') && optionTexts.includes('MD');
+        
+        if (hasTitleLevelOptions) {
+          // Find and select the target level
+          const targetOption = options.find(o => o.text.trim() === targetLevel);
+          if (targetOption) {
+            select.value = targetOption.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            return { success: true, selectedLevel: targetLevel };
+          }
+        }
+      }
+      return { success: false };
+    }, titleLevel);
+    
+    if (!levelSet.success) {
+      console.log(`[Downline Scraper] Could not set title level to ${titleLevel}, skipping...`);
+      continue;
+    }
+    
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // Click "Generate Report" button
+    const generateClicked = await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('input[type="button"], button'));
+      const generateBtn = buttons.find(el => 
+        el.textContent?.includes('Generate Report') || 
+        (el as HTMLInputElement).value?.includes('Generate Report')
+      );
+      if (generateBtn) {
+        (generateBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    
+    if (generateClicked) {
+      // Wait for report to load
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    
+    // Extract header info (only once)
+    if (!runDate) {
+      const headerInfo = await page.evaluate(() => {
+        const headerText = document.body.innerText;
+        const runDateMatch = headerText.match(/Run Date and Time:\s*([^\n]+)/);
+        const infoMatch = headerText.match(/Shopeju,\s*Zaid[^\n]+/);
+        return {
+          runDate: runDateMatch ? runDateMatch[1].trim() : '',
+          reportInfo: infoMatch ? infoMatch[0].trim() : '',
+        };
+      });
+      runDate = headerInfo.runDate;
+      reportInfo = headerInfo.reportInfo;
+    }
+    
+    // Extract agents from this title level
+    const agents = await extractAgentsFromPage(page);
+    console.log(`[Downline Scraper] Found ${agents.length} agents at title level ${titleLevel}`);
+    
+    // Add unique agents to the list
+    for (const agent of agents) {
+      if (!seenAgentCodes.has(agent.agentCode)) {
+        seenAgentCodes.add(agent.agentCode);
+        allAgents.push(agent);
+      }
+    }
+  }
+  
+  console.log(`[Downline Scraper] Total unique agents extracted: ${allAgents.length}`);
+  
+  // Save screenshot for debugging
+  try {
+    await page.screenshot({ path: '/tmp/mywfg-report-final.png', fullPage: true });
+    console.log('[Downline Scraper] Screenshot saved: /tmp/mywfg-report-final.png');
+  } catch (e) {}
+  
+  // Map title levels to WFG ranks using the collected agents from all title levels
+  const agents: DownlineAgent[] = allAgents.map((agent: any) => ({
     ...agent,
     wfgRank: TITLE_LEVEL_TO_RANK[agent.titleLevel] || 'TRAINING_ASSOCIATE',
     isLifeLicensed: agent.llFlag === true || agent.llFlag === 'Yes' || agent.llFlag === 'yes',
@@ -327,8 +394,8 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
   return {
     success: agents.length > 0,
     agents,
-    runDate: reportData.runDate,
-    reportInfo: reportData.reportInfo,
+    runDate,
+    reportInfo,
   };
 }
 

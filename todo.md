@@ -442,3 +442,26 @@
 - [x] Add "View Full History" button linking to Sync History page
 - [x] Display 3:30 PM and 6:30 PM sync task status breakdown
 - [x] Show agents processed, contacts updated, and error counts
+
+
+## Agent Data Cleanup (In Progress)
+- [ ] Fix incorrect position levels (e.g., Okulaja is not SMD)
+- [ ] Remove test agents from database
+- [ ] Clean up incorrect stage data (getById Test etc.)
+- [ ] Verify all agent ranks match MyWFG source data
+
+## MyWFG Sync Fix (In Progress)
+- [ ] Fix MyWFG sync to successfully fetch agent data
+- [ ] Ensure correct title level to rank mapping (01=TA, 10=A, 15=SA, 17=MD, 20=SMD)
+- [ ] Verify all agent ranks are updated automatically from MyWFG source data
+- [ ] Remove need for manual rank corrections
+
+
+## Agent Rank Fix (Completed)
+- [x] Fixed incorrect agent position levels
+- [x] Armstrong = SMD (only SMD)
+- [x] Adepitan and Okulaja = MD (only 2 MDs)
+- [x] Adetona, Humphrey, Imasuen, Ogunlolu, Okonofua = SA (Senior Associate)
+- [x] Henry, Olaiya = A (Associate)
+- [x] Removed test agents created by vitest tests
+- [x] Updated title level mapping: 01=TA, 10=A, 15=SA, 17=MD, 20=SMD
