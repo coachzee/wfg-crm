@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { waitForOTP, getMyWFGCredentials } from '../server/gmail-otp.ts';
-import { getDb } from '../server/db.ts';
+import { getDb, createScheduledSyncLog, updateScheduledSyncLog } from '../server/db.ts';
 import { agents } from '../drizzle/schema.ts';
 import { eq } from 'drizzle-orm';
 
@@ -388,6 +388,31 @@ async function getAgentContactInfo(page, agentCode) {
 async function main() {
   console.log('=== MyWFG Full Agent Data Sync ===\n');
   
+  // Determine scheduled time based on current hour
+  const currentHour = new Date().getHours();
+  const scheduledTime = currentHour < 16 ? '3:30 PM' : '6:30 PM';
+  
+  // Create sync log entry
+  let syncLogId = null;
+  const startTime = new Date();
+  const errors = [];
+  let agentsProcessed = 0;
+  let agentsUpdated = 0;
+  let contactsUpdated = 0;
+  
+  try {
+    const syncLog = await createScheduledSyncLog({
+      syncType: 'MYWFG_FULL_SYNC',
+      scheduledTime,
+      status: 'RUNNING',
+      startedAt: startTime,
+    });
+    syncLogId = syncLog.id;
+    console.log(`[Full Sync] Created sync log entry: ${syncLogId}`);
+  } catch (e) {
+    console.log('[Full Sync] Could not create sync log:', e.message);
+  }
+  
   let browser = null;
   
   try {
@@ -405,6 +430,7 @@ async function main() {
     
     // Fetch downline status
     const downlineAgents = await fetchDownlineStatus(page, '73DXR');
+    agentsProcessed = downlineAgents.length;
     
     // Get database connection
     const db = await getDb();
@@ -412,7 +438,6 @@ async function main() {
     if (downlineAgents.length > 0) {
       console.log(`\n[Full Sync] Updating ${downlineAgents.length} agents from Downline Status...`);
       
-      let updated = 0;
       for (const agent of downlineAgents) {
         const existing = await db.select()
           .from(agents)
@@ -429,18 +454,17 @@ async function main() {
             .where(eq(agents.agentCode, agent.agentCode));
           
           console.log(`  ✓ ${agent.firstName} ${agent.lastName} (${agent.agentCode}) -> ${agent.wfgRank}`);
-          updated++;
+          agentsUpdated++;
         }
       }
       
-      console.log(`\n[Full Sync] Updated ${updated} agents from Downline Status`);
+      console.log(`\n[Full Sync] Updated ${agentsUpdated} agents from Downline Status`);
     }
     
     // Fetch contact info for agents in our database
     const dbAgents = await db.select().from(agents);
     console.log(`\n[Full Sync] Fetching contact info for ${dbAgents.length} agents...`);
     
-    let contactsUpdated = 0;
     for (let i = 0; i < dbAgents.length; i++) {
       const agent = dbAgents[i];
       console.log(`  Processing ${i + 1}/${dbAgents.length}: ${agent.firstName} ${agent.lastName}...`);
@@ -462,6 +486,7 @@ async function main() {
         }
       } catch (e) {
         console.log(`    ⚠ Error: ${e.message}`);
+        errors.push(`${agent.firstName} ${agent.lastName}: ${e.message}`);
       }
       
       await new Promise(r => setTimeout(r, 1500));
@@ -472,8 +497,46 @@ async function main() {
     await browser.close();
     console.log('[Full Sync] Browser closed');
     
+    // Update sync log with success
+    if (syncLogId) {
+      const endTime = new Date();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      await updateScheduledSyncLog(syncLogId, {
+        status: errors.length > 0 ? 'PARTIAL' : 'SUCCESS',
+        completedAt: endTime,
+        durationSeconds,
+        agentsProcessed,
+        agentsUpdated,
+        contactsUpdated,
+        errorsCount: errors.length,
+        errorMessages: errors.length > 0 ? errors : null,
+        summary: `Processed ${agentsProcessed} agents, updated ${agentsUpdated} ranks and ${contactsUpdated} contacts`,
+      });
+      console.log('[Full Sync] Sync log updated with success');
+    }
+    
   } catch (error) {
     console.error('Error:', error.message);
+    errors.push(error.message);
+    
+    // Update sync log with failure
+    if (syncLogId) {
+      const endTime = new Date();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      await updateScheduledSyncLog(syncLogId, {
+        status: 'FAILED',
+        completedAt: endTime,
+        durationSeconds,
+        agentsProcessed,
+        agentsUpdated,
+        contactsUpdated,
+        errorsCount: errors.length,
+        errorMessages: errors,
+        summary: `Sync failed: ${error.message}`,
+      });
+      console.log('[Full Sync] Sync log updated with failure');
+    }
+    
     if (browser) await browser.close();
     process.exit(1);
   }

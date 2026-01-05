@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
 import TeamMembers from "./pages/TeamMembers";
 import Team from "./pages/Team";
+import SyncHistory from "./pages/SyncHistory";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -98,6 +99,9 @@ function Router() {
             <TeamMembers />
           </DashboardLayout>
         )}
+      </Route>
+      <Route path={"/sync-history"}>
+        {() => <SyncHistory />}
       </Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

@@ -29,9 +29,15 @@ import {
   upsertCashFlowRecord,
   bulkUpsertCashFlowRecords,
   clearAllCashFlowRecords,
+  getRecentScheduledSyncLogs,
+  getWeeklySyncSummary,
+  getScheduledSyncLogs,
+  getLatestScheduledSyncLog,
+  getTodaySyncLogs,
   type Agent,
   type Client,
   type WorkflowTask,
+  type SyncLog,
 } from "./db";
 import { productionRecords } from "../drizzle/schema";
 import { encryptCredential, decryptCredential } from "./encryption";
@@ -518,6 +524,46 @@ export const appRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
       }
       return getAllUsers();
+    }),
+  }),
+
+  // Sync Logs - For monitoring scheduled sync tasks
+  syncLogs: router({
+    // Get recent sync logs
+    getRecent: protectedProcedure.input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+      }).optional()
+    ).query(async ({ input }) => {
+      return getRecentScheduledSyncLogs(input?.limit || 20);
+    }),
+    
+    // Get paginated sync logs with filtering
+    getPaginated: protectedProcedure.input(
+      z.object({
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(20),
+        status: z.enum(['PENDING', 'RUNNING', 'SUCCESS', 'FAILED', 'PARTIAL']).optional(),
+        syncType: z.enum(['FULL_SYNC', 'DOWNLINE_STATUS', 'CONTACT_INFO', 'CASH_FLOW', 'PRODUCTION']).optional(),
+        scheduledTime: z.string().optional(),
+      })
+    ).query(async ({ input }) => {
+      return getScheduledSyncLogs(input);
+    }),
+    
+    // Get the latest sync log
+    getLatest: protectedProcedure.query(async () => {
+      return getLatestScheduledSyncLog();
+    }),
+    
+    // Get today's sync logs
+    getToday: protectedProcedure.query(async () => {
+      return getTodaySyncLogs();
+    }),
+    
+    // Get weekly sync summary for dashboard
+    getWeeklySummary: protectedProcedure.query(async () => {
+      return getWeeklySyncSummary();
     }),
   }),
 });

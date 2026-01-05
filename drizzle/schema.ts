@@ -429,3 +429,40 @@ export const agentCashFlowHistoryRelations = relations(agentCashFlowHistory, ({ 
     references: [agents.id],
   }),
 }));
+
+
+// Sync Logs - Track MyWFG sync history for monitoring
+export const syncLogs = mysqlTable("syncLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  syncType: mysqlEnum("syncType", [
+    "FULL_SYNC",
+    "DOWNLINE_STATUS",
+    "CONTACT_INFO",
+    "CASH_FLOW",
+    "PRODUCTION",
+  ]).notNull(),
+  scheduledTime: varchar("scheduledTime", { length: 20 }), // "3:30 PM" or "6:30 PM"
+  status: mysqlEnum("status", ["PENDING", "RUNNING", "SUCCESS", "FAILED", "PARTIAL"]).default("PENDING").notNull(),
+  
+  // Timing
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  durationSeconds: int("durationSeconds"),
+  
+  // Results
+  agentsProcessed: int("agentsProcessed").default(0),
+  agentsUpdated: int("agentsUpdated").default(0),
+  agentsCreated: int("agentsCreated").default(0),
+  contactsUpdated: int("contactsUpdated").default(0),
+  errorsCount: int("errorsCount").default(0),
+  
+  // Details
+  errorMessages: json("errorMessages"), // Array of error messages
+  summary: text("summary"), // Human-readable summary
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SyncLog = typeof syncLogs.$inferSelect;
+export type InsertSyncLog = typeof syncLogs.$inferInsert;

@@ -415,3 +415,30 @@
 - [x] Automated OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
 - [x] Full sync script: mywfg-full-sync.mjs
 - [x] Contact info sync for all 45 agents (emails and phone numbers)
+
+
+## Scheduled MyWFG Sync (Completed)
+- [x] Set up twice daily sync at 3:30 PM and 6:30 PM
+- [x] Run mywfg-full-sync.mjs automatically
+
+
+## Sync History & Monitoring (New)
+- [ ] Create sync_logs database table for storing sync history
+- [ ] Build Sync History page with detailed logs
+- [ ] Add weekly sync summary section to dashboard bottom
+- [ ] Update mywfg-full-sync.mjs to log results to database
+- [ ] Show 3:30 PM and 6:30 PM sync status in summary
+
+
+## Sync History & Weekly Summary (Completed)
+- [x] Fix test failures for sync logs functionality (syncType enum, return types)
+- [x] Implement getScheduledSyncLogs function with pagination and filtering
+- [x] Implement getLatestScheduledSyncLog function
+- [x] Implement getTodaySyncLogs function
+- [x] Add tRPC procedures for sync logs (getPaginated, getLatest, getToday)
+- [x] Create Sync History page UI with filtering (status, type, scheduled time)
+- [x] Add pagination to Sync History page
+- [x] Add Weekly Sync Summary section to Dashboard
+- [x] Add "View Full History" button linking to Sync History page
+- [x] Display 3:30 PM and 6:30 PM sync task status breakdown
+- [x] Show agents processed, contacts updated, and error counts

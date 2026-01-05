@@ -36,6 +36,13 @@
       "when": 1767595372746,
       "tag": "0004_bouncy_malcolm_colcord",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1767637751027,
+      "tag": "0005_freezing_scalphunter",
+      "breakpoints": true
     }
   ]
 }
