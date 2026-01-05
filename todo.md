@@ -288,3 +288,19 @@
 - [x] Display agents with commissions on hold with balance owed and email
 - [x] Display agents with first notice warning with balance owed and email
 - [x] Show "6 pending" badge on Compliance section
+
+
+## Transamerica Face Amount Extraction (New)
+- [x] Login to Transamerica Life Access portal
+- [x] Launch Transamerica Life AccessSM
+- [x] Navigate to My Book > View My Book for pending policies
+- [x] Extract inforce policies with face amounts (Zaid Shopeju book only)
+- [x] Calculate total face amount from Zaid Shopeju's inforce policies ($26,025,000 from 52 policies)
+- [ ] Check notifications for impending chargebacks
+- [ ] Check notifications for premium payment reversals
+- [x] Update dashboard Total Face Amount metric with calculated total ($26.02M)
+- [ ] Add chargeback/reversal tracking to dashboard
+- [ ] Set up email notifications for impending chargebacks to:
+  - Zaid Shopeju (zaidshopejuwbh@gmail.com)
+  - Oluwaseyi Adepitan (mseyifunmiwbh@gmail.com)
+- [ ] Set up email notifications for premium payment reversals

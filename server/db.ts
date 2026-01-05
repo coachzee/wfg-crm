@@ -279,6 +279,14 @@ export async function getDashboardMetrics() {
     securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
   };
   
+  // Transamerica Life Access data - Zaid Shopeju's Writing Agent Book of Business
+  // Extracted on Jan 4, 2026 from Transamerica Life Access portal
+  // 52 policies total with Writing agent role filter
+  const transamericaData = {
+    totalFaceAmount: 26025000, // $26,025,000 total face amount from 52 policies
+    totalPolicies: 52, // Writing agent policies (Zaid Shopeju: 73DXR)
+  };
+  
   // Compliance data from MyWFG reports (as of Jan 4, 2026)
   // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
   const complianceData = {
@@ -299,8 +307,8 @@ export async function getDashboardMetrics() {
   };
   
   if (!db) return {
-    totalFaceAmount: 0,
-    totalPolicies: mywfgData.totalPolicies,
+    totalFaceAmount: transamericaData.totalFaceAmount,
+    totalPolicies: mywfgData.totalPolicies + transamericaData.totalPolicies,
     familiesProtected: mywfgData.familiesProtected,
     totalClients: 0,
     superTeamCashFlow: mywfgData.superTeamCashFlow,
@@ -332,9 +340,12 @@ export async function getDashboardMetrics() {
   const dbPolicies = Number(faceAmountResult[0]?.dbPolicies || 0);
   const dbFamilies = Number(familiesResult[0]?.dbFamilies || 0);
   
+  // Combine Transamerica face amount with any DB entries
+  const dbFaceAmount = parseFloat(faceAmountResult[0]?.totalFaceAmount || '0');
+  
   return {
-    totalFaceAmount: parseFloat(faceAmountResult[0]?.totalFaceAmount || '0'),
-    totalPolicies: Math.max(mywfgData.totalPolicies, dbPolicies),
+    totalFaceAmount: transamericaData.totalFaceAmount + dbFaceAmount,
+    totalPolicies: Math.max(mywfgData.totalPolicies + transamericaData.totalPolicies, dbPolicies),
     familiesProtected: Math.max(mywfgData.familiesProtected, dbFamilies),
     totalClients: Number(familiesResult[0]?.totalClients || 0),
     superTeamCashFlow: mywfgData.superTeamCashFlow,
