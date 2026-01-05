@@ -71,11 +71,19 @@ export async function fetchRecentOTP(
         const sinceDateStr = sinceDate.toISOString().split('T')[0];
         
         // Build search criteria
+        // For MyWFG OTP, search for WebHelp@Transamerica.com with "Security Validation Code" subject
         const searchCriteria: any[] = [
-          ['FROM', senderPattern],
           ['SINCE', sinceDateStr],
           'UNSEEN'
         ];
+        
+        // Add FROM criteria - for 'transamerica', specifically look for WebHelp
+        if (senderPattern.toLowerCase() === 'transamerica') {
+          searchCriteria.push(['FROM', 'WebHelp']);
+          searchCriteria.push(['SUBJECT', 'Validation Code']);
+        } else {
+          searchCriteria.push(['FROM', senderPattern]);
+        }
         
         imap.search(searchCriteria, (searchErr: Error | null, results: number[]) => {
           if (searchErr) {
@@ -146,15 +154,14 @@ export async function fetchRecentOTP(
 
 // Extract OTP code from email text
 function extractOTPFromText(text: string): string | null {
-  // Common OTP patterns (4-8 digit codes)
+  // MyWFG/Transamerica OTP format: XXXX-XXXXXX (4 digits, hyphen, 6 digits)
+  // Example: "3334-136345" -> OTP is "136345" (last 6 digits after hyphen)
   const patterns = [
-    /\b(\d{6})\b/,           // 6-digit code (most common)
-    /\b(\d{4})\b/,           // 4-digit code
-    /\b(\d{8})\b/,           // 8-digit code
-    /code[:\s]+(\d{4,8})/i,  // "code: 123456" or "code 123456"
+    /\d{4}-(\d{6})/,         // XXXX-XXXXXX format - extract last 6 digits
+    /\d{3}-(\d{6})/,         // XXX-XXXXXX format - extract last 6 digits (fallback)
+    /\b(\d{6})\b/,           // 6-digit code (fallback)
+    /code[:\s]+(\d{4,8})/i,  // "code: 123456"
     /OTP[:\s]+(\d{4,8})/i,   // "OTP: 123456"
-    /verification[:\s]+(\d{4,8})/i,  // "verification: 123456"
-    /password[:\s]+(\d{4,8})/i,      // "password: 123456"
   ];
   
   for (const pattern of patterns) {
@@ -222,8 +229,8 @@ export function getTransamericaCredentials(): GmailCredentials {
 // Platform-specific OTP fetchers
 export async function fetchMyWFGOTP(): Promise<OTPResult> {
   const credentials = getMyWFGCredentials();
-  // MyWFG OTP emails typically come from WFG or similar domain
-  return waitForOTP(credentials, 'wfg', 60, 5);
+  // MyWFG OTP emails come from WebHelp@Transamerica.com
+  return waitForOTP(credentials, 'transamerica', 120, 5);
 }
 
 export async function fetchTransamericaOTP(): Promise<OTPResult> {

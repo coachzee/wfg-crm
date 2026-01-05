@@ -371,3 +371,28 @@
 - [x] Calculate Net Licensed dynamically from database (≥$1,000, TA/A only)
 - [x] Add payment date tracking for when agents achieved Net Licensed status
 - [x] Write tests for Net Licensed calculation logic
+
+
+## Agent Data Validation & Update (In Progress)
+- [ ] Extract licensed agents list from Downline Status report (LL Flag = Yes)
+- [ ] Pull contact details from Hierarchy Tool for each agent:
+  - Personal email
+  - Mobile phone
+  - Home address
+- [ ] Update database with correct license status (isLifeLicensed field)
+- [ ] Update database with real contact information (no placeholders)
+- [ ] Verify all agent data is accurate
+
+
+## Agent Data Validation & Contact Extraction (Completed)
+- [x] Extract licensed agents list from Downline Status report (LL Flag = Yes)
+- [x] Pull contact details from Hierarchy Tool for each agent:
+  - [x] Personal email - 31 agents updated
+  - [x] Mobile phone - 31 agents updated
+  - [ ] Home address (pending - need to add address field to schema)
+- [x] Update database with correct license status (isLifeLicensed field)
+- [x] Update database with real contact information (no placeholders)
+- [x] Verify all agent data is accurate
+- [x] Fixed OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
+- [x] Automated MyWFG Hierarchy Tool scraper working
+- [x] All 31 licensed agents have real emails and phone numbers
