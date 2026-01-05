@@ -159,6 +159,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   
   const { data: stats, isLoading, refetch, isRefetching } = trpc.dashboard.stats.useQuery(undefined, {
     staleTime: 30000, // Cache for 30 seconds
@@ -181,6 +182,26 @@ export default function Dashboard() {
     onError: () => {
       setNotificationStatus('error');
       setTimeout(() => setNotificationStatus('idle'), 3000);
+    },
+  });
+
+  // Auto sync status query
+  const { data: autoSyncData, refetch: refetchSyncStatus } = trpc.dashboard.autoSyncStatus.useQuery(undefined, {
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Trigger sync mutation
+  const triggerSync = trpc.dashboard.triggerSync.useMutation({
+    onMutate: () => setSyncStatus('syncing'),
+    onSuccess: (data) => {
+      setSyncStatus('success');
+      refetchSyncStatus();
+      setTimeout(() => setSyncStatus('idle'), 5000);
+    },
+    onError: () => {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 5000);
     },
   });
 
@@ -596,6 +617,97 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Automated Sync Controls */}
+      <Card className="card-hover border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 text-blue-500" />
+                Automated Data Sync
+              </CardTitle>
+              <CardDescription>Sync data from MyWFG and Transamerica automatically</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {autoSyncData?.lastSyncTime && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  Last sync: {formatDistanceToNow(new Date(autoSyncData.lastSyncTime), { addSuffix: true })}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Connection Status */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-500" />
+                Connection Status
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${autoSyncData?.mywfgEmailConfigured && autoSyncData?.mywfgLoginConfigured ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="text-sm">MyWFG</span>
+                  </div>
+                  <Badge variant={autoSyncData?.mywfgEmailConfigured && autoSyncData?.mywfgLoginConfigured ? 'default' : 'destructive'} className="text-xs">
+                    {autoSyncData?.mywfgEmailConfigured && autoSyncData?.mywfgLoginConfigured ? 'Connected' : 'Not Configured'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${autoSyncData?.transamericaEmailConfigured && autoSyncData?.transamericaLoginConfigured ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="text-sm">Transamerica</span>
+                  </div>
+                  <Badge variant={autoSyncData?.transamericaEmailConfigured && autoSyncData?.transamericaLoginConfigured ? 'default' : 'destructive'} className="text-xs">
+                    {autoSyncData?.transamericaEmailConfigured && autoSyncData?.transamericaLoginConfigured ? 'Connected' : 'Not Configured'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            {/* Sync Actions */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Zap className="h-4 w-4 text-blue-500" />
+                Sync Actions
+              </h4>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Trigger a manual sync to pull the latest data from MyWFG and Transamerica. You'll receive email alerts during the process.
+                </p>
+                <Button
+                  variant={syncStatus === 'success' ? 'outline' : 'default'}
+                  size="sm"
+                  onClick={() => triggerSync.mutate()}
+                  disabled={syncStatus === 'syncing'}
+                  className="gap-2 w-full"
+                >
+                  {syncStatus === 'syncing' ? (
+                    <><RefreshCw className="h-4 w-4 animate-spin" /> Syncing Data...</>
+                  ) : syncStatus === 'success' ? (
+                    <><CheckCircle className="h-4 w-4 text-green-600" /> Sync Complete!</>
+                  ) : syncStatus === 'error' ? (
+                    <><AlertTriangle className="h-4 w-4" /> Sync Failed - Try Again</>
+                  ) : (
+                    <><RefreshCw className="h-4 w-4" /> Trigger Manual Sync</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Info Notice */}
+          <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <p className="text-sm text-blue-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span><strong>Note:</strong> Automated sync uses your Gmail to read OTP codes. You'll receive email alerts for each login attempt and OTP fetch.</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pipeline Progress */}
       <Card className="card-hover">

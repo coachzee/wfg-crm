@@ -329,7 +329,7 @@
 - [x] Implement automated login flow for MyWFG with OTP extraction
 - [x] Implement automated login flow for Transamerica with OTP extraction
 - [x] Create sync service with API endpoints
-- [ ] Add sync controls to dashboard UI
+- [x] Add sync controls to dashboard UI
 - [ ] Test automated login system end-to-end
 
 - [x] Send email alert to zaidshopejuwbh@gmail.com when OTP is fetched
