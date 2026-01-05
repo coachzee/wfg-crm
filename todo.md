@@ -474,3 +474,8 @@
 - [x] Update sync service to populate agent addresses
 - [x] Display addresses in agent detail view with MapPin icon
 - [ ] Test address extraction with manual sync (requires running sync with addresses)
+
+
+## Data Cleanup (Completed)
+- [x] Delete test agents (Stage Update deleted)
+- [x] Fix incorrect agent ranks (Armstrong=SMD, Adepitan=MD, Okulaja=MD, 5 SAs, 2 As, 35 TAs)
