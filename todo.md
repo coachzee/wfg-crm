@@ -359,3 +359,15 @@
 
 - [ ] Make login automation smarter with better error handling and efficient OTP retrieval
 - [ ] Exclude Senior Associate (SA) and above from Net Licensed count (only TA and A count)
+
+- [ ] Fix missing Net Licensed agents: Add Francis Ogunlolu ($1,802.15) and Renata Jeroe ($1,245.17)
+
+
+## Dynamic Net Licensed Data Fetching (Completed)
+- [x] Create cashFlowRecords table in database schema for storing YTD cash flow data
+- [x] Add tRPC procedures for cash flow data CRUD operations
+- [x] Update MyWFG sync service to fetch Custom Reports - Personal Cash Flow YTD
+- [x] Remove hardcoded Net Licensed data from db.ts
+- [x] Calculate Net Licensed dynamically from database (≥$1,000, TA/A only)
+- [x] Add payment date tracking for when agents achieved Net Licensed status
+- [x] Write tests for Net Licensed calculation logic

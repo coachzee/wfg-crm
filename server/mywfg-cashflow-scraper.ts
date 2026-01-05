@@ -243,14 +243,14 @@ export function getHardcodedCashFlowData(): CashFlowReportResult {
     // Note: SMD (Senior Marketing Director) and above are excluded from Net Licensed count
     // Only TA (Training Associate) and A (Associate) with $1,000+ qualify as Net Licensed
     { rank: 1, name: 'Zaid Shopeju', code: '73DXR', titleLevel: 'SMD', totalCashFlow: 189931.39, uplineSMD: 'Adewale Adeleke', isNetLicensed: false }, // SMD - excluded
-    { rank: 2, name: 'Augustina Armstrong-Oghanna', code: 'D0T7M', titleLevel: 'SMD', totalCashFlow: 57655.48, uplineSMD: 'Zaid Shopeju', isNetLicensed: false }, // SMD - excluded
-    { rank: 3, name: 'Chinonyerem Nkemere', code: 'E0D89', titleLevel: 'A', totalCashFlow: 15071.31, uplineSMD: 'Augustina Armstrong', isNetLicensed: true }, // A with $1,000+ = Net Licensed
+    { rank: 2, name: 'Augustina Armstrong-Ogbonna', code: 'D0T7M', titleLevel: 'SMD', totalCashFlow: 57655.48, uplineSMD: 'Zaid Shopeju', isNetLicensed: false }, // SMD - excluded
+    { rank: 3, name: 'Chinonyerem Nkemere', code: 'E0D89', titleLevel: 'A', totalCashFlow: 15071.31, uplineSMD: 'Augustina Armstrong-Ogbonna', isNetLicensed: true }, // A with $1,000+ = Net Licensed
     { rank: 4, name: 'Oluwatosin Adetona', code: 'C9U9S', titleLevel: 'A', totalCashFlow: 6488.12, uplineSMD: 'Zaid Shopeju', isNetLicensed: true }, // A with $1,000+ = Net Licensed
     { rank: 5, name: 'Nonso Humphrey', code: 'D6W3S', titleLevel: 'A', totalCashFlow: 4993.62, uplineSMD: 'Zaid Shopeju', isNetLicensed: true }, // A with $1,000+ = Net Licensed
     { rank: 6, name: 'Odion Imasuen', code: 'D3Y16', titleLevel: 'A', totalCashFlow: 3361.35, uplineSMD: 'Zaid Shopeju', isNetLicensed: true }, // A with $1,000+ = Net Licensed
-    { rank: 7, name: 'Agent 7', code: 'XXXXX', titleLevel: 'A', totalCashFlow: 800.00, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
-    { rank: 8, name: 'Agent 8', code: 'XXXXX', titleLevel: 'A', totalCashFlow: 500.00, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
-    { rank: 9, name: 'Agent 9', code: 'XXXXX', titleLevel: 'A', totalCashFlow: 300.00, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
+    { rank: 7, name: 'Francis Ogunlolu', code: '49AEA', titleLevel: 'A', totalCashFlow: 1802.15, uplineSMD: 'Zaid Shopeju', isNetLicensed: true }, // A with $1,000+ = Net Licensed
+    { rank: 8, name: 'Renata Jeroe', code: 'D3Z8L', titleLevel: 'A', totalCashFlow: 1245.17, uplineSMD: 'Augustina Armstrong-Ogbonna', isNetLicensed: true }, // A with $1,000+ = Net Licensed
+    { rank: 9, name: 'Mercy Okonofua', code: 'C9F3Z', titleLevel: 'A', totalCashFlow: 755.76, uplineSMD: 'Zaid Shopeju', isNetLicensed: false }, // Under $1,000
     { rank: 10, name: 'Ese Moses', code: 'D3U63', titleLevel: 'TA', totalCashFlow: 155.96, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
     { rank: 11, name: 'Clive Henry', code: '42EBU', titleLevel: 'A', totalCashFlow: 9.84, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
     { rank: 12, name: 'Folashade Olaiya', code: '16CKG', titleLevel: 'A', totalCashFlow: 0.64, uplineSMD: 'Zaid Shopeju', isNetLicensed: false },
