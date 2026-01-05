@@ -321,3 +321,19 @@
 - [x] Implement Manus notifications for chargebacks (to project owner)
 - [x] Create notification trigger when new chargeback alerts are detected
 - [x] Test notification system - Send Alert Notification button added to dashboard
+
+
+## Automated OTP Login System
+- [x] Store email credentials securely (MyWFG: zaidshopejuwbh@gmail.com, Transamerica: zaidshopejuwfg@gmail.com)
+- [x] Create Gmail IMAP service to read OTP emails automatically
+- [x] Implement automated login flow for MyWFG with OTP extraction
+- [x] Implement automated login flow for Transamerica with OTP extraction
+- [x] Create sync service with API endpoints
+- [ ] Add sync controls to dashboard UI
+- [ ] Test automated login system end-to-end
+
+- [x] Send email alert to zaidshopejuwbh@gmail.com when OTP is fetched
+- [x] Send email alert when login credentials are used
+- [x] Send email alert when automated sync is triggered
+
+- [ ] Fix branding in email alerts: change "WFG CRM" to "Wealth Builders Haven CRM"

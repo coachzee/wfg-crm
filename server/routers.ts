@@ -337,6 +337,50 @@ export const appRouter = router({
       const success = await sendChargebackNotification(alerts);
       return { success, alertCount: alerts.reversedPremiumPayments.length + alerts.eftRemovals.length };
     }),
+    
+    // Trigger automated sync for all platforms
+    triggerSync: protectedProcedure.mutation(async () => {
+      const { runFullSync, getLastSyncTime } = await import("./sync-service");
+      const results = await runFullSync();
+      return {
+        results,
+        lastSyncTime: getLastSyncTime(),
+      };
+    }),
+    
+    // Get automated sync status
+    autoSyncStatus: protectedProcedure.query(async () => {
+      const { getLastSyncTime } = await import("./sync-service");
+      const { verifyGmailCredentials, getMyWFGCredentials, getTransamericaCredentials } = await import("./gmail-otp");
+      
+      // Check if Gmail credentials are configured
+      const mywfgCreds = getMyWFGCredentials();
+      const transamericaCreds = getTransamericaCredentials();
+      
+      return {
+        lastSyncTime: getLastSyncTime(),
+        mywfgEmailConfigured: !!mywfgCreds.email && !!mywfgCreds.appPassword,
+        transamericaEmailConfigured: !!transamericaCreds.email && !!transamericaCreds.appPassword,
+        mywfgLoginConfigured: !!process.env.MYWFG_USERNAME && !!process.env.MYWFG_PASSWORD,
+        transamericaLoginConfigured: !!process.env.TRANSAMERICA_USERNAME && !!process.env.TRANSAMERICA_PASSWORD,
+      };
+    }),
+    
+    // Test Gmail OTP connection
+    testGmailConnection: protectedProcedure.input(
+      z.object({
+        platform: z.enum(['mywfg', 'transamerica']),
+      })
+    ).mutation(async ({ input }) => {
+      const { verifyGmailCredentials, getMyWFGCredentials, getTransamericaCredentials } = await import("./gmail-otp");
+      
+      const credentials = input.platform === 'mywfg' 
+        ? getMyWFGCredentials() 
+        : getTransamericaCredentials();
+      
+      const result = await verifyGmailCredentials(credentials);
+      return result;
+    }),
   }),
 
   // MyWFG Integration
