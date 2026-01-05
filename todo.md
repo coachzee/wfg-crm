@@ -465,3 +465,12 @@
 - [x] Henry, Olaiya = A (Associate)
 - [x] Removed test agents created by vitest tests
 - [x] Updated title level mapping: 01=TA, 10=A, 15=SA, 17=MD, 20=SMD
+
+
+## Agent Home Address Extraction (Completed)
+- [x] Investigate MyWFG Hierarchy Tool page structure for address data
+- [x] Add homeAddress field to agents table schema
+- [x] Implement address extraction in MyWFG scraper (fetchAgentAddress, fetchAgentAddresses functions)
+- [x] Update sync service to populate agent addresses
+- [x] Display addresses in agent detail view with MapPin icon
+- [ ] Test address extraction with manual sync (requires running sync with addresses)

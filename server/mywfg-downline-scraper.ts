@@ -64,6 +64,7 @@ export interface DownlineAgent {
   mdApprovalDate: string | null;
   terminateDate: string | null;
   country: string;
+  homeAddress: string | null; // From Hierarchy Tool
   // Computed fields
   wfgRank: string;
   isLifeLicensed: boolean;
@@ -385,6 +386,7 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
   // Map title levels to WFG ranks using the collected agents from all title levels
   const agents: DownlineAgent[] = allAgents.map((agent: any) => ({
     ...agent,
+    homeAddress: null, // Will be populated by fetchAgentAddresses
     wfgRank: TITLE_LEVEL_TO_RANK[agent.titleLevel] || 'TRAINING_ASSOCIATE',
     isLifeLicensed: agent.llFlag === true || agent.llFlag === 'Yes' || agent.llFlag === 'yes',
   }));
@@ -474,16 +476,20 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any): Promis
         .limit(1);
       
       if (existing.length > 0) {
-        // Update existing agent
+        // Update existing agent (only update homeAddress if we have a new one)
+        const updateData: any = {
+          firstName: agent.firstName,
+          lastName: agent.lastName,
+          currentRank: agent.wfgRank,
+          isLifeLicensed: agent.isLifeLicensed,
+          licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
+          currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
+        };
+        if (agent.homeAddress) {
+          updateData.homeAddress = agent.homeAddress;
+        }
         await db.update(schema.agents)
-          .set({
-            firstName: agent.firstName,
-            lastName: agent.lastName,
-            currentRank: agent.wfgRank,
-            isLifeLicensed: agent.isLifeLicensed,
-            licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
-            currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
-          })
+          .set(updateData)
           .where(schema.eq(schema.agents.agentCode, agent.agentCode));
         updated++;
       } else {
@@ -494,6 +500,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any): Promis
           agentCode: agent.agentCode,
           currentRank: agent.wfgRank,
           isLifeLicensed: agent.isLifeLicensed,
+          homeAddress: agent.homeAddress,
           licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
           currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
         });
@@ -511,6 +518,175 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any): Promis
       success: false,
       added: 0,
       updated: 0,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+
+/**
+ * Fetch home address for a single agent from MyWFG Hierarchy Tool
+ */
+export async function fetchAgentAddress(page: Page, agentCode: string): Promise<string | null> {
+  try {
+    console.log(`[Hierarchy Tool] Fetching address for agent ${agentCode}...`);
+    
+    const url = `https://www.mywfg.com/Wfg.HierarchyTool/HierarchyDetails/LoadHierarchyToolMain?agentcodenumber=${agentCode}`;
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    
+    // Wait for the page to load
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Click on Associate Details tab if available
+    try {
+      const associateDetailsLink = await page.$('a[id="AgentDetailsLink"], a:has-text("Associate Details")');
+      if (associateDetailsLink) {
+        await associateDetailsLink.click();
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    } catch (e) {
+      // Tab might already be open or not exist
+    }
+    
+    // Extract home address
+    const address = await page.evaluate(() => {
+      // Look for Home Address label and its value
+      const labels = Array.from(document.querySelectorAll('label, div, span, td'));
+      let foundHomeAddress = false;
+      
+      for (const el of labels) {
+        const text = el.textContent?.trim() || '';
+        
+        if (text.includes('Home Address') || text === 'Home Address:') {
+          foundHomeAddress = true;
+          continue;
+        }
+        
+        // If we found the label, the next element with substantial text is the address
+        if (foundHomeAddress && text.length > 10 && !text.includes('Address')) {
+          // Clean up the address - remove extra whitespace
+          return text.replace(/\s+/g, ' ').trim();
+        }
+      }
+      
+      // Alternative: Look for address pattern in the page
+      const pageText = document.body.innerText;
+      const addressMatch = pageText.match(/Home Address[:\s]*([^\n]+(?:\n[^\n]+)?)/i);
+      if (addressMatch) {
+        return addressMatch[1].replace(/\s+/g, ' ').trim();
+      }
+      
+      return null;
+    });
+    
+    if (address) {
+      console.log(`[Hierarchy Tool] Found address for ${agentCode}: ${address.substring(0, 50)}...`);
+    } else {
+      console.log(`[Hierarchy Tool] No address found for ${agentCode}`);
+    }
+    
+    return address;
+  } catch (error) {
+    console.error(`[Hierarchy Tool] Error fetching address for ${agentCode}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch addresses for multiple agents (with rate limiting)
+ */
+export async function fetchAgentAddresses(
+  page: Page, 
+  agentCodes: string[],
+  onProgress?: (current: number, total: number, agentCode: string) => void
+): Promise<Map<string, string>> {
+  const addresses = new Map<string, string>();
+  
+  console.log(`[Hierarchy Tool] Fetching addresses for ${agentCodes.length} agents...`);
+  
+  for (let i = 0; i < agentCodes.length; i++) {
+    const agentCode = agentCodes[i];
+    
+    if (onProgress) {
+      onProgress(i + 1, agentCodes.length, agentCode);
+    }
+    
+    const address = await fetchAgentAddress(page, agentCode);
+    if (address) {
+      addresses.set(agentCode, address);
+    }
+    
+    // Rate limiting: wait 1.5 seconds between requests to avoid overwhelming the server
+    if (i < agentCodes.length - 1) {
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  
+  console.log(`[Hierarchy Tool] Successfully fetched ${addresses.size} addresses out of ${agentCodes.length} agents`);
+  
+  return addresses;
+}
+
+/**
+ * Fetch downline status with addresses from Hierarchy Tool
+ */
+export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR'): Promise<DownlineStatusResult> {
+  let browser: Browser | null = null;
+  
+  try {
+    console.log('[Downline Scraper] Starting downline status extraction with addresses...');
+    
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Login to MyWFG
+    const loggedIn = await loginToMyWFG(page);
+    if (!loggedIn) {
+      throw new Error('Failed to login to MyWFG');
+    }
+    
+    // Extract downline status
+    const result = await extractDownlineStatus(page, agentId);
+    
+    if (result.success && result.agents.length > 0) {
+      // Fetch addresses for all agents
+      console.log('[Downline Scraper] Fetching addresses from Hierarchy Tool...');
+      const agentCodes = result.agents.map(a => a.agentCode);
+      const addresses = await fetchAgentAddresses(page, agentCodes);
+      
+      // Update agents with addresses
+      for (const agent of result.agents) {
+        const address = addresses.get(agent.agentCode);
+        if (address) {
+          agent.homeAddress = address;
+        }
+      }
+      
+      console.log(`[Downline Scraper] Updated ${addresses.size} agents with addresses`);
+    }
+    
+    await browser.close();
+    browser = null;
+    
+    return result;
+    
+  } catch (error) {
+    console.error('[Downline Scraper] Error:', error);
+    
+    if (browser) {
+      await browser.close();
+    }
+    
+    return {
+      success: false,
+      agents: [],
+      runDate: '',
+      reportInfo: '',
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }

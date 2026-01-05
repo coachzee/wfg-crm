@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Mail, Phone, Code, Calendar, TrendingUp, Users, FileText, Award, Target, ChevronRight, Shield, Star } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Code, Calendar, TrendingUp, Users, FileText, Award, Target, ChevronRight, Shield, Star, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 
@@ -389,6 +389,16 @@ export default function AgentDetail() {
                 <p className="text-sm">{format(new Date(agent.createdAt), "MMM d, yyyy")}</p>
               </div>
             </div>
+
+            {agent.homeAddress && (
+              <div className="flex items-start gap-3 md:col-span-2">
+                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Home Address</p>
+                  <p className="text-sm text-muted-foreground">{agent.homeAddress}</p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

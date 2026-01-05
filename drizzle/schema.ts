@@ -52,6 +52,7 @@ export const agents = mysqlTable("agents", {
   lastName: varchar("lastName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 20 }),
+  homeAddress: text("homeAddress"), // Home address from MyWFG Hierarchy Tool
   recruiterUserId: int("recruiterUserId").references(() => users.id),
   
   // Upline/Downline hierarchy

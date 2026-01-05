@@ -2,7 +2,7 @@ import { loginToMyWFGWithCache } from './auto-login-mywfg';
 import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts } from './auto-login-transamerica';
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
-import { fetchDownlineStatus, syncAgentsFromDownlineStatus } from './mywfg-downline-scraper';
+import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses } from './mywfg-downline-scraper';
 import { getDb } from './db';
 import * as schema from '../drizzle/schema';
 
