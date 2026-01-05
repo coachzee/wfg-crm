@@ -108,6 +108,10 @@ export const agents = mysqlTable("agents", {
   directSmdLegs: int("directSmdLegs").default(0),
   
   notes: text("notes"),
+  
+  // Team type - Base Shop (direct reports) vs Super Team (entire downline)
+  teamType: mysqlEnum("teamType", ["BASE_SHOP", "SUPER_TEAM"]).default("BASE_SHOP").notNull(),
+  
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -232,6 +232,7 @@ export default function Agents() {
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [rankFilter, setRankFilter] = useState<string>("all");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
+  const [teamFilter, setTeamFilter] = useState<"BASE_SHOP" | "SUPER_TEAM">("BASE_SHOP");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -270,6 +271,7 @@ export default function Agents() {
         agent.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStage = stageFilter === "all" || agent.currentStage === stageFilter;
       const matchesRank = rankFilter === "all" || agent.currentRank === rankFilter;
+      const matchesTeam = agent.teamType === teamFilter;
       
       // Quick filter logic
       let matchesQuickFilter = true;
@@ -283,22 +285,23 @@ export default function Agents() {
         matchesQuickFilter = new Date(agent.createdAt) >= startOfMonth;
       }
       
-      return matchesSearch && matchesStage && matchesRank && matchesQuickFilter;
+      return matchesSearch && matchesStage && matchesRank && matchesQuickFilter && matchesTeam;
     });
-  }, [agents, searchQuery, stageFilter, rankFilter, quickFilter]);
+  }, [agents, searchQuery, stageFilter, rankFilter, quickFilter, teamFilter]);
 
-  // Memoized stats
+  // Memoized stats (based on current team filter)
   const stats = useMemo(() => {
     if (!agents) return { total: 0, netLicensed: 0, inTraining: 0, newThisMonth: 0 };
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const teamAgents = agents.filter((a: any) => a.teamType === teamFilter);
     return {
-      total: agents.length,
-      netLicensed: agents.filter((a: any) => a.currentStage === "NET_LICENSED").length,
-      inTraining: agents.filter((a: any) => ["EXAM_PREP", "PRODUCT_TRAINING"].includes(a.currentStage)).length,
-      newThisMonth: agents.filter((a: any) => new Date(a.createdAt) >= startOfMonth).length,
+      total: teamAgents.length,
+      netLicensed: teamAgents.filter((a: any) => a.currentStage === "NET_LICENSED").length,
+      inTraining: teamAgents.filter((a: any) => ["EXAM_PREP", "PRODUCT_TRAINING"].includes(a.currentStage)).length,
+      newThisMonth: teamAgents.filter((a: any) => new Date(a.createdAt) >= startOfMonth).length,
     };
-  }, [agents]);
+  }, [agents, teamFilter]);
 
   // Callbacks
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -418,6 +421,36 @@ export default function Agents() {
             </form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Team Tabs */}
+      <div className="flex gap-2 border-b border-border pb-2">
+        <button
+          onClick={() => setTeamFilter("BASE_SHOP")}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            teamFilter === "BASE_SHOP"
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "bg-muted hover:bg-muted/80 text-muted-foreground"
+          }`}
+        >
+          Base Shop
+          <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-white/20">
+            {agents?.filter((a: any) => a.teamType === "BASE_SHOP").length || 0}
+          </span>
+        </button>
+        <button
+          onClick={() => setTeamFilter("SUPER_TEAM")}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            teamFilter === "SUPER_TEAM"
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "bg-muted hover:bg-muted/80 text-muted-foreground"
+          }`}
+        >
+          Super Team
+          <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-white/20">
+            {agents?.filter((a: any) => a.teamType === "SUPER_TEAM").length || 0}
+          </span>
+        </button>
       </div>
 
       {/* Stats */}

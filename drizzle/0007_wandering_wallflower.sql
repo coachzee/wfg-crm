@@ -1,0 +1,1 @@
+ALTER TABLE `agents` ADD `teamType` enum('BASE_SHOP','SUPER_TEAM') DEFAULT 'BASE_SHOP' NOT NULL;

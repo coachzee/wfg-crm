@@ -34,12 +34,13 @@ function getGmailCredentials() {
 }
 
 // MyWFG Title Level to WFG Rank mapping
+// Correct mapping: 01=TA, 10=A, 15=SA, 17=MD, 20=SMD
 const TITLE_LEVEL_TO_RANK: Record<string, string> = {
   '01': 'TRAINING_ASSOCIATE',
   '1': 'TRAINING_ASSOCIATE',
-  '10': 'MARKETING_DIRECTOR',
-  '15': 'SENIOR_MARKETING_DIRECTOR',
-  '17': 'SENIOR_MARKETING_DIRECTOR',
+  '10': 'ASSOCIATE',
+  '15': 'SENIOR_ASSOCIATE',
+  '17': 'MARKETING_DIRECTOR',
   '20': 'SENIOR_MARKETING_DIRECTOR',
   '65': 'EXECUTIVE_MARKETING_DIRECTOR',
   '75': 'CEO_MARKETING_DIRECTOR',
@@ -275,17 +276,50 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
 
 /**
  * Navigate to Downline Status report and extract data for ALL title levels
+ * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
  */
-async function extractDownlineStatus(page: Page, agentId: string): Promise<DownlineStatusResult> {
+async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult> {
   const reportUrl = `https://www.mywfg.com/reports-downline-status?AgentID=${agentId}`;
   
-  console.log(`[Downline Scraper] Navigating to Downline Status report...`);
+  console.log(`[Downline Scraper] Navigating to Downline Status report (${teamType})...`);
   await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 60000 });
   
   await new Promise(r => setTimeout(r, 3000));
   
   // Wait for report to load
   await page.waitForSelector('#ReportViewer1_ctl09', { timeout: 30000 }).catch(() => {});
+  
+  // Set DOWNLINE TYPE filter (Base Shop or Super Team)
+  const downlineTypeSet = await page.evaluate((targetType) => {
+    const selects = Array.from(document.querySelectorAll('select'));
+    
+    for (const select of selects) {
+      const options = Array.from(select.options);
+      const optionTexts = options.map(o => o.text.trim().toLowerCase());
+      
+      // Check if this looks like a downline type dropdown
+      const hasDownlineOptions = optionTexts.some(t => t.includes('base shop') || t.includes('super team'));
+      
+      if (hasDownlineOptions) {
+        // Find and select the target type
+        const targetText = targetType === 'SUPER_TEAM' ? 'super team' : 'base shop';
+        const targetOption = options.find(o => o.text.trim().toLowerCase().includes(targetText));
+        if (targetOption) {
+          select.value = targetOption.value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          return { success: true, selectedType: targetType };
+        }
+      }
+    }
+    return { success: false };
+  }, teamType);
+  
+  if (downlineTypeSet.success) {
+    console.log(`[Downline Scraper] Set downline type to ${teamType}`);
+    await new Promise(r => setTimeout(r, 1000));
+  } else {
+    console.log(`[Downline Scraper] Could not find downline type dropdown, using default`);
+  }
   
   // Title levels to iterate through: TA, A, SA, MD, SMD
   const titleLevels = ['TA', 'A', 'SA', 'MD', 'SMD'];
@@ -403,8 +437,9 @@ async function extractDownlineStatus(page: Page, agentId: string): Promise<Downl
 
 /**
  * Main function to fetch downline status from MyWFG
+ * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
  */
-export async function fetchDownlineStatus(agentId: string = '73DXR'): Promise<DownlineStatusResult> {
+export async function fetchDownlineStatus(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult> {
   let browser: Browser | null = null;
   
   try {
@@ -425,7 +460,7 @@ export async function fetchDownlineStatus(agentId: string = '73DXR'): Promise<Do
     }
     
     // Extract downline status
-    const result = await extractDownlineStatus(page, agentId);
+    const result = await extractDownlineStatus(page, agentId, teamType);
     
     await browser.close();
     browser = null;
@@ -451,15 +486,16 @@ export async function fetchDownlineStatus(agentId: string = '73DXR'): Promise<Do
 
 /**
  * Sync agents from MyWFG Downline Status to database
+ * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
  */
-export async function syncAgentsFromDownlineStatus(db: any, schema: any): Promise<{
+export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<{
   success: boolean;
   added: number;
   updated: number;
   error?: string;
 }> {
   try {
-    const result = await fetchDownlineStatus();
+    const result = await fetchDownlineStatus('73DXR', teamType);
     
     if (!result.success) {
       return { success: false, added: 0, updated: 0, error: result.error };
@@ -503,6 +539,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any): Promis
           homeAddress: agent.homeAddress,
           licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
           currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
+          teamType: teamType,
         });
         added++;
       }
@@ -629,8 +666,9 @@ export async function fetchAgentAddresses(
 
 /**
  * Fetch downline status with addresses from Hierarchy Tool
+ * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
  */
-export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR'): Promise<DownlineStatusResult> {
+export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult> {
   let browser: Browser | null = null;
   
   try {
@@ -651,7 +689,7 @@ export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR'
     }
     
     // Extract downline status
-    const result = await extractDownlineStatus(page, agentId);
+    const result = await extractDownlineStatus(page, agentId, teamType);
     
     if (result.success && result.agents.length > 0) {
       // Fetch addresses for all agents

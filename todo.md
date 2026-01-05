@@ -491,3 +491,10 @@
 - [x] Filter agents by selected rank (SMD, MD, SA, A, TA, etc.)
 - [x] Fixed test cleanup to prevent test agents from persisting in database
 - [x] Updated agents.test.ts with afterEach cleanup hook
+
+
+## Super Team Import & Tabs (In Progress)
+- [ ] Add teamType field to agents schema (BASE_SHOP, SUPER_TEAM)
+- [ ] Fetch and import all Super Team agents from MyWFG
+- [ ] Create tabbed interface on Agents page (Super Team / Base Shop tabs)
+- [ ] Update agent counts to reflect both teams
