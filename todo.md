@@ -396,3 +396,22 @@
 - [x] Fixed OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
 - [x] Automated MyWFG Hierarchy Tool scraper working
 - [x] All 31 licensed agents have real emails and phone numbers
+
+
+## Agent Data Cleanup & Rank Correction (Completed)
+- [x] Remove test agents ("GetById Test", "Test Agent", "Rank Test", "Stage Update") from database - 32 removed
+- [x] Correct agent ranks based on MyWFG Downline Status report:
+  - Augustina -> SMD (Level 20)
+  - Ayodele Okulaja -> SMD (Level 17)
+  - Oluwaseyi Adepitan -> SMD (Level 17)
+- [x] Verify all agent data is accurate after cleanup - 45 real agents remaining
+
+## Automated MyWFG Agent Data Fetching (Completed)
+- [x] Create automated scraper to fetch agent data from MyWFG Downline Status report
+- [x] Extract agent names, codes, title levels, and license status directly from MyWFG
+- [x] Map MyWFG title levels to WFG ranks (01=TA, 10=MD, 17=SMD, 20=SMD, etc.)
+- [x] Auto-update agent ranks when syncing from MyWFG
+- [x] Remove dependency on CSV files for agent data
+- [x] Automated OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
+- [x] Full sync script: mywfg-full-sync.mjs
+- [x] Contact info sync for all 45 agents (emails and phone numbers)

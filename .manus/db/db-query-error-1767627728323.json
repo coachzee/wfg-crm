@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, first_name, last_name, agent_code, current_rank FROM agents ORDER BY first_name, last_name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, first_name, last_name, agent_code, current_rank FROM agents ORDER BY first_name, last_name;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'first_name' in 'field list'"
+  ]
+}
