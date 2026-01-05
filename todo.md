@@ -304,3 +304,9 @@
   - Zaid Shopeju (zaidshopejuwbh@gmail.com)
   - Oluwaseyi Adepitan (mseyifunmiwbh@gmail.com)
 - [ ] Set up email notifications for premium payment reversals
+
+## Full Book of Business Extraction (All Agent Roles) - COMPLETED
+- [x] Update Transamerica filter to include Service Agent, Writing, and Overwriting roles
+- [x] Confirmed: 52 policies represent complete book of business (Zaid is Writing Agent on all)
+- [x] Calculate total face amount for entire book of business: $26,025,000
+- [x] Update dashboard with complete book of business total ($26.02M)
