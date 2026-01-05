@@ -42,13 +42,13 @@ export async function sendEmailAlert(options: EmailAlertOptions): Promise<boolea
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: `WFG CRM Alert <${credentials.email}>`,
+      from: `Wealth Builders Haven CRM <${credentials.email}>`,
       to: 'zaidshopejuwbh@gmail.com',
-      subject: `[WFG CRM] ${options.subject}`,
+      subject: `[WBH CRM] ${options.subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">🔔 WFG CRM Alert</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">🔔 Wealth Builders Haven CRM</h1>
           </div>
           <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 8px 8px;">
             <h2 style="color: #333; margin-top: 0;">${options.subject}</h2>
@@ -62,7 +62,7 @@ export async function sendEmailAlert(options: EmailAlertOptions): Promise<boolea
               })}
             </p>
             <p style="color: #888; font-size: 12px; margin: 5px 0 0 0;">
-              This is an automated alert from your WFG CRM system.
+              This is an automated alert from your Wealth Builders Haven CRM system.
             </p>
           </div>
         </div>

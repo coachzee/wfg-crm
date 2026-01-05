@@ -4,9 +4,9 @@ import { sendEmailAlert } from './email-alert';
 describe('Email Alert Service', () => {
   it('should send a test email alert', async () => {
     const result = await sendEmailAlert({
-      subject: 'Test Alert from WFG CRM',
+      subject: 'Test Alert from Wealth Builders Haven CRM',
       message: `
-        <p>This is a test email alert from your WFG CRM system.</p>
+        <p>This is a test email alert from your Wealth Builders Haven CRM system.</p>
         <p>If you received this email, the email alert system is working correctly!</p>
         <p><strong>Features enabled:</strong></p>
         <ul>

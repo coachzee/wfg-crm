@@ -336,4 +336,4 @@
 - [x] Send email alert when login credentials are used
 - [x] Send email alert when automated sync is triggered
 
-- [ ] Fix branding in email alerts: change "WFG CRM" to "Wealth Builders Haven CRM"
+- [x] Fix branding in email alerts: change "WFG CRM" to "Wealth Builders Haven CRM"
