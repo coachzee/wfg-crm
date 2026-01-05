@@ -264,3 +264,12 @@
 - [x] Update Active Agents to show MyWFG Active Associates (91) instead of local DB count
 - [x] Add new Licensed Agents card showing Life Licensed Associates (27)
 - [x] Update getDashboardMetrics to include activeAssociates and licensedAgents from MyWFG data
+
+
+## Import Real Agents from MyWFG (Completed)
+- [x] Navigate to MyWFG Downline Status report
+- [x] Extract 45 Base Shop team members (names, agent codes, ranks)
+- [x] Clear test agent data from CRM database
+- [x] Import real agents into CRM with correct WFG ranks
+- [x] Verify agents display correctly in Agents page
+- Note: 45 agents imported from Base Shop; remaining 46 are in Super Team hierarchy (under other SMDs)
