@@ -473,7 +473,8 @@
 - [x] Implement address extraction in MyWFG scraper (fetchAgentAddress, fetchAgentAddresses functions)
 - [x] Update sync service to populate agent addresses
 - [x] Display addresses in agent detail view with MapPin icon
-- [ ] Test address extraction with manual sync (requires running sync with addresses)
+- [x] Test address extraction with manual sync (requires running sync with addresses)
+- [x] Complete address extraction for all 45 Base Shop agents (100% coverage)
 
 
 ## Data Cleanup (Completed)
