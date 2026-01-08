@@ -189,6 +189,10 @@ export default function Production() {
   const { data: topProducers, isLoading: topLoading } = trpc.inforcePolicies.getTopProducers.useQuery(10, {
     staleTime: 30000,
   });
+  
+  const { data: topAgents, isLoading: agentsLoading } = trpc.inforcePolicies.getTopAgentsByCommission.useQuery(10, {
+    staleTime: 30000,
+  });
 
   // Memoized calculations
   const { statusBreakdown, sortedPolicies, stats } = useMemo(() => {
@@ -306,6 +310,7 @@ export default function Production() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="policies">All Policies ({stats.totalPolicies})</TabsTrigger>
           <TabsTrigger value="top-clients">Top Clients</TabsTrigger>
+          <TabsTrigger value="top-agents">Top Agents</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
@@ -533,6 +538,62 @@ export default function Production() {
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Users className="h-12 w-12 mb-2 opacity-20" />
                   <p>No client data available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="top-agents" className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Top Agents by Commission</CardTitle>
+                    <p className="text-xs text-muted-foreground">Agents ranked by total commission earned</p>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {topAgents && topAgents.length > 0 ? (
+                <div className="space-y-1">
+                  {topAgents.map((agent: any, index: number) => (
+                    <div key={agent.name} className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                        index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30' :
+                        index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-lg shadow-slate-400/30' :
+                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-lg shadow-amber-700/30' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {index < 3 ? <Crown className="h-5 w-5" /> : index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{agent.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {agent.agentCode && <span className="font-mono bg-muted px-1.5 py-0.5 rounded">{agent.agentCode}</span>}
+                          <span>{agent.policyCount} {agent.policyCount === 1 ? 'policy' : 'policies'}</span>
+                          <span>•</span>
+                          <span>Avg Level: {Math.round(agent.avgCommissionLevel)}%</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg text-emerald-600">${agent.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Premium: ${agent.totalPremium.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Users className="h-12 w-12 mb-2 opacity-20" />
+                  <p>No agent data available</p>
                 </div>
               )}
             </CardContent>

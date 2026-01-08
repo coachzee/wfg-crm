@@ -596,3 +596,13 @@
 - [x] Update Total Commission calculation in Production Dashboard
 - [x] Write unit tests for commission calculation (11 tests passing)
 - [x] Test policy update with extracted Transamerica data (policy 6602238677)
+
+
+## Top Agents by Commission Feature (Completed - Jan 8, 2026)
+- [x] Add Top Agents section to Production Dashboard showing agents ranked by commission
+- [x] Calculate total commission per writing agent from inforce policies (includes split agents)
+- [x] Display agent name, agent code, total commission, policy count, and avg commission level
+- [x] Add visual ranking indicators (gold, silver, bronze badges with gradients)
+- [x] Add getTopAgentsByCommission function in db.ts
+- [x] Add router endpoint for getTopAgentsByCommission
+- [x] Write unit tests for getTopAgentsByCommission (3 tests passing)

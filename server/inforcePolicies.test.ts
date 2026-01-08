@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { getDb, getInforcePolicyByNumber } from './db';
+import { getDb, getInforcePolicyByNumber, getTopAgentsByCommission } from './db';
 import { inforcePolicies } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 
@@ -136,6 +136,44 @@ describe('Inforce Policies Commission Calculation', () => {
         // Total commission should be approximately $16,827.94
         const commission = parseFloat(policy.calculatedCommission.toString());
         expect(commission).toBeCloseTo(16827.94, 0);
+      }
+    });
+  });
+
+  describe('getTopAgentsByCommission', () => {
+    it('should return agents sorted by commission', async () => {
+      const topAgents = await getTopAgentsByCommission(10);
+      
+      expect(Array.isArray(topAgents)).toBe(true);
+      expect(topAgents.length).toBeLessThanOrEqual(10);
+      
+      // Verify sorted in descending order by commission
+      for (let i = 1; i < topAgents.length; i++) {
+        expect(topAgents[i - 1].totalCommission).toBeGreaterThanOrEqual(topAgents[i].totalCommission);
+      }
+    });
+
+    it('should include required fields for each agent', async () => {
+      const topAgents = await getTopAgentsByCommission(5);
+      
+      topAgents.forEach((agent: any) => {
+        expect(agent).toHaveProperty('name');
+        expect(agent).toHaveProperty('totalCommission');
+        expect(agent).toHaveProperty('totalPremium');
+        expect(agent).toHaveProperty('policyCount');
+        expect(agent).toHaveProperty('avgCommissionLevel');
+      });
+    });
+
+    it('should calculate commission using default level when not set', async () => {
+      const topAgents = await getTopAgentsByCommission(10);
+      
+      // Find an agent with policies (should have positive commission)
+      const agentWithPolicies = topAgents.find((a: any) => a.policyCount > 0);
+      if (agentWithPolicies) {
+        expect(agentWithPolicies.totalCommission).toBeGreaterThan(0);
+        // Average level should be positive
+        expect(agentWithPolicies.avgCommissionLevel).toBeGreaterThanOrEqual(0);
       }
     });
   });

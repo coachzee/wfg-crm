@@ -49,6 +49,7 @@ import {
   getProductionSummary,
   getTopProducersByPremium,
   getProductionByWritingAgent,
+  getTopAgentsByCommission,
   type Agent,
   type Client,
   type WorkflowTask,
@@ -722,6 +723,13 @@ export const appRouter = router({
     getByWritingAgent: protectedProcedure
       .query(async () => {
         return getProductionByWritingAgent();
+      }),
+    
+    // Get top agents by commission
+    getTopAgentsByCommission: protectedProcedure
+      .input(z.number().optional())
+      .query(async ({ input }) => {
+        return getTopAgentsByCommission(input || 10);
       }),
     
     // Update policy with Target Premium and Split Agent data

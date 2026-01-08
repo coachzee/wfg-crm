@@ -1080,4 +1080,86 @@ export async function getProductionByWritingAgent() {
     .sort((a, b) => b.totalPremium - a.totalPremium);
 }
 
+// Get top agents by commission (includes split agent commissions)
+export async function getTopAgentsByCommission(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
+  
+  // Group by agent (both primary and secondary) and sum their commissions
+  const agentMap = new Map<string, { 
+    name: string; 
+    agentCode: string;
+    totalCommission: number; 
+    totalPremium: number;
+    policyCount: number;
+    avgCommissionLevel: number;
+    commissionLevelSum: number;
+  }>();
+  
+  for (const policy of policies) {
+    const targetPremium = parseFloat(policy.targetPremium?.toString() || policy.premium?.toString() || '0');
+    const multiplier = 1.25;
+    
+    // Primary agent
+    const primaryName = policy.writingAgentName || 'Unknown';
+    const primaryCode = policy.writingAgentCode || '';
+    const primarySplit = Number(policy.writingAgentSplit) || 100;
+    const primaryLevel = Number(policy.writingAgentLevel) || 55;
+    const primaryCommission = targetPremium * multiplier * (primaryLevel / 100) * (primarySplit / 100);
+    
+    const existingPrimary = agentMap.get(primaryName) || { 
+      name: primaryName, 
+      agentCode: primaryCode,
+      totalCommission: 0, 
+      totalPremium: 0, 
+      policyCount: 0,
+      avgCommissionLevel: 0,
+      commissionLevelSum: 0
+    };
+    existingPrimary.totalCommission += primaryCommission;
+    existingPrimary.totalPremium += targetPremium * (primarySplit / 100);
+    existingPrimary.policyCount += 1;
+    existingPrimary.commissionLevelSum += Number(primaryLevel);
+    existingPrimary.avgCommissionLevel = existingPrimary.commissionLevelSum / existingPrimary.policyCount;
+    if (!existingPrimary.agentCode && primaryCode) {
+      existingPrimary.agentCode = primaryCode;
+    }
+    agentMap.set(primaryName, existingPrimary);
+    
+    // Secondary agent (if split)
+    if (policy.secondAgentName && policy.secondAgentSplit && policy.secondAgentSplit > 0) {
+      const secondaryName = policy.secondAgentName;
+      const secondaryCode = policy.secondAgentCode || '';
+      const secondarySplit = Number(policy.secondAgentSplit);
+      const secondaryLevel = Number(policy.secondAgentLevel) || 25;
+      const secondaryCommission = targetPremium * multiplier * (secondaryLevel / 100) * (secondarySplit / 100);
+      
+      const existingSecondary = agentMap.get(secondaryName) || { 
+        name: secondaryName, 
+        agentCode: secondaryCode,
+        totalCommission: 0, 
+        totalPremium: 0, 
+        policyCount: 0,
+        avgCommissionLevel: 0,
+        commissionLevelSum: 0
+      };
+      existingSecondary.totalCommission += secondaryCommission;
+      existingSecondary.totalPremium += targetPremium * (secondarySplit / 100);
+      existingSecondary.policyCount += 1;
+      existingSecondary.commissionLevelSum += Number(secondaryLevel);
+      existingSecondary.avgCommissionLevel = existingSecondary.commissionLevelSum / existingSecondary.policyCount;
+      if (!existingSecondary.agentCode && secondaryCode) {
+        existingSecondary.agentCode = secondaryCode;
+      }
+      agentMap.set(secondaryName, existingSecondary);
+    }
+  }
+  
+  return Array.from(agentMap.values())
+    .sort((a, b) => b.totalCommission - a.totalCommission)
+    .slice(0, limit);
+}
+
 export type { InforcePolicy };
