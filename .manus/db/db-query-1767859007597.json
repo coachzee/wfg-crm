@@ -1,0 +1,346 @@
+{
+  "query": "SELECT policyNumber, ownerName, premium, faceAmount, status FROM inforcePolicies WHERE ownerName LIKE '%OLUWATOSIN%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT policyNumber, ownerName, premium, faceAmount, status FROM inforcePolicies WHERE ownerName LIKE '%OLUWATOSIN%';",
+  "rows": [
+    {
+      "policyNumber": "6602263847",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602262959",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602261934",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602260740",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602259629",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602258579",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602257546",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602256496",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602255446",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602254396",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602253346",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602251149",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602250099",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602249049",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602247999",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602246949",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602245899",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602244849",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602243799",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602242749",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602241699",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602239599",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602238549",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602237499",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602236449",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602235399",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602234349",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602233299",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602231199",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602230149",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602229099",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602228049",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602226999",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602225949",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602224899",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602222799",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602221749",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602220699",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602218599",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602217549",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602216499",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602214399",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602213349",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602212299",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602210199",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602209149",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "10000.00",
+      "faceAmount": "1000000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602030925",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "8180.00",
+      "faceAmount": "200000.00",
+      "status": "Active"
+    },
+    {
+      "policyNumber": "6602029636",
+      "ownerName": "OLUWATOSIN ADETONA",
+      "premium": "8180.00",
+      "faceAmount": "200000.00",
+      "status": "Active"
+    }
+  ],
+  "messages": [],
+  "stdout": "policyNumber\townerName\tpremium\tfaceAmount\tstatus\n6602263847\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602262959\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602261934\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602260740\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602259629\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602258579\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602257546\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602256496\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602255446\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602254396\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602253346\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602251149\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602250099\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602249049\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602247999\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602246949\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602245899\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602244849\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602243799\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602242749\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602241699\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602239599\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602238549\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602237499\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602236449\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602235399\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602234349\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602233299\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602231199\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602230149\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602229099\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602228049\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602226999\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602225949\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602224899\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602222799\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602221749\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602220699\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602218599\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602217549\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602216499\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602214399\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602213349\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602212299\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602210199\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602209149\tOLUWATOSIN ADETONA\t10000.00\t1000000.00\tActive\n6602030925\tOLUWATOSIN ADETONA\t8180.00\t200000.00\tActive\n6602029636\tOLUWATOSIN ADETONA\t8180.00\t200000.00\tActive\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

@@ -550,6 +550,7 @@
 
 ## Bug Fixes
 - [x] Fix Production page error: Cannot read properties of undefined (reading 'replace') at line 246
+- [x] Fix inforce policies data - removed duplicate/fabricated entries, re-imported from Transamerica CSV (97 unique policies)
 
 
 ## Transamerica Production Data Import (Completed)
