@@ -99,6 +99,9 @@ export const agents = mysqlTable("agents", {
   firstProductionAmount: decimal("firstProductionAmount", { precision: 10, scale: 2 }),
   productionMilestoneDate: date("productionMilestoneDate"),
   
+  // Commission level (percentage for commission calculations)
+  commissionLevel: int("commissionLevel").default(25), // 25%, 35%, 45%, 55%, 65%, etc.
+  
   // Cumulative metrics (updated from mywfg sync)
   totalBaseShopPoints: decimal("totalBaseShopPoints", { precision: 15, scale: 2 }).default("0"),
   totalPersonalPoints: decimal("totalPersonalPoints", { precision: 15, scale: 2 }).default("0"),
@@ -574,7 +577,8 @@ export const inforcePolicies = mysqlTable("inforcePolicies", {
   
   // Financial info
   faceAmount: decimal("faceAmount", { precision: 15, scale: 2 }),
-  premium: decimal("premium", { precision: 12, scale: 2 }), // Target premium
+  premium: decimal("premium", { precision: 12, scale: 2 }), // Premium from list view (may be annual or modal)
+  targetPremium: decimal("targetPremium", { precision: 12, scale: 2 }), // Actual Target Premium from Policy Guidelines
   premiumFrequency: varchar("premiumFrequency", { length: 20 }), // Monthly, Annual, Flexible
   annualPremium: decimal("annualPremium", { precision: 12, scale: 2 }), // Calculated annual premium
   
@@ -583,14 +587,23 @@ export const inforcePolicies = mysqlTable("inforcePolicies", {
   transamericaMultiplier: decimal("transamericaMultiplier", { precision: 5, scale: 2 }).default("1.25"), // 125%
   calculatedCommission: decimal("calculatedCommission", { precision: 12, scale: 2 }),
   
-  // Agent info (writing agent)
+  // Agent info (primary writing agent)
   writingAgentName: varchar("writingAgentName", { length: 255 }),
   writingAgentCode: varchar("writingAgentCode", { length: 50 }),
   writingAgentSplit: int("writingAgentSplit").default(100), // Percentage split (0-100)
   writingAgentLevel: decimal("writingAgentLevel", { precision: 5, scale: 2 }).default("0.55"), // Agent commission level (e.g., 0.55 = 55%)
+  writingAgentCommission: decimal("writingAgentCommission", { precision: 12, scale: 2 }), // Calculated commission for this agent
   
   // Link to our agents table
   agentId: int("agentId").references(() => agents.id),
+  
+  // Secondary writing agent (for split policies)
+  secondAgentName: varchar("secondAgentName", { length: 255 }),
+  secondAgentCode: varchar("secondAgentCode", { length: 50 }),
+  secondAgentSplit: int("secondAgentSplit").default(0), // Percentage split (0-100)
+  secondAgentLevel: decimal("secondAgentLevel", { precision: 5, scale: 2 }).default("0.25"), // Agent commission level
+  secondAgentCommission: decimal("secondAgentCommission", { precision: 12, scale: 2 }), // Calculated commission for this agent
+  secondAgentId: int("secondAgentId").references(() => agents.id),
   
   // Dates
   premiumDueDate: varchar("premiumDueDate", { length: 20 }),

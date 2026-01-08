@@ -1,0 +1,1 @@
+ALTER TABLE `inforcePolicies` ADD `targetPremium` decimal(12,2);

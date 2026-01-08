@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Trophy, TrendingUp, Target, Award, Users, DollarSign, ArrowUpRight, Crown, FileText, RefreshCw, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import PolicyDetailDialog from "@/components/PolicyDetailDialog";
+import { Pencil } from "lucide-react";
 
 // Color palette
 const CHART_COLORS = {
@@ -68,18 +70,24 @@ const StatsCard = memo(function StatsCard({
 const PolicyRow = memo(function PolicyRow({ 
   policy, 
   rank,
-  showRank = false
+  showRank = false,
+  onClick
 }: { 
   policy: any; 
   rank?: number;
   showRank?: boolean;
+  onClick?: () => void;
 }) {
-  const premium = parseFloat(policy.premium || '0');
+  const premium = parseFloat(policy.targetPremium || policy.premium || '0');
   const commission = parseFloat(policy.calculatedCommission || '0');
   const faceAmount = parseFloat(policy.faceAmount || '0');
+  const hasTargetPremium = policy.targetPremium && parseFloat(policy.targetPremium) > 0;
   
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50">
+    <div 
+      className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50 cursor-pointer group"
+      onClick={onClick}
+    >
       {showRank && rank && (
         <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
           rank === 1 ? 'bg-amber-500 text-white' :
@@ -96,12 +104,23 @@ const PolicyRow = memo(function PolicyRow({
           <span className="font-mono">{policy.policyNumber}</span>
           <span>•</span>
           <span>{policy.productType}</span>
+          {policy.writingAgentSplit && policy.writingAgentSplit < 100 && (
+            <>
+              <span>•</span>
+              <span className="text-amber-600">Split: {policy.writingAgentSplit}%/{100 - policy.writingAgentSplit}%</span>
+            </>
+          )}
         </div>
       </div>
       <div className="text-right">
-        <p className="font-bold text-emerald-600">${premium.toLocaleString()}</p>
+        <div className="flex items-center gap-1 justify-end">
+          <p className="font-bold text-emerald-600">${premium.toLocaleString()}</p>
+          {hasTargetPremium && (
+            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200">Target</Badge>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
-          Face: ${(faceAmount / 1000).toFixed(0)}K
+          Commission: ${commission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </p>
       </div>
       <Badge 
@@ -110,6 +129,7 @@ const PolicyRow = memo(function PolicyRow({
       >
         {policy.status}
       </Badge>
+      <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 });
@@ -149,6 +169,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function Production() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handlePolicyClick = useCallback((policy: any) => {
+    setSelectedPolicy(policy);
+    setDialogOpen(true);
+  }, []);
   
   // Fetch inforce policies data
   const { data: inforcePolicies, isLoading: policiesLoading, refetch: refetchPolicies } = trpc.inforcePolicies.list.useQuery(undefined, {
@@ -186,10 +213,10 @@ export default function Production() {
     });
     const breakdown = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
 
-    // Sort policies by premium
+    // Sort policies by target premium (or premium if no target)
     const sorted = [...inforcePolicies].sort((a: any, b: any) => {
-      const premiumA = parseFloat(a.premium || '0');
-      const premiumB = parseFloat(b.premium || '0');
+      const premiumA = parseFloat(a.targetPremium || a.premium || '0');
+      const premiumB = parseFloat(b.targetPremium || b.premium || '0');
       return premiumB - premiumA;
     });
 
@@ -407,6 +434,7 @@ export default function Production() {
                       policy={policy} 
                       rank={index + 1}
                       showRank={true}
+                      onClick={() => handlePolicyClick(policy)}
                     />
                   ))}
                 </div>
@@ -440,7 +468,11 @@ export default function Production() {
               {sortedPolicies.length > 0 ? (
                 <div className="space-y-1 max-h-[600px] overflow-y-auto">
                   {sortedPolicies.map((policy: any) => (
-                    <PolicyRow key={policy.id} policy={policy} />
+                    <PolicyRow 
+                      key={policy.id} 
+                      policy={policy} 
+                      onClick={() => handlePolicyClick(policy)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -507,6 +539,14 @@ export default function Production() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Policy Detail Dialog */}
+      <PolicyDetailDialog
+        policy={selectedPolicy}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onUpdate={() => refetchPolicies()}
+      />
     </div>
   );
 }

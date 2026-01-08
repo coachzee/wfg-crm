@@ -561,3 +561,38 @@
 - [x] Add automated sync service for 3:30 PM and 6:30 PM EST daily
 - [x] Write vitest tests for inforce policies feature (13 tests passing)
 - [x] Commission calculation: Premium × 125% × Agent Level (55% default)
+
+- [ ] Fix premium values - use Planned Modal Premium instead of annual premium for commission calculations
+
+
+## Fix Production Dashboard Premium Data (In Progress)
+- [ ] Extract Target Premium from Payment > Policy Guidelines for each policy
+- [ ] Extract split agent information from General > Agent Information
+- [ ] Link production data to chargeback dashboard for context
+- [ ] Recalculate commissions using correct Target Premium values
+- [ ] Update sync service to extract Target Premium from policy detail pages
+
+
+## Agent Level & Production Commission Fix
+- [ ] Add agentLevel field to agents table (percentage: 25%, 35%, 55%, 65%, etc.)
+- [ ] Create UI to manage agent commission levels
+- [ ] Extract Target Premium from Payment > Policy Guidelines for all 97 policies
+- [ ] Extract Split Agent data from General > Agent Information for all policies
+- [ ] Update inforcePolicies table with targetPremium and splitAgents fields
+- [ ] Update Production dashboard to use correct commission formula: Target Premium × 125% × Agent Level × Split %
+- [ ] Link policies to agents for per-agent production tracking
+
+
+## Target Premium & Split Agent Commission Calculation (Completed - Jan 8, 2026)
+- [x] Add targetPremium field to inforcePolicies table
+- [x] Add split agent fields (secondAgentName, secondAgentCode, secondAgentSplit, secondAgentLevel)
+- [x] Add writingAgentLevel field for primary agent commission level
+- [x] Create updatePolicy mutation for editing Target Premium and Split Agent data
+- [x] Build PolicyDetailDialog component for editing policy details
+- [x] Implement commission calculation formula: Target Premium × 125% × Agent Level × Split %
+- [x] Add live Commission Preview in edit dialog
+- [x] Display split indicator (e.g., "Split: 40%/60%") in policy list
+- [x] Display "Target" badge for policies with custom Target Premium
+- [x] Update Total Commission calculation in Production Dashboard
+- [x] Write unit tests for commission calculation (11 tests passing)
+- [x] Test policy update with extracted Transamerica data (policy 6602238677)

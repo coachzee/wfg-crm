@@ -1,0 +1,1 @@
+ALTER TABLE `agents` ADD `commissionLevel` int DEFAULT 25;
