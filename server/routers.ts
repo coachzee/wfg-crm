@@ -256,7 +256,7 @@ export const appRouter = router({
       }),
   }),
 
-  // MyWBH Credentials
+  // MyWFG Credentials
   credentials: router({
     get: protectedProcedure.query(async ({ ctx }) => {
       const cred = await getCredentialsByUserId(ctx.user.id);
@@ -412,7 +412,7 @@ export const appRouter = router({
     }),
   }),
 
-  // MyWBH Integration
+  // MyWFG Integration
   mywfg: router({
     getLatestSync: protectedProcedure.query(async () => {
       return getLatestSyncLog();
@@ -438,10 +438,10 @@ export const appRouter = router({
         );
         return {
           success: result.success,
-          agentsExtracted: result.agentsExtracted ?? 0,
-          productionRecordsExtracted: result.productionRecordsExtracted ?? 0,
+          agentsExtracted: result.agentsExtracted,
+          productionRecordsExtracted: result.productionRecordsExtracted,
           error: result.error,
-          requiresValidation: result.requiresValidation ?? false,
+          requiresValidation: result.requiresValidation,
         };
       } catch (error) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Test sync failed" });
@@ -497,7 +497,7 @@ export const appRouter = router({
       });
     }),
     
-    // Bulk upsert cash flow records (from MyWBH sync)
+    // Bulk upsert cash flow records (from MyWFG sync)
     bulkUpsert: protectedProcedure.input(
       z.object({
         records: z.array(z.object({

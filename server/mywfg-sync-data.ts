@@ -1,8 +1,8 @@
 /**
- * MyWBH Sync Data Storage
+ * MyWFG Sync Data Storage
  * 
- * This module stores the extracted MyWBH data that can be updated periodically.
- * Since MyWBH requires OTP authentication, fully automated sync isn't possible.
+ * This module stores the extracted MyWFG data that can be updated periodically.
+ * Since MyWFG requires OTP authentication, fully automated sync isn't possible.
  * 
  * Data is stored in the database and can be refreshed via:
  * 1. Manual sync through the UI (user provides OTP)
@@ -13,7 +13,7 @@ import { getDb } from "./db";
 import { mywfgSyncLogs } from "../drizzle/schema";
 import { desc, sql } from "drizzle-orm";
 
-// Cached MyWBH data structure
+// Cached MyWFG data structure
 export interface MyWFGCachedData {
   // Cash Flow Data
   personalCashFlow: number;
@@ -57,7 +57,7 @@ export interface MyWFGCachedData {
   agentName: string;
 }
 
-// Default data from MyWBH exploration (Jan 4, 2026)
+// Default data from MyWFG exploration (Jan 4, 2026)
 // This serves as the baseline until user performs a manual sync
 const DEFAULT_MYWFG_DATA: MyWFGCachedData = {
   // Cash Flow Data (from Total Cash Flow report - Super Team)
@@ -108,14 +108,14 @@ const DEFAULT_MYWFG_DATA: MyWFGCachedData = {
 let cachedData: MyWFGCachedData = { ...DEFAULT_MYWFG_DATA };
 
 /**
- * Get the current cached MyWBH data
+ * Get the current cached MyWFG data
  */
 export function getCachedMyWFGData(): MyWFGCachedData {
   return { ...cachedData };
 }
 
 /**
- * Update the cached MyWBH data
+ * Update the cached MyWFG data
  */
 export function updateCachedMyWFGData(newData: Partial<MyWFGCachedData>): void {
   cachedData = {
@@ -192,7 +192,7 @@ export async function logSyncAttempt(
 ): Promise<void> {
   const db = await getDb();
   if (!db) {
-    console.warn("[MyWBH Sync] Cannot log sync: database not available");
+    console.warn("[MyWFG Sync] Cannot log sync: database not available");
     return;
   }
   
@@ -204,7 +204,7 @@ export async function logSyncAttempt(
       errorMessage,
     });
   } catch (error) {
-    console.error("[MyWBH Sync] Failed to log sync attempt:", error);
+    console.error("[MyWFG Sync] Failed to log sync attempt:", error);
   }
 }
 
@@ -223,14 +223,14 @@ export async function getRecentSyncLogs(limit: number = 10) {
       .limit(limit);
     return logs;
   } catch (error) {
-    console.error("[MyWBH Sync] Failed to get sync logs:", error);
+    console.error("[MyWFG Sync] Failed to get sync logs:", error);
     return [];
   }
 }
 
 /**
  * Payment cycle information
- * WBH pays 9 times per month on Tuesdays and Fridays
+ * WFG pays 9 times per month on Tuesdays and Fridays
  */
 export function getPaymentCycleInfo(): {
   nextPaymentDate: Date;

@@ -18,14 +18,12 @@ import TeamMembers from "./pages/TeamMembers";
 import Team from "./pages/Team";
 import SyncHistory from "./pages/SyncHistory";
 import PendingPolicies from "./pages/PendingPolicies";
-import Login from "./pages/Login";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/login"} component={Login} />
       <Route path={"/dashboard"}>
         {() => (
           <DashboardLayout>

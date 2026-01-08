@@ -71,7 +71,7 @@ export async function fetchRecentOTP(
         const sinceDateStr = sinceDate.toISOString().split('T')[0];
         
         // Build search criteria
-        // For MyWBH OTP, search for WebHelp@Transamerica.com with "Security Validation Code" subject
+        // For MyWFG OTP, search for WebHelp@Transamerica.com with "Security Validation Code" subject
         const searchCriteria: any[] = [
           ['SINCE', sinceDateStr],
           'UNSEEN'
@@ -195,7 +195,7 @@ export async function waitForOTP(
       // Send email alert about OTP fetch
       try {
         const { alertOTPFetched } = await import('./email-alert');
-        const platform = senderPattern.toLowerCase().includes('wfg') ? 'MyWBH' : 'Transamerica';
+        const platform = senderPattern.toLowerCase().includes('wfg') ? 'MyWFG' : 'Transamerica';
         await alertOTPFetched(platform, result.otp);
       } catch (e) {
         console.error('[Gmail] Failed to send OTP alert email:', e);
@@ -229,7 +229,7 @@ export function getTransamericaCredentials(): GmailCredentials {
 // Platform-specific OTP fetchers
 export async function fetchMyWFGOTP(): Promise<OTPResult> {
   const credentials = getMyWFGCredentials();
-  // MyWBH OTP emails come from WebHelp@Transamerica.com
+  // MyWFG OTP emails come from WebHelp@Transamerica.com
   return waitForOTP(credentials, 'transamerica', 120, 5);
 }
 

@@ -8,8 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Trophy, TrendingUp, Target, Award, Users, DollarSign, ArrowUpRight, Crown, FileText, RefreshCw, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import PolicyDetailDialog from "@/components/PolicyDetailDialog";
-import BulkPolicyUpdateDialog from "@/components/BulkPolicyUpdateDialog";
-import { Pencil, Settings2, Upload } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 // Color palette
 const CHART_COLORS = {
@@ -178,9 +177,6 @@ export default function Production() {
     setDialogOpen(true);
   }, []);
   
-  // Bulk update dialog state
-  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
-  
   // Fetch inforce policies data
   const { data: inforcePolicies, isLoading: policiesLoading, refetch: refetchPolicies } = trpc.inforcePolicies.list.useQuery(undefined, {
     staleTime: 30000,
@@ -270,16 +266,10 @@ export default function Production() {
           <h1 className="text-2xl font-bold tracking-tight">Production Dashboard</h1>
           <p className="text-muted-foreground">Transamerica Life Access - Inforce Policies</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setBulkUpdateOpen(true)}>
-            <Settings2 className="h-4 w-4 mr-2" />
-            Bulk Update
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Data
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Key Metrics */}
@@ -616,14 +606,6 @@ export default function Production() {
         policy={selectedPolicy}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onUpdate={() => refetchPolicies()}
-      />
-      
-      {/* Bulk Policy Update Dialog */}
-      <BulkPolicyUpdateDialog
-        policies={sortedPolicies || []}
-        open={bulkUpdateOpen}
-        onOpenChange={setBulkUpdateOpen}
         onUpdate={() => refetchPolicies()}
       />
     </div>

@@ -159,7 +159,7 @@ describe("agents router", () => {
   });
 });
 
-describe("WBH rank system", () => {
+describe("WFG rank system", () => {
   it("validates rank hierarchy order", () => {
     const rankOrder = [
       "TRAINING_ASSOCIATE",

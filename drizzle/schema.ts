@@ -12,12 +12,10 @@ export const users = mysqlTable("users", {
    * Use this for relations between tables.
    */
   id: int("id").autoincrement().primaryKey(),
-  /** Unique user identifier. For self-hosted auth, this is generated locally. */
+  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }).unique(),
-  /** Bcrypt hashed password for local authentication */
-  passwordHash: varchar("passwordHash", { length: 255 }),
+  email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -28,13 +26,13 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// WBH Rank Levels - Official hierarchy from Training Associate to Executive Chairman
+// WFG Rank Levels - Official hierarchy from Training Associate to Executive Chairman
 export const WFG_RANKS = [
-  "TRAINING_ASSOCIATE",  // TA - MyWBH Level 01
-  "ASSOCIATE",           // A - MyWBH Level 10
-  "SENIOR_ASSOCIATE",    // SA - MyWBH Level 15
-  "MARKETING_DIRECTOR",  // MD - MyWBH Level 17
-  "SENIOR_MARKETING_DIRECTOR", // SMD - MyWBH Level 20
+  "TRAINING_ASSOCIATE",  // TA - MyWFG Level 01
+  "ASSOCIATE",           // A - MyWFG Level 10
+  "SENIOR_ASSOCIATE",    // SA - MyWFG Level 15
+  "MARKETING_DIRECTOR",  // MD - MyWFG Level 17
+  "SENIOR_MARKETING_DIRECTOR", // SMD - MyWFG Level 20
   "EXECUTIVE_MARKETING_DIRECTOR", // EMD - Level 65
   "CEO_MARKETING_DIRECTOR", // CEO MD - Level 75
   "EXECUTIVE_VICE_CHAIRMAN", // EVC - Level 87
@@ -54,13 +52,13 @@ export const agents = mysqlTable("agents", {
   lastName: varchar("lastName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 20 }),
-  homeAddress: text("homeAddress"), // Home address from MyWBH Hierarchy Tool
+  homeAddress: text("homeAddress"), // Home address from MyWFG Hierarchy Tool
   recruiterUserId: int("recruiterUserId").references(() => users.id),
   
   // Upline/Downline hierarchy
   uplineAgentId: int("uplineAgentId"), // Self-referencing for hierarchy
   
-  // WBH Rank tracking
+  // WFG Rank tracking
   currentRank: mysqlEnum("currentRank", [
     "TRAINING_ASSOCIATE",
     "ASSOCIATE",
@@ -286,7 +284,7 @@ export const advancementProgress = mysqlTable("advancementProgress", {
 export type AdvancementProgress = typeof advancementProgress.$inferSelect;
 export type InsertAdvancementProgress = typeof advancementProgress.$inferInsert;
 
-// MyWBH Integration Logs - Track automated data syncs from mywfg.com
+// MyWFG Integration Logs - Track automated data syncs from mywfg.com
 export const mywfgSyncLogs = mysqlTable("mywfgSyncLogs", {
   id: int("id").autoincrement().primaryKey(),
   syncDate: timestamp("syncDate").defaultNow().notNull(),
@@ -441,7 +439,7 @@ export const agentCashFlowHistoryRelations = relations(agentCashFlowHistory, ({ 
 }));
 
 
-// Sync Logs - Track MyWBH sync history for monitoring
+// Sync Logs - Track MyWFG sync history for monitoring
 export const syncLogs = mysqlTable("syncLogs", {
   id: int("id").autoincrement().primaryKey(),
   syncType: mysqlEnum("syncType", [

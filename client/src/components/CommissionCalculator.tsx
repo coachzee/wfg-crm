@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, TrendingUp, Users, Calculator, Info } from "lucide-react";
 
-// WBH Commission Structure based on official compensation grid
+// WFG Commission Structure based on official compensation grid
 const COMMISSION_STRUCTURE = {
   // Base shop payout percentage
   baseShopPayout: 65,
@@ -267,7 +267,7 @@ export default function CommissionCalculator({
         <TabsContent value="structure" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>WBH Compensation Structure</CardTitle>
+              <CardTitle>WFG Compensation Structure</CardTitle>
               <CardDescription>
                 Official commission rates and bonus pools
               </CardDescription>

@@ -89,18 +89,18 @@ export default function Settings() {
 
       <Tabs defaultValue="mywfg" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="mywfg">MyWBH Integration</TabsTrigger>
+          <TabsTrigger value="mywfg">MyWFG Integration</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
 
-        {/* MyWBH Integration Tab */}
+        {/* MyWFG Integration Tab */}
         <TabsContent value="mywfg" className="space-y-6">
           {/* Credentials Card */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lock className="h-5 w-5" />
-                MyWBH Credentials
+                MyWFG Credentials
               </CardTitle>
               <CardDescription>
                 Securely store your mywfg.com login credentials for automated data syncing.
@@ -130,7 +130,7 @@ export default function Settings() {
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Update MyWBH Credentials</DialogTitle>
+                        <DialogTitle>Update MyWFG Credentials</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleSaveCredentials} className="space-y-4">
                         <Alert className="bg-blue-50 border-blue-200">
@@ -141,25 +141,25 @@ export default function Settings() {
                         </Alert>
 
                         <div className="space-y-2">
-                          <Label htmlFor="username">MyWBH Username</Label>
+                          <Label htmlFor="username">MyWFG Username</Label>
                           <Input
                             id="username"
                             type="text"
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            placeholder="Your MyWBH username"
+                            placeholder="Your MyWFG username"
                             required
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="password">MyWBH Password</Label>
+                          <Label htmlFor="password">MyWFG Password</Label>
                           <Input
                             id="password"
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Your MyWBH password"
+                            placeholder="Your MyWFG password"
                             required
                           />
                         </div>
@@ -187,17 +187,17 @@ export default function Settings() {
                   <Alert className="bg-yellow-50 border-yellow-200">
                     <AlertCircle className="h-4 w-4 text-yellow-600" />
                     <AlertDescription className="text-yellow-800">
-                      No credentials stored yet. Add your MyWBH login to enable automated syncing.
+                      No credentials stored yet. Add your MyWFG login to enable automated syncing.
                     </AlertDescription>
                   </Alert>
 
                   <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
-                      <Button>Add MyWBH Credentials</Button>
+                      <Button>Add MyWFG Credentials</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Add MyWBH Credentials</DialogTitle>
+                        <DialogTitle>Add MyWFG Credentials</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleSaveCredentials} className="space-y-4">
                         <Alert className="bg-blue-50 border-blue-200">
@@ -208,25 +208,25 @@ export default function Settings() {
                         </Alert>
 
                         <div className="space-y-2">
-                          <Label htmlFor="username">MyWBH Username</Label>
+                          <Label htmlFor="username">MyWFG Username</Label>
                           <Input
                             id="username"
                             type="text"
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            placeholder="Your MyWBH username"
+                            placeholder="Your MyWFG username"
                             required
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="password">MyWBH Password</Label>
+                          <Label htmlFor="password">MyWFG Password</Label>
                           <Input
                             id="password"
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            placeholder="Your MyWBH password"
+                            placeholder="Your MyWFG password"
                             required
                           />
                         </div>
@@ -260,7 +260,7 @@ export default function Settings() {
                 <RefreshCw className="h-5 w-5" />
                 Sync Status
               </CardTitle>
-              <CardDescription>Monitor and control MyWBH data synchronization.</CardDescription>
+              <CardDescription>Monitor and control MyWFG data synchronization.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {syncLoading ? (

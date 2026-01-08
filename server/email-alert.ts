@@ -82,7 +82,7 @@ export async function sendEmailAlert(options: EmailAlertOptions): Promise<boolea
 }
 
 // Alert types for specific events
-export async function alertOTPFetched(platform: 'MyWBH' | 'Transamerica', otp: string): Promise<boolean> {
+export async function alertOTPFetched(platform: 'MyWFG' | 'Transamerica', otp: string): Promise<boolean> {
   return sendEmailAlert({
     subject: `OTP Fetched for ${platform}`,
     message: `
@@ -94,7 +94,7 @@ export async function alertOTPFetched(platform: 'MyWBH' | 'Transamerica', otp: s
   });
 }
 
-export async function alertCredentialsUsed(platform: 'MyWFG' | 'MyWBH' | 'Transamerica'): Promise<boolean> {
+export async function alertCredentialsUsed(platform: 'MyWFG' | 'Transamerica'): Promise<boolean> {
   return sendEmailAlert({
     subject: `Login Credentials Used for ${platform}`,
     message: `

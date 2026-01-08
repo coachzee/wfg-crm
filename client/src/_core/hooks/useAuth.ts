@@ -43,7 +43,7 @@ export function useAuth(options?: UseAuthOptions) {
 
   const state = useMemo(() => {
     localStorage.setItem(
-      "wbh-crm-user-info",
+      "manus-runtime-user-info",
       JSON.stringify(meQuery.data)
     );
     return {

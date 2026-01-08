@@ -1,4 +1,4 @@
-# WBH CRM System Architecture
+# WFG CRM System Architecture
 
 **Version:** 1.0  
 **Last Updated:** January 8, 2026  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Wealth Builders Haven CRM (WBH CRM) is a comprehensive customer relationship management system designed specifically for World Financial Group (WFG) insurance agents. The system integrates with external portals (MyWFG.com and Transamerica Life Access) to automatically sync agent data, track production metrics, manage pending policies, and provide actionable insights through a modern dashboard interface.
+The Wealth Builders Haven CRM (WFG CRM) is a comprehensive customer relationship management system designed specifically for World Financial Group (WFG) insurance agents. The system integrates with external portals (MyWFG.com and Transamerica Life Access) to automatically sync agent data, track production metrics, manage pending policies, and provide actionable insights through a modern dashboard interface.
 
 ---
 
@@ -42,7 +42,7 @@ The Wealth Builders Haven CRM (WBH CRM) is a comprehensive customer relationship
 │  │                          │                                          │    │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │    │
 │  │  │                    Service Layer                              │   │    │
-│  │  │  • MyWBH Sync Service    • Transamerica Sync Service         │   │    │
+│  │  │  • MyWFG Sync Service    • Transamerica Sync Service         │   │    │
 │  │  │  • Gmail OTP Service     • Notification Service               │   │    │
 │  │  │  • Email Alert Service   • Chargeback Notification           │   │    │
 │  │  └──────────────────────────────────────────────────────────────┘   │    │
@@ -96,7 +96,7 @@ User → Login Page → Manus OAuth → Callback → JWT Cookie → Authenticate
 
 The system uses Manus OAuth for authentication. When a user logs in, they are redirected to the Manus OAuth portal, which returns an authorization code. The server exchanges this code for user information and creates a JWT session cookie.
 
-### 2. MyWBH Data Sync Flow
+### 2. MyWFG Data Sync Flow
 
 ```
 Scheduled Trigger (3:30 PM / 6:30 PM EST)
@@ -180,7 +180,7 @@ Log Sync Results
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `users` | System users with OAuth | id, openId, name, email, role |
-| `agents` | WBH team members | id, agentCode, firstName, lastName, rank, stage |
+| `agents` | WFG team members | id, agentCode, firstName, lastName, rank, stage |
 | `clients` | Policy holders | id, firstName, lastName, email, phone, agentId |
 | `workflowTasks` | Follow-ups and reminders | id, title, dueDate, status, agentId, clientId |
 | `productionRecords` | Agent production tracking | id, agentId, amount, productType, submittedDate |
@@ -212,9 +212,9 @@ pendingPolicies (1) ────── (N) pendingRequirements
 | `server/routers.ts` | Main tRPC router with all API procedures |
 | `server/db.ts` | Database helper functions and queries |
 | `server/gmail-otp.ts` | Gmail IMAP service for OTP extraction |
-| `server/auto-login-mywfg.ts` | MyWBH portal automated login |
+| `server/auto-login-mywfg.ts` | MyWFG portal automated login |
 | `server/auto-login-transamerica.ts` | Transamerica portal automated login |
-| `server/mywfg-service-v3.ts` | MyWBH data extraction service |
+| `server/mywfg-service-v3.ts` | MyWFG data extraction service |
 | `server/mywfg-downline-scraper.ts` | Downline status report scraper |
 | `server/mywfg-cashflow-scraper.ts` | Cash flow report scraper |
 | `server/transamerica-sync.ts` | Transamerica pending policies sync |
@@ -242,11 +242,11 @@ The system runs automated sync jobs at specific times:
 
 | Job | Schedule (EST) | Purpose |
 |-----|----------------|---------|
-| MyWBH Sync | 3:30 PM, 6:30 PM | Sync agent data, cash flow, production |
+| MyWFG Sync | 3:30 PM, 6:30 PM | Sync agent data, cash flow, production |
 | Transamerica Sync | 3:30 PM, 6:30 PM | Sync pending policies and requirements |
 
 These jobs are configured in:
-- `server/mywfg-sync-job.ts` - MyWBH scheduling
+- `server/mywfg-sync-job.ts` - MyWFG scheduling
 - `server/transamerica-sync.ts` - Transamerica scheduling (scheduleTransamericaSync function)
 
 ---
@@ -257,7 +257,7 @@ These jobs are configured in:
 
 All sensitive credentials are stored in environment variables, never in code:
 
-- `MYWFG_USERNAME`, `MYWFG_PASSWORD` - MyWBH portal credentials
+- `MYWFG_USERNAME`, `MYWFG_PASSWORD` - MyWFG portal credentials
 - `TRANSAMERICA_USERNAME`, `TRANSAMERICA_PASSWORD` - Transamerica credentials
 - `TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY`, `TRANSAMERICA_SECURITY_Q_PET_NAME` - Security question answers
 - `MYWFG_EMAIL`, `MYWFG_APP_PASSWORD` - Gmail credentials for OTP

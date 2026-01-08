@@ -99,13 +99,6 @@
       "when": 1767864146297,
       "tag": "0013_jittery_cardiac",
       "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "5",
-      "when": 1767875020578,
-      "tag": "0014_tense_captain_flint",
-      "breakpoints": true
     }
   ]
 }
