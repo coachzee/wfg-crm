@@ -499,3 +499,29 @@
 - [ ] Fetch and import all Super Team agents from MyWFG
 - [ ] Create tabbed interface on Agents page (Super Team / Base Shop tabs)
 - [ ] Update agent counts to reflect both teams
+
+
+## Transamerica Pending Policies Dashboard (New)
+- [ ] Explore Transamerica Life Access portal structure
+- [ ] Navigate to "My Book" > "Pending" > "View My Book"
+- [ ] Extract pending policy data with requirements
+- [ ] Create database schema for pending policies
+- [ ] Implement tRPC procedures for pending policy data
+- [ ] Build Production page dashboard with three categories:
+  - [ ] Pending with Producer
+  - [ ] Pending with Transamerica
+  - [ ] Completed
+- [ ] Display policy details including pending requirements
+- [ ] Add automated sync for pending policy data
+
+
+## Transamerica Pending Policies Dashboard (Completed)
+- [x] Extract pending policy data from Transamerica Life Access
+- [x] Add pendingPolicies and pendingRequirements tables to database schema
+- [x] Create tRPC procedures for pending policies CRUD
+- [x] Build Pending Policies page with requirements dashboard
+- [x] Display requirements by category (Pending with Producer, Pending with Transamerica, Completed)
+- [x] Create automated sync script for Transamerica pending policies
+- [x] Set up scheduled sync at 3:30 PM EST and 6:30 PM EST daily
+- [x] Add sync status indicator to Pending Policies page
+- [x] Write vitest tests for pending policies feature

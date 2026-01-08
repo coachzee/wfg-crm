@@ -445,6 +445,7 @@ export const syncLogs = mysqlTable("syncLogs", {
     "CONTACT_INFO",
     "CASH_FLOW",
     "PRODUCTION",
+    "TRANSAMERICA_PENDING",
   ]).notNull(),
   scheduledTime: varchar("scheduledTime", { length: 20 }), // "3:30 PM" or "6:30 PM"
   status: mysqlEnum("status", ["PENDING", "RUNNING", "SUCCESS", "FAILED", "PARTIAL"]).default("PENDING").notNull(),
@@ -471,3 +472,88 @@ export const syncLogs = mysqlTable("syncLogs", {
 
 export type SyncLog = typeof syncLogs.$inferSelect;
 export type InsertSyncLog = typeof syncLogs.$inferInsert;
+
+
+// Transamerica Pending Policies - Track pending policy requirements from Transamerica Life Access
+export const pendingPolicies = mysqlTable("pendingPolicies", {
+  id: int("id").autoincrement().primaryKey(),
+  policyNumber: varchar("policyNumber", { length: 50 }).notNull().unique(),
+  ownerName: varchar("ownerName", { length: 255 }).notNull(),
+  productType: varchar("productType", { length: 100 }),
+  faceAmount: varchar("faceAmount", { length: 50 }),
+  deathBenefitOption: varchar("deathBenefitOption", { length: 50 }),
+  moneyReceived: varchar("moneyReceived", { length: 50 }),
+  premium: varchar("premium", { length: 50 }),
+  premiumFrequency: varchar("premiumFrequency", { length: 50 }),
+  issueDate: varchar("issueDate", { length: 20 }),
+  submittedDate: varchar("submittedDate", { length: 20 }),
+  policyClosureDate: varchar("policyClosureDate", { length: 20 }),
+  policyDeliveryTrackingNumber: varchar("policyDeliveryTrackingNumber", { length: 100 }),
+  
+  // Status tracking
+  status: mysqlEnum("status", [
+    "Pending",
+    "Issued",
+    "Incomplete",
+    "Post Approval Processing",
+    "Declined",
+    "Withdrawn",
+  ]).notNull(),
+  statusAsOf: varchar("statusAsOf", { length: 20 }),
+  
+  // Underwriting info
+  underwritingDecision: varchar("underwritingDecision", { length: 100 }),
+  underwriter: varchar("underwriter", { length: 100 }),
+  riskClass: varchar("riskClass", { length: 50 }),
+  
+  // Agent info
+  agentCode: varchar("agentCode", { length: 20 }),
+  agentName: varchar("agentName", { length: 255 }),
+  
+  // Sync metadata
+  lastSyncedAt: timestamp("lastSyncedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PendingPolicy = typeof pendingPolicies.$inferSelect;
+export type InsertPendingPolicy = typeof pendingPolicies.$inferInsert;
+
+// Pending Policy Requirements - Track individual requirements for each pending policy
+export const pendingRequirements = mysqlTable("pendingRequirements", {
+  id: int("id").autoincrement().primaryKey(),
+  policyId: int("policyId").references(() => pendingPolicies.id).notNull(),
+  
+  // Requirement category
+  category: mysqlEnum("category", [
+    "Pending with Producer",
+    "Pending with Transamerica",
+    "Completed",
+  ]).notNull(),
+  
+  // Requirement details
+  dateRequested: varchar("dateRequested", { length: 20 }),
+  requirementOn: varchar("requirementOn", { length: 255 }),
+  status: varchar("status", { length: 50 }), // Add, Outstanding, Received, Waived, etc.
+  requirement: varchar("requirement", { length: 255 }),
+  instruction: text("instruction"),
+  comments: text("comments"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PendingRequirement = typeof pendingRequirements.$inferSelect;
+export type InsertPendingRequirement = typeof pendingRequirements.$inferInsert;
+
+// Relations for pending policies
+export const pendingPoliciesRelations = relations(pendingPolicies, ({ many }) => ({
+  requirements: many(pendingRequirements),
+}));
+
+export const pendingRequirementsRelations = relations(pendingRequirements, ({ one }) => ({
+  policy: one(pendingPolicies, {
+    fields: [pendingRequirements.policyId],
+    references: [pendingPolicies.id],
+  }),
+}));

@@ -25,7 +25,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { 
   LayoutDashboard, LogOut, PanelLeft, Users, FileText, 
   CheckCircle, Settings, BarChart3, UserCircle, Shield,
-  ChevronRight, Sparkles
+  ChevronRight, Sparkles, ClipboardList
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState, memo, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -39,6 +39,7 @@ const menuItems = [
   { icon: Users, label: "Agents", path: "/agents", description: "Manage recruits" },
   { icon: FileText, label: "Clients", path: "/clients", description: "Client relationships" },
   { icon: BarChart3, label: "Production", path: "/production", description: "Performance metrics" },
+  { icon: ClipboardList, label: "Pending Policies", path: "/pending-policies", description: "Transamerica pending" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
   { icon: Users, label: "Team", path: "/team", description: "Team members" },
   { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },

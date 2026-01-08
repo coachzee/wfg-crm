@@ -17,6 +17,7 @@ import NotificationSettings from "./pages/NotificationSettings";
 import TeamMembers from "./pages/TeamMembers";
 import Team from "./pages/Team";
 import SyncHistory from "./pages/SyncHistory";
+import PendingPolicies from "./pages/PendingPolicies";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -62,6 +63,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <Production />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/pending-policies"}>
+        {() => (
+          <DashboardLayout>
+            <PendingPolicies />
           </DashboardLayout>
         )}
       </Route>

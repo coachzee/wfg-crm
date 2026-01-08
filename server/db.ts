@@ -827,3 +827,123 @@ export async function getTodaySyncLogs(): Promise<SyncLog[]> {
     .where(sql`${syncLogs.createdAt} >= ${today} AND ${syncLogs.createdAt} < ${tomorrow}`)
     .orderBy(desc(syncLogs.createdAt));
 }
+
+
+// Pending Policies queries (Transamerica Life Access)
+import { pendingPolicies, pendingRequirements, InsertPendingPolicy, InsertPendingRequirement } from "../drizzle/schema";
+
+export async function getPendingPolicies(filters?: { status?: string; agentCode?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query: any = db.select().from(pendingPolicies);
+  if (filters?.status) {
+    query = query.where(eq(pendingPolicies.status, filters.status as any));
+  }
+  if (filters?.agentCode) {
+    query = query.where(eq(pendingPolicies.agentCode, filters.agentCode));
+  }
+  return query.orderBy(desc(pendingPolicies.updatedAt));
+}
+
+export async function getPendingPolicyByNumber(policyNumber: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pendingPolicies).where(eq(pendingPolicies.policyNumber, policyNumber)).limit(1);
+  return result[0] || null;
+}
+
+export async function upsertPendingPolicy(data: InsertPendingPolicy) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Check if policy exists
+  const existing = await getPendingPolicyByNumber(data.policyNumber);
+  
+  if (existing) {
+    // Update existing policy
+    await db.update(pendingPolicies)
+      .set({ ...data, lastSyncedAt: new Date() })
+      .where(eq(pendingPolicies.policyNumber, data.policyNumber));
+    return getPendingPolicyByNumber(data.policyNumber);
+  } else {
+    // Insert new policy
+    const result = await db.insert(pendingPolicies).values({ ...data, lastSyncedAt: new Date() });
+    const insertId = (result as any)[0]?.insertId;
+    if (!insertId) throw new Error("Failed to insert pending policy");
+    const created = await db.select().from(pendingPolicies).where(eq(pendingPolicies.id, insertId)).limit(1);
+    return created[0];
+  }
+}
+
+export async function getPendingRequirementsByPolicyId(policyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pendingRequirements).where(eq(pendingRequirements.policyId, policyId));
+}
+
+export async function clearPendingRequirements(policyId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(pendingRequirements).where(eq(pendingRequirements.policyId, policyId));
+}
+
+export async function insertPendingRequirement(data: InsertPendingRequirement) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(pendingRequirements).values(data);
+}
+
+export async function bulkInsertPendingRequirements(requirements: InsertPendingRequirement[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (requirements.length === 0) return;
+  return db.insert(pendingRequirements).values(requirements);
+}
+
+export async function getPendingPoliciesWithRequirements() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const policies = await db.select().from(pendingPolicies).orderBy(desc(pendingPolicies.updatedAt));
+  
+  const policiesWithRequirements = await Promise.all(
+    policies.map(async (policy) => {
+      const requirements = await getPendingRequirementsByPolicyId(policy.id);
+      return {
+        ...policy,
+        requirements: {
+          pendingWithProducer: requirements.filter(r => r.category === "Pending with Producer"),
+          pendingWithTransamerica: requirements.filter(r => r.category === "Pending with Transamerica"),
+          completed: requirements.filter(r => r.category === "Completed"),
+        },
+      };
+    })
+  );
+  
+  return policiesWithRequirements;
+}
+
+export async function getPendingPolicySummary() {
+  const db = await getDb();
+  if (!db) return { total: 0, byStatus: {}, totalPendingRequirements: 0 };
+  
+  const policies = await db.select().from(pendingPolicies);
+  const requirements = await db.select().from(pendingRequirements);
+  
+  const byStatus: Record<string, number> = {};
+  policies.forEach(p => {
+    byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+  });
+  
+  const pendingWithProducerCount = requirements.filter(r => r.category === "Pending with Producer").length;
+  const pendingWithTransamericaCount = requirements.filter(r => r.category === "Pending with Transamerica").length;
+  
+  return {
+    total: policies.length,
+    byStatus,
+    totalPendingRequirements: pendingWithProducerCount + pendingWithTransamericaCount,
+    pendingWithProducerCount,
+    pendingWithTransamericaCount,
+  };
+}
