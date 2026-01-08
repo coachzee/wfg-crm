@@ -43,10 +43,17 @@ import {
   bulkInsertPendingRequirements,
   getPendingPoliciesWithRequirements,
   getPendingPolicySummary,
+  getInforcePolicies,
+  getInforcePolicyByNumber,
+  upsertInforcePolicy,
+  getProductionSummary,
+  getTopProducersByPremium,
+  getProductionByWritingAgent,
   type Agent,
   type Client,
   type WorkflowTask,
   type SyncLog,
+  type InforcePolicy,
 } from "./db";
 import { productionRecords } from "../drizzle/schema";
 import { encryptCredential, decryptCredential } from "./encryption";
@@ -675,6 +682,45 @@ export const appRouter = router({
         }
         
         return policy;
+      }),
+  }),
+
+  // Inforce Policies (Transamerica Production Data)
+  inforcePolicies: router({
+    // Get all inforce policies
+    list: protectedProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        agentId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return getInforcePolicies(input);
+      }),
+    
+    // Get inforce policy by policy number
+    getByPolicyNumber: protectedProcedure
+      .input(z.string())
+      .query(async ({ input }) => {
+        return getInforcePolicyByNumber(input);
+      }),
+    
+    // Get production summary for dashboard
+    getSummary: protectedProcedure
+      .query(async () => {
+        return getProductionSummary();
+      }),
+    
+    // Get top producers by premium
+    getTopProducers: protectedProcedure
+      .input(z.number().optional())
+      .query(async ({ input }) => {
+        return getTopProducersByPremium(input || 10);
+      }),
+    
+    // Get production by writing agent
+    getByWritingAgent: protectedProcedure
+      .query(async () => {
+        return getProductionByWritingAgent();
       }),
   }),
 });

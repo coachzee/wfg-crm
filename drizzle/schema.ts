@@ -446,6 +446,7 @@ export const syncLogs = mysqlTable("syncLogs", {
     "CASH_FLOW",
     "PRODUCTION",
     "TRANSAMERICA_PENDING",
+    "TRANSAMERICA_INFORCE",
   ]).notNull(),
   scheduledTime: varchar("scheduledTime", { length: 20 }), // "3:30 PM" or "6:30 PM"
   status: mysqlEnum("status", ["PENDING", "RUNNING", "SUCCESS", "FAILED", "PARTIAL"]).default("PENDING").notNull(),
@@ -557,3 +558,73 @@ export const pendingRequirementsRelations = relations(pendingRequirements, ({ on
     references: [pendingPolicies.id],
   }),
 }));
+
+
+// Transamerica Inforce Policies - Track active/issued policies for production tracking
+export const inforcePolicies = mysqlTable("inforcePolicies", {
+  id: int("id").autoincrement().primaryKey(),
+  policyNumber: varchar("policyNumber", { length: 50 }).notNull().unique(),
+  
+  // Policy holder info
+  ownerName: varchar("ownerName", { length: 255 }).notNull(),
+  issueState: varchar("issueState", { length: 10 }),
+  
+  // Product info
+  productType: varchar("productType", { length: 100 }),
+  
+  // Financial info
+  faceAmount: decimal("faceAmount", { precision: 15, scale: 2 }),
+  premium: decimal("premium", { precision: 12, scale: 2 }), // Target premium
+  premiumFrequency: varchar("premiumFrequency", { length: 20 }), // Monthly, Annual, Flexible
+  annualPremium: decimal("annualPremium", { precision: 12, scale: 2 }), // Calculated annual premium
+  
+  // Commission calculation
+  // Commission = Target Premium × 125% × Agent Level × Split
+  transamericaMultiplier: decimal("transamericaMultiplier", { precision: 5, scale: 2 }).default("1.25"), // 125%
+  calculatedCommission: decimal("calculatedCommission", { precision: 12, scale: 2 }),
+  
+  // Agent info (writing agent)
+  writingAgentName: varchar("writingAgentName", { length: 255 }),
+  writingAgentCode: varchar("writingAgentCode", { length: 50 }),
+  writingAgentSplit: int("writingAgentSplit").default(100), // Percentage split (0-100)
+  writingAgentLevel: decimal("writingAgentLevel", { precision: 5, scale: 2 }).default("0.55"), // Agent commission level (e.g., 0.55 = 55%)
+  
+  // Link to our agents table
+  agentId: int("agentId").references(() => agents.id),
+  
+  // Dates
+  premiumDueDate: varchar("premiumDueDate", { length: 20 }),
+  expiryDate: varchar("expiryDate", { length: 20 }),
+  issueDate: varchar("issueDate", { length: 20 }),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "Active",
+    "Surrendered",
+    "Free Look Surrender",
+    "Lapsed",
+    "Terminated",
+  ]).default("Active").notNull(),
+  
+  // Overwriting agents (JSON array for hierarchy)
+  overwritingAgents: json("overwritingAgents"), // [{name, code, split, role}]
+  
+  // Sync metadata
+  lastSyncedAt: timestamp("lastSyncedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InforcePolicy = typeof inforcePolicies.$inferSelect;
+export type InsertInforcePolicy = typeof inforcePolicies.$inferInsert;
+
+// Relations for inforce policies
+export const inforcePoliciesRelations = relations(inforcePolicies, ({ one }) => ({
+  agent: one(agents, {
+    fields: [inforcePolicies.agentId],
+    references: [agents.id],
+  }),
+}));
+
+// Update syncLogs to include TRANSAMERICA_INFORCE sync type
+// Note: This is handled by adding the enum value in the existing syncLogs table

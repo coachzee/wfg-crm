@@ -1,9 +1,12 @@
-import { useMemo, memo } from "react";
+import { memo, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Trophy, TrendingUp, Target, Award, Users, DollarSign, ArrowUpRight, Crown } from "lucide-react";
+import { Trophy, TrendingUp, Target, Award, Users, DollarSign, ArrowUpRight, Crown, FileText, RefreshCw, Building2 } from "lucide-react";
+import { toast } from "sonner";
 
 // Color palette
 const CHART_COLORS = {
@@ -15,7 +18,7 @@ const CHART_COLORS = {
   cyan: "oklch(0.65 0.15 200)",
 };
 
-const PIE_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+const PIE_COLORS = ["#10b981", "#ef4444", "#f59e0b", "#6366f1", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
 
 // Stats card component
 const StatsCard = memo(function StatsCard({ 
@@ -61,36 +64,52 @@ const StatsCard = memo(function StatsCard({
   );
 });
 
-// Leaderboard row component
-const LeaderboardRow = memo(function LeaderboardRow({ 
-  rank, 
-  agent, 
-  isTopThree 
+// Policy row component
+const PolicyRow = memo(function PolicyRow({ 
+  policy, 
+  rank,
+  showRank = false
 }: { 
-  rank: number; 
-  agent: any; 
-  isTopThree: boolean;
+  policy: any; 
+  rank?: number;
+  showRank?: boolean;
 }) {
+  const premium = parseFloat(policy.premium || '0');
+  const commission = parseFloat(policy.calculatedCommission || '0');
+  const faceAmount = parseFloat(policy.faceAmount || '0');
+  
   return (
-    <div className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${isTopThree ? 'bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-950/20' : 'hover:bg-muted/50'}`}>
-      <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
-        rank === 1 ? 'bg-amber-500 text-white' :
-        rank === 2 ? 'bg-slate-400 text-white' :
-        rank === 3 ? 'bg-amber-700 text-white' :
-        'bg-muted text-muted-foreground'
-      }`}>
-        {rank <= 3 ? <Crown className="h-4 w-4" /> : rank}
-      </div>
+    <div className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50">
+      {showRank && rank && (
+        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
+          rank === 1 ? 'bg-amber-500 text-white' :
+          rank === 2 ? 'bg-slate-400 text-white' :
+          rank === 3 ? 'bg-amber-700 text-white' :
+          'bg-muted text-muted-foreground'
+        }`}>
+          {rank <= 3 ? <Crown className="h-4 w-4" /> : rank}
+        </div>
+      )}
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{agent.name}</p>
-        <p className="text-xs text-muted-foreground">{agent.stage ? agent.stage.replace(/_/g, " ") : "Unknown"}</p>
+        <p className="font-medium truncate">{policy.ownerName}</p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="font-mono">{policy.policyNumber}</span>
+          <span>•</span>
+          <span>{policy.productType}</span>
+        </div>
       </div>
       <div className="text-right">
-        <p className="font-bold text-emerald-600">${agent.production.toLocaleString()}</p>
-        {agent.agentCode && (
-          <p className="text-xs text-muted-foreground font-mono">{agent.agentCode}</p>
-        )}
+        <p className="font-bold text-emerald-600">${premium.toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">
+          Face: ${(faceAmount / 1000).toFixed(0)}K
+        </p>
       </div>
+      <Badge 
+        variant={policy.status === 'Active' ? 'default' : 'secondary'}
+        className={policy.status === 'Active' ? 'bg-emerald-500' : ''}
+      >
+        {policy.status}
+      </Badge>
     </div>
   );
 });
@@ -129,60 +148,82 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function Production() {
-  const { data: agents, isLoading: agentsLoading } = trpc.agents.list.useQuery(undefined, {
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Fetch inforce policies data
+  const { data: inforcePolicies, isLoading: policiesLoading, refetch: refetchPolicies } = trpc.inforcePolicies.list.useQuery(undefined, {
     staleTime: 30000,
   });
-  const { data: productionRecords, isLoading: productionLoading } = trpc.production.list.useQuery(undefined, {
+  
+  const { data: productionSummary, isLoading: summaryLoading } = trpc.inforcePolicies.getSummary.useQuery(undefined, {
+    staleTime: 30000,
+  });
+  
+  const { data: topProducers, isLoading: topLoading } = trpc.inforcePolicies.getTopProducers.useQuery(10, {
     staleTime: 30000,
   });
 
   // Memoized calculations
-  const { agentProduction, topProducers, stageBreakdown, stats } = useMemo(() => {
-    if (!agents) return { agentProduction: [], topProducers: [], stageBreakdown: [], stats: { total: 0, netLicensed: 0, average: 0, activeAgents: 0 } };
-
-    const agentProd = agents.map((agent: any) => {
-      const agentRecords = productionRecords?.filter((r: any) => r.agentId === agent.id) || [];
-      const totalProduction = agentRecords.reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-      return {
-        id: agent.id,
-        name: `${agent.firstName} ${agent.lastName}`,
-        production: totalProduction,
-        stage: agent.workflowStage,
-        agentCode: agent.agentCode,
+  const { statusBreakdown, sortedPolicies, stats } = useMemo(() => {
+    if (!inforcePolicies || !productionSummary) {
+      return { 
+        statusBreakdown: [], 
+        sortedPolicies: [], 
+        stats: { 
+          totalPolicies: 0, 
+          activePolicies: 0, 
+          totalPremium: 0, 
+          totalCommission: 0,
+          totalFaceAmount: 0,
+        } 
       };
+    }
+
+    // Status breakdown for pie chart
+    const statusMap: Record<string, number> = {};
+    inforcePolicies.forEach((p: any) => {
+      statusMap[p.status] = (statusMap[p.status] || 0) + 1;
+    });
+    const breakdown = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+
+    // Sort policies by premium
+    const sorted = [...inforcePolicies].sort((a: any, b: any) => {
+      const premiumA = parseFloat(a.premium || '0');
+      const premiumB = parseFloat(b.premium || '0');
+      return premiumB - premiumA;
     });
 
-    const sorted = [...agentProd].sort((a, b) => b.production - a.production);
-    const top10 = sorted.slice(0, 10);
-
-    const stages = agents.reduce((acc: any, agent: any) => {
-      const stage = (agent.workflowStage || "unknown").replace(/_/g, " ");
-      const existing = acc.find((s: any) => s.name === stage);
-      if (existing) {
-        existing.value += 1;
-      } else {
-        acc.push({ name: stage, value: 1 });
-      }
-      return acc;
-    }, []);
-
-    const totalProd = agentProd.reduce((sum: number, a: any) => sum + a.production, 0);
-    const netLicensedCount = agentProd.filter((a: any) => a.production >= 1000).length;
-
     return {
-      agentProduction: agentProd,
-      topProducers: top10,
-      stageBreakdown: stages,
+      statusBreakdown: breakdown,
+      sortedPolicies: sorted,
       stats: {
-        total: totalProd,
-        netLicensed: netLicensedCount,
-        average: agentProd.length > 0 ? totalProd / agentProd.length : 0,
-        activeAgents: agentProd.length,
+        totalPolicies: productionSummary.totalPolicies,
+        activePolicies: productionSummary.activePolicies,
+        totalPremium: productionSummary.totalPremium,
+        totalCommission: productionSummary.totalCommission,
+        totalFaceAmount: productionSummary.totalFaceAmount,
       },
     };
-  }, [agents, productionRecords]);
+  }, [inforcePolicies, productionSummary]);
 
-  if (agentsLoading || productionLoading) {
+  // Chart data for top producers
+  const chartData = useMemo(() => {
+    if (!topProducers) return [];
+    return topProducers.map((p: any) => ({
+      name: p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name,
+      premium: p.totalPremium,
+      commission: p.totalCommission,
+      policies: p.policyCount,
+    }));
+  }, [topProducers]);
+
+  const handleRefresh = async () => {
+    toast.info("Refreshing production data...");
+    await refetchPolicies();
+    toast.success("Production data refreshed");
+  };
+
+  if (policiesLoading || summaryLoading) {
     return <ProductionSkeleton />;
   }
 
@@ -192,181 +233,280 @@ export default function Production() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Production Dashboard</h1>
-          <p className="text-muted-foreground">Track agent production, milestones, and team performance</p>
+          <p className="text-muted-foreground">Transamerica Life Access - Inforce Policies</p>
         </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard 
           icon={DollarSign} 
-          label="Total Production" 
-          value={`$${stats.total.toLocaleString()}`}
-          subtext="Across all agents"
+          label="Total Premium" 
+          value={`$${stats.totalPremium.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtext="Target premium across all policies"
           color="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 text-emerald-700 dark:text-emerald-400"
         />
         <StatsCard 
           icon={Trophy} 
-          label="Net Licensed" 
-          value={stats.netLicensed}
-          subtext="$1,000+ in production"
+          label="Total Commission" 
+          value={`$${stats.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtext="At 55% agent level × 125%"
           color="bg-gradient-to-br from-amber-500/10 to-amber-500/5 text-amber-700 dark:text-amber-400"
         />
         <StatsCard 
-          icon={Target} 
-          label="Average Production" 
-          value={`$${stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          subtext="Per agent"
+          icon={FileText} 
+          label="Active Policies" 
+          value={stats.activePolicies}
+          subtext={`${stats.totalPolicies} total policies`}
           color="bg-gradient-to-br from-blue-500/10 to-blue-500/5 text-blue-700 dark:text-blue-400"
         />
         <StatsCard 
-          icon={Users} 
-          label="Active Agents" 
-          value={stats.activeAgents}
-          subtext="Total recruits"
+          icon={Building2} 
+          label="Total Face Amount" 
+          value={`$${(stats.totalFaceAmount / 1000000).toFixed(1)}M`}
+          subtext="Life insurance coverage"
           color="bg-gradient-to-br from-violet-500/10 to-violet-500/5 text-violet-700 dark:text-violet-400"
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Producers Chart */}
-        <Card className="card-hover">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Top Producers</CardTitle>
-                <p className="text-xs text-muted-foreground">Production by agent</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {topProducers.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={topProducers} layout="vertical" margin={{ left: 20, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" tickFormatter={(value) => `$${value.toLocaleString()}`} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="production" fill="url(#productionGradient)" radius={[0, 4, 4, 0]} />
-                  <defs>
-                    <linearGradient id="productionGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="100%" stopColor="#8b5cf6" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <TrendingUp className="h-12 w-12 mb-2 opacity-20" />
-                <p>No production data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Tabs for different views */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="policies">All Policies ({stats.totalPolicies})</TabsTrigger>
+          <TabsTrigger value="top-clients">Top Clients</TabsTrigger>
+        </TabsList>
 
-        {/* Stage Breakdown */}
-        <Card className="card-hover">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                <Award className="h-4 w-4 text-violet-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Pipeline Distribution</CardTitle>
-                <p className="text-xs text-muted-foreground">Agents by workflow stage</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {stageBreakdown.length > 0 ? (
-              <div className="flex items-center gap-4">
-                <ResponsiveContainer width="50%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={stageBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {stageBreakdown.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+        <TabsContent value="overview" className="space-y-6 mt-4">
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Clients by Premium */}
+            <Card className="card-hover">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Top Clients by Premium</CardTitle>
+                    <p className="text-xs text-muted-foreground">Highest premium policyholders</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
+                      <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="premium" fill="url(#productionGradient)" radius={[0, 4, 4, 0]} />
+                      <defs>
+                        <linearGradient id="productionGradient" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                    <TrendingUp className="h-12 w-12 mb-2 opacity-20" />
+                    <p>No production data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Policy Status Distribution */}
+            <Card className="card-hover">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Award className="h-4 w-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Policy Status Distribution</CardTitle>
+                    <p className="text-xs text-muted-foreground">Breakdown by policy status</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {statusBreakdown.length > 0 ? (
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width="50%" height={240}>
+                      <PieChart>
+                        <Pie
+                          data={statusBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {statusBreakdown.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-2">
+                      {statusBreakdown.map((status: any, index: number) => (
+                        <div key={status.name} className="flex items-center gap-2">
+                          <div 
+                            className="h-3 w-3 rounded-full" 
+                            style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                          />
+                          <span className="text-sm flex-1 truncate">{status.name}</span>
+                          <Badge variant="secondary" className="text-xs">{status.value}</Badge>
+                        </div>
                       ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex-1 space-y-2">
-                  {stageBreakdown.map((stage: any, index: number) => (
-                    <div key={stage.name} className="flex items-center gap-2">
-                      <div 
-                        className="h-3 w-3 rounded-full" 
-                        style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
-                      />
-                      <span className="text-sm flex-1 truncate">{stage.name}</span>
-                      <Badge variant="secondary" className="text-xs">{stage.value}</Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                    <Award className="h-12 w-12 mb-2 opacity-20" />
+                    <p>No policy data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent High-Value Policies */}
+          <Card className="card-hover">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Top Premium Policies</CardTitle>
+                    <p className="text-xs text-muted-foreground">Highest premium policies in your book</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Top 10
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {sortedPolicies.length > 0 ? (
+                <div className="space-y-1">
+                  {sortedPolicies.slice(0, 10).map((policy: any, index: number) => (
+                    <PolicyRow 
+                      key={policy.id} 
+                      policy={policy} 
+                      rank={index + 1}
+                      showRank={true}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mb-2 opacity-20" />
+                  <p>No policies found</p>
+                  <p className="text-sm">Sync with Transamerica to import policies</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="policies" className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">All Inforce Policies</CardTitle>
+                    <p className="text-xs text-muted-foreground">Complete list of policies from Transamerica</p>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {sortedPolicies.length > 0 ? (
+                <div className="space-y-1 max-h-[600px] overflow-y-auto">
+                  {sortedPolicies.map((policy: any) => (
+                    <PolicyRow key={policy.id} policy={policy} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mb-2 opacity-20" />
+                  <p>No policies found</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="top-clients" className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <Trophy className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Top Clients Leaderboard</CardTitle>
+                    <p className="text-xs text-muted-foreground">Clients ranked by total premium</p>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {topProducers && topProducers.length > 0 ? (
+                <div className="space-y-1">
+                  {topProducers.map((client: any, index: number) => (
+                    <div key={client.name} className="flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        index === 0 ? 'bg-amber-500 text-white' :
+                        index === 1 ? 'bg-slate-400 text-white' :
+                        index === 2 ? 'bg-amber-700 text-white' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {index < 3 ? <Crown className="h-4 w-4" /> : index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{client.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {client.policyCount} {client.policyCount === 1 ? 'policy' : 'policies'} • 
+                          Face: ${(client.totalFaceAmount / 1000000).toFixed(2)}M
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-emerald-600">${client.totalPremium.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Commission: ${client.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <Award className="h-12 w-12 mb-2 opacity-20" />
-                <p>No agent data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Leaderboard */}
-      <Card className="card-hover">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <Trophy className="h-4 w-4 text-amber-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Production Leaderboard</CardTitle>
-                <p className="text-xs text-muted-foreground">All agents ranked by production</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-xs">
-              {agentProduction.length} agents
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {agentProduction.length > 0 ? (
-            <div className="space-y-1 max-h-96 overflow-y-auto">
-              {[...agentProduction]
-                .sort((a, b) => b.production - a.production)
-                .map((agent, index) => (
-                  <LeaderboardRow 
-                    key={agent.id} 
-                    rank={index + 1} 
-                    agent={agent} 
-                    isTopThree={index < 3}
-                  />
-                ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Users className="h-12 w-12 mb-2 opacity-20" />
-              <p>No agent production data available</p>
-              <p className="text-sm">Add agents and record their production to see the leaderboard</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Users className="h-12 w-12 mb-2 opacity-20" />
+                  <p>No client data available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

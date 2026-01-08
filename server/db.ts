@@ -1,6 +1,6 @@
 import { eq, desc, sql, count, sum, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, agentCashFlowHistory, syncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory, InsertSyncLog, SyncLog } from "../drizzle/schema";
+import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, agentCashFlowHistory, syncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory, InsertSyncLog, SyncLog, inforcePolicies, InsertInforcePolicy, InforcePolicy } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -947,3 +947,137 @@ export async function getPendingPolicySummary() {
     pendingWithTransamericaCount,
   };
 }
+
+
+// ============================================
+// Inforce Policies (Transamerica Production Data)
+// ============================================
+
+// Get all inforce policies
+export async function getInforcePolicies(filters?: { status?: string; agentId?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query: any = db.select().from(inforcePolicies);
+  if (filters?.status) {
+    query = query.where(eq(inforcePolicies.status, filters.status as any));
+  }
+  if (filters?.agentId) {
+    query = query.where(eq(inforcePolicies.agentId, filters.agentId));
+  }
+  return query.orderBy(desc(inforcePolicies.updatedAt));
+}
+
+// Get inforce policy by policy number
+export async function getInforcePolicyByNumber(policyNumber: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(inforcePolicies).where(eq(inforcePolicies.policyNumber, policyNumber)).limit(1);
+  return result[0] || null;
+}
+
+// Upsert inforce policy
+export async function upsertInforcePolicy(data: InsertInforcePolicy) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getInforcePolicyByNumber(data.policyNumber);
+  
+  if (existing) {
+    await db.update(inforcePolicies)
+      .set({ ...data, lastSyncedAt: new Date() })
+      .where(eq(inforcePolicies.policyNumber, data.policyNumber));
+    return getInforcePolicyByNumber(data.policyNumber);
+  } else {
+    const result = await db.insert(inforcePolicies).values({ ...data, lastSyncedAt: new Date() });
+    const insertId = (result as any)[0]?.insertId;
+    if (!insertId) throw new Error("Failed to insert inforce policy");
+    const created = await db.select().from(inforcePolicies).where(eq(inforcePolicies.id, insertId)).limit(1);
+    return created[0];
+  }
+}
+
+// Get production summary (for dashboard)
+export async function getProductionSummary() {
+  const db = await getDb();
+  if (!db) return {
+    totalPolicies: 0,
+    activePolicies: 0,
+    totalPremium: 0,
+    totalCommission: 0,
+    totalFaceAmount: 0,
+    byStatus: {},
+  };
+  
+  const policies = await db.select().from(inforcePolicies);
+  
+  const activePolicies = policies.filter(p => p.status === 'Active');
+  const totalPremium = policies.reduce((sum, p) => sum + parseFloat(p.premium?.toString() || '0'), 0);
+  const totalCommission = policies.reduce((sum, p) => sum + parseFloat(p.calculatedCommission?.toString() || '0'), 0);
+  const totalFaceAmount = policies.reduce((sum, p) => sum + parseFloat(p.faceAmount?.toString() || '0'), 0);
+  
+  const byStatus: Record<string, number> = {};
+  policies.forEach(p => {
+    byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+  });
+  
+  return {
+    totalPolicies: policies.length,
+    activePolicies: activePolicies.length,
+    totalPremium,
+    totalCommission,
+    totalFaceAmount,
+    byStatus,
+  };
+}
+
+// Get top producers by premium
+export async function getTopProducersByPremium(limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
+  
+  // Group by owner name and sum premiums
+  const producerMap = new Map<string, { name: string; totalPremium: number; totalCommission: number; policyCount: number; totalFaceAmount: number }>();
+  
+  for (const policy of policies) {
+    const name = policy.ownerName;
+    const existing = producerMap.get(name) || { name, totalPremium: 0, totalCommission: 0, policyCount: 0, totalFaceAmount: 0 };
+    existing.totalPremium += parseFloat(policy.premium?.toString() || '0');
+    existing.totalCommission += parseFloat(policy.calculatedCommission?.toString() || '0');
+    existing.totalFaceAmount += parseFloat(policy.faceAmount?.toString() || '0');
+    existing.policyCount += 1;
+    producerMap.set(name, existing);
+  }
+  
+  // Sort by total premium and return top N
+  return Array.from(producerMap.values())
+    .sort((a, b) => b.totalPremium - a.totalPremium)
+    .slice(0, limit);
+}
+
+// Get production by writing agent (for agent-level tracking)
+export async function getProductionByWritingAgent() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
+  
+  // Group by writing agent
+  const agentMap = new Map<string, { name: string; totalPremium: number; totalCommission: number; policyCount: number }>();
+  
+  for (const policy of policies) {
+    const name = policy.writingAgentName || 'Unknown';
+    const existing = agentMap.get(name) || { name, totalPremium: 0, totalCommission: 0, policyCount: 0 };
+    existing.totalPremium += parseFloat(policy.premium?.toString() || '0');
+    existing.totalCommission += parseFloat(policy.calculatedCommission?.toString() || '0');
+    existing.policyCount += 1;
+    agentMap.set(name, existing);
+  }
+  
+  return Array.from(agentMap.values())
+    .sort((a, b) => b.totalPremium - a.totalPremium);
+}
+
+export type { InforcePolicy };
