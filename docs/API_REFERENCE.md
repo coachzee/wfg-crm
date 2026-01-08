@@ -1,4 +1,4 @@
-# WFG CRM API Reference
+# WBH CRM API Reference
 
 **Version:** 1.0  
 **Last Updated:** January 8, 2026  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The WFG CRM API is built using tRPC, providing end-to-end type safety between the client and server. All procedures are accessible via the `trpc` client in the frontend.
+The WBH CRM API is built using tRPC, providing end-to-end type safety between the client and server. All procedures are accessible via the `trpc` client in the frontend.
 
 ---
 
@@ -346,7 +346,7 @@ const { data } = trpc.sync.getLogs.useQuery({
 
 ### sync.triggerMyWFG
 
-Triggers a manual MyWFG sync.
+Triggers a manual MyWBH sync.
 
 **Type:** Mutation  
 **Auth Required:** Yes (Admin only)

@@ -210,7 +210,7 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent className="text-sm text-blue-900 space-y-2">
           <p>
-            • Notifications are sent to the system owner via the Manus notification system
+            • Notifications are sent to the system owner via email
           </p>
           <p>
             • Daily checks run at your specified time and scan for overdue tasks, milestones, and renewals

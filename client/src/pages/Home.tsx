@@ -151,7 +151,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-semibold mb-2">Secure & Private</h3>
                 <p className="text-sm text-muted-foreground">
-                  In-house hosted system with encrypted credential storage for secure MyWFG integration.
+                  In-house hosted system with encrypted credential storage for secure MyWBH integration.
                 </p>
               </CardContent>
             </Card>

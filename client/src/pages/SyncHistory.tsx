@@ -80,7 +80,7 @@ export default function SyncHistory() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Sync History</h1>
-          <p className="text-muted-foreground">Monitor scheduled MyWFG sync tasks (3:30 PM & 6:30 PM daily)</p>
+          <p className="text-muted-foreground">Monitor scheduled MyWBH sync tasks (3:30 PM & 6:30 PM daily)</p>
         </div>
 
         {/* Weekly Summary Cards */}

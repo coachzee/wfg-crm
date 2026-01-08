@@ -1,4 +1,8 @@
-import { ENV } from "./env";
+// LLM Integration - Uses OpenAI API
+// Configure OPENAI_API_KEY in environment variables to enable
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? "";
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -209,16 +213,20 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const resolveApiUrl = () => OPENAI_API_URL;
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not configured. Set it in environment variables to enable LLM features.");
   }
 };
+
+/**
+ * Check if LLM integration is available.
+ */
+export function isLLMAvailable(): boolean {
+  return Boolean(OPENAI_API_KEY);
+}
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -316,7 +324,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify(payload),
   });

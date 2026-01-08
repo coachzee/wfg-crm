@@ -98,11 +98,11 @@ export default function TeamMembers() {
         </CardHeader>
         <CardContent className="text-sm text-blue-900 space-y-3">
           <p>
-            Team members can access your CRM by logging in with their Manus account. Here's how to set it up:
+            Team members can access your CRM by creating an account. Here's how to set it up:
           </p>
           <ol className="list-decimal list-inside space-y-2">
-            <li>Have your team member create a Manus account at manus.im</li>
-            <li>They can then login to your CRM using their Manus credentials</li>
+            <li>Have your team member go to the login page and click "Register"</li>
+            <li>They can then login to your CRM using their email and password</li>
             <li>Contact support to assign them admin or team member roles</li>
             <li>All team members will see the same real-time data and can collaborate</li>
           </ol>

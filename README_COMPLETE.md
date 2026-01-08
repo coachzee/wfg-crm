@@ -1,8 +1,8 @@
-# WFG CRM System - Complete Documentation & Implementation Guide
+# WBH CRM System - Complete Documentation & Implementation Guide
 
 ## Project Overview
 
-A comprehensive Customer Relationship Management (CRM) system built specifically for WFG (World Financial Group) insurance brokers to track agent recruitment, training, licensing, production, and client management through a complete workflow lifecycle.
+A comprehensive Customer Relationship Management (CRM) system built specifically for WBH (World Financial Group) insurance brokers to track agent recruitment, training, licensing, production, and client management through a complete workflow lifecycle.
 
 **Built by:** Manus AI  
 **Created:** January 4, 2026  
@@ -16,7 +16,7 @@ A comprehensive Customer Relationship Management (CRM) system built specifically
 - **Backend:** Express 4 + tRPC 11 for type-safe API
 - **Database:** MySQL/TiDB with Drizzle ORM
 - **Authentication:** Manus OAuth 2.0
-- **Browser Automation:** Playwright for MyWFG integration
+- **Browser Automation:** Playwright for MyWBH integration
 - **Hosting:** Manus platform with custom domain support
 - **Language:** TypeScript for full type safety
 
@@ -87,7 +87,7 @@ A comprehensive Customer Relationship Management (CRM) system built specifically
 - Net Licensed milestone tracking ($1,000 threshold)
 - Last sync status indicator
 
-### 7. MyWFG Integration Framework ✅
+### 7. MyWBH Integration Framework ✅
 - Secure credential storage (AES-256 encryption)
 - Headless browser automation with Playwright
 - 2FA/Validation code support for multi-step authentication
@@ -146,7 +146,7 @@ A comprehensive Customer Relationship Management (CRM) system built specifically
 - ❌ Monthly/quarterly/annual production reports
 - ❌ Chargeback proof tracking dashboard
 
-### 4. MyWFG Integration (Partial)
+### 4. MyWBH Integration (Partial)
 - ⚠️ Headless automation framework built but needs testing with real mywfg.com page structure
 - ❌ Automated daily sync job (framework ready, needs activation)
 - ❌ Notification system for sync failures
@@ -421,7 +421,7 @@ users (authentication)
   │   ├── production_records (sales)
   │   └── clients (policy holders)
   │       └── (policies - to be added)
-  └── credentials (encrypted MyWFG login)
+  └── credentials (encrypted MyWBH login)
       └── mywfg_sync_logs (audit trail)
 ```
 
@@ -478,14 +478,14 @@ dashboard/
 - `/production` - Production analytics
 - `/tasks` - Task/follow-up management
 - `/team` - Team member management
-- `/settings` - MyWFG integration and system settings
+- `/settings` - MyWBH integration and system settings
 
 ---
 
 ## KEY FILES & STRUCTURE
 
 ```
-wfg-crm/
+wbh-crm/
 ├── client/
 │   ├── src/
 │   │   ├── pages/
@@ -555,7 +555,7 @@ wfg-crm/
 
 ### Installation
 ```bash
-cd wfg-crm
+cd wbh-crm
 pnpm install
 pnpm db:push  # Create database tables
 pnpm dev      # Start development server
@@ -574,7 +574,7 @@ VITE_OAUTH_PORTAL_URL=https://manus.im/oauth
 
 ## NEXT IMMEDIATE STEPS
 
-1. **Test MyWFG Integration** with your credentials and validation code (189410)
+1. **Test MyWBH Integration** with your credentials and validation code (189410)
 2. **Add test agents** to verify workflow stages work correctly
 3. **Test task creation** and completion workflows
 4. **Verify email notifications** are being sent
@@ -594,7 +594,7 @@ Once verified, proceed with Phase 1 features:
 1. Check the browser console for error messages
 2. Review server logs for backend errors
 3. Verify database connectivity
-4. Check MyWFG credentials and validation code
+4. Check MyWBH credentials and validation code
 
 ### For Updates:
 - Pull latest code from repository
@@ -613,7 +613,7 @@ Once verified, proceed with Phase 1 features:
 ## CONTACT & SUPPORT
 
 **Built by:** Manus AI  
-**Project:** WFG CRM System  
+**Project:** WBH CRM System  
 **Version:** 1.0.0  
 **Last Updated:** January 4, 2026
 

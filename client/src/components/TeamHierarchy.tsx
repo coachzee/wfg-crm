@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Users, User, Award, TrendingUp } from "lucide-react";
 
-// WFG Rank configuration
+// WBH Rank configuration
 const RANK_CONFIG: Record<string, { label: string; icon: string; color: string; bgColor: string }> = {
   TRAINING_ASSOCIATE: { label: "TA", icon: "🎓", color: "text-gray-700", bgColor: "bg-gray-100" },
   ASSOCIATE: { label: "A", icon: "📋", color: "text-blue-700", bgColor: "bg-blue-100" },

@@ -58,7 +58,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
+    } else if (user.openId === (process.env.OWNER_OPEN_ID ?? "")) {
       values.role = 'admin';
       updateSet.role = 'admin';
     }
@@ -96,6 +96,41 @@ export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(users);
+}
+
+// Self-hosted authentication functions
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserPasswordHash(openId: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.openId, openId)).limit(1);
+  return result.length > 0 ? result[0].passwordHash : null;
+}
+
+export async function createUserWithPassword(
+  user: InsertUser,
+  passwordHash: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(users).values({
+    ...user,
+    passwordHash,
+  });
+}
+
+export async function updateUserPassword(openId: string, passwordHash: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users).set({ passwordHash }).where(eq(users.openId, openId));
 }
 
 // Agent queries
@@ -248,7 +283,7 @@ export async function createOrUpdateCredential(data: InsertCredential) {
   });
 }
 
-// MyWFG sync log queries
+// MyWBH sync log queries
 export async function createSyncLog(data: InsertMywfgSyncLog) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -263,12 +298,12 @@ export async function getLatestSyncLog() {
 }
 
 // Dashboard metrics for face amount and families protected
-// Note: Some values are pulled from MyWFG data exploration (Jan 2025 - Dec 2025)
+// Note: Some values are pulled from MyWBH data exploration (Jan 2025 - Dec 2025)
 export async function getDashboardMetrics() {
   const db = await getDb();
   
-  // MyWFG extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
-  // These are the actual values from the MyWFG account as of Jan 4, 2026
+  // MyWBH extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
+  // These are the actual values from the MyWBH account as of Jan 4, 2026
   const mywfgData = {
     superTeamCashFlow: 290099.22, // Super Team Total Cash Flow (Jan-Dec 2025)
     personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
@@ -307,10 +342,10 @@ export async function getDashboardMetrics() {
   // Net Licensed data - fetched dynamically from database
   // Net Licensed = Agent with $1,000+ total cash flow AND title level TA or A
   // Excludes Senior Associate (SA) and above
-  // Data is synced from MyWFG Custom Reports - Personal Cash Flow YTD
+  // Data is synced from MyWBH Custom Reports - Personal Cash Flow YTD
   const netLicensedData = await getNetLicensedAgents();
   
-  // Compliance data from MyWFG reports (as of Jan 4, 2026)
+  // Compliance data from MyWBH reports (as of Jan 4, 2026)
   // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
   const complianceData = {
     missingLicenses: 11, // Missing Licenses and Appointments report (11 state jurisdictions)
@@ -363,7 +398,7 @@ export async function getDashboardMetrics() {
     totalClients: sql<number>`COUNT(*)`,
   }).from(clients);
 
-  // Use MyWFG data for families/policies, but allow DB to add more
+  // Use MyWBH data for families/policies, but allow DB to add more
   const dbPolicies = Number(faceAmountResult[0]?.dbPolicies || 0);
   const dbFamilies = Number(familiesResult[0]?.dbFamilies || 0);
   
@@ -526,7 +561,7 @@ export interface CashFlowRecordInput {
   reportPeriod?: string;
 }
 
-// Bulk upsert cash flow records from MyWFG sync
+// Bulk upsert cash flow records from MyWBH sync
 export async function bulkUpsertCashFlowRecords(records: CashFlowRecordInput[]) {
   const results = [];
   for (const record of records) {

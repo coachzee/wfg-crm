@@ -1,0 +1,30 @@
+{
+  "query": "SELECT policyNumber, ownerName FROM inforcePolicies LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT policyNumber, ownerName FROM inforcePolicies LIMIT 5;",
+  "rows": [
+    {
+      "policyNumber": "6602269223",
+      "ownerName": "ZOE DELINE"
+    },
+    {
+      "policyNumber": "6602269192",
+      "ownerName": "ZOE DELINE"
+    },
+    {
+      "policyNumber": "6602261140",
+      "ownerName": "MOUSSA DIALLO"
+    },
+    {
+      "policyNumber": "6602261128",
+      "ownerName": "MOUSSA DIALLO"
+    },
+    {
+      "policyNumber": "6602261107",
+      "ownerName": "MOUSSA DIALLO"
+    }
+  ],
+  "messages": [],
+  "stdout": "policyNumber\townerName\n6602269223\tZOE DELINE\n6602269192\tZOE DELINE\n6602261140\tMOUSSA DIALLO\n6602261128\tMOUSSA DIALLO\n6602261107\tMOUSSA DIALLO\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

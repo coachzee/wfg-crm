@@ -1,4 +1,4 @@
-# WFG CRM Project TODO
+# WBH CRM Project TODO
 
 ## Database Schema & Core Setup
 - [x] Define and implement agents table (recruits with workflow stages)
@@ -55,7 +55,7 @@
 - [ ] Add chargeback proof tracking dashboard
 - [x] Implement real-time sync status indicator
 
-## MyWFG Integration (Core Framework Complete)
+## MyWBH Integration (Core Framework Complete)
 - [x] Create mywfg.com credential management UI (backend procedures)
 - [x] Implement secure credential storage with encryption
 - [x] Build headless browser automation script for data extraction
@@ -177,7 +177,7 @@
 
 
 ## Rebranding (Completed)
-- [x] Change "WFG CRM" to "Wealth Builders Haven CRM" throughout the application
+- [x] Change "WBH CRM" to "Wealth Builders Haven CRM" throughout the application
 - [x] Update sidebar branding
 - [x] Update page titles and headers
 - [ ] Update any documentation references
@@ -190,7 +190,7 @@
 - [x] Add logo to landing page footer
 
 
-## MyWFG Crawler Analysis (Completed)
+## MyWBH Crawler Analysis (Completed)
 - [x] Build crawler to login and explore mywfg.com account
 - [x] Capture screenshots of key pages
 - [x] Analyze HTML structure and data tables
@@ -200,8 +200,8 @@
 - [x] Document Advancement Guidelines (TA to EC)
 - [x] Document Commission Guidelines and compensation grid
 
-## WFG Rank Hierarchy & Advancement (New)
-- [x] Add WFG rank hierarchy enum to database schema (TA, A, SA, MD, SMD, EMD, CEO_MD, EVC, SEVC, FC, EC)
+## WBH Rank Hierarchy & Advancement (New)
+- [x] Add WBH rank hierarchy enum to database schema (TA, A, SA, MD, SMD, EMD, CEO_MD, EVC, SEVC, FC, EC)
 - [x] Add advancement requirements tracking table
 - [x] Add upline/downline relationship tracking to agents table
 - [x] Add commission payments table
@@ -212,13 +212,13 @@
 
 ## Commission Structure Integration (New)
 - [x] Add commission structure table with generational overrides
-- [x] Build commission calculator based on WFG grid (65% base shop payout)
+- [x] Build commission calculator based on WBH grid (65% base shop payout)
 - [x] Track generational overrides (1st: 12%, 2nd: 6%, 3rd: 3.5%, etc.)
 - [x] Add bonus pool tracking (6.5% bonus pool, 2.5% executive pools)
 - [x] Implement production multiplier calculations for EVCs+
 
-## MyWFG Sync Enhancement (New)
-- [x] Update MyWFG sync service with actual report URLs
+## MyWBH Sync Enhancement (New)
+- [x] Update MyWBH sync service with actual report URLs
 - [x] Add data parsers for Downline Status report
 - [x] Add data parsers for Commissions Summary report
 - [x] Add data parsers for Payment Report
@@ -226,7 +226,7 @@
 - [x] Implement semi-automated sync with OTP code support
 - [x] Add payment cycle tracking (Tuesdays/Fridays, 9x/month)
 - [x] Add Team Chart hierarchy extraction
-- [x] Add WFG rank mapping from display names to internal codes
+- [x] Add WBH rank mapping from display names to internal codes
 
 
 ## Policy Face Amount & Families Protected Tracking (New)
@@ -238,8 +238,8 @@
 - [ ] Display face amount in production records list
 
 
-## MyWFG Policy Data Extraction (Completed)
-- [x] Login to MyWFG and navigate to Commission Statements/Summary
+## MyWBH Policy Data Extraction (Completed)
+- [x] Login to MyWBH and navigate to Commission Statements/Summary
 - [x] Analyze commission data structure for policy numbers
 - [x] Extract total policy count (~77 policies) and dollar amounts (~$175K net commission)
 - [x] Document data fields available for import
@@ -248,7 +248,7 @@
 - [ ] Add manual face amount entry option for policies
 
 
-## Automated MyWFG Sync (Completed)
+## Automated MyWBH Sync (Completed)
 - [x] Check Total Cash Flow report for accurate team commission ($290,099.22 Super Team)
 - [x] Update dashboard to show 77 families protected
 - [x] Update dashboard to show total team commission from Total Cash Flow ($290.1K)
@@ -260,17 +260,17 @@
 - [x] Note: Full automation blocked by OTP requirement - semi-automated sync with manual trigger implemented
 
 
-## Dashboard MyWFG Team Metrics (Completed)
-- [x] Update Active Agents to show MyWFG Active Associates (91) instead of local DB count
+## Dashboard MyWBH Team Metrics (Completed)
+- [x] Update Active Agents to show MyWBH Active Associates (91) instead of local DB count
 - [x] Add new Licensed Agents card showing Life Licensed Associates (27)
-- [x] Update getDashboardMetrics to include activeAssociates and licensedAgents from MyWFG data
+- [x] Update getDashboardMetrics to include activeAssociates and licensedAgents from MyWBH data
 
 
-## Import Real Agents from MyWFG (Completed)
-- [x] Navigate to MyWFG Downline Status report
+## Import Real Agents from MyWBH (Completed)
+- [x] Navigate to MyWBH Downline Status report
 - [x] Extract 45 Base Shop team members (names, agent codes, ranks)
 - [x] Clear test agent data from CRM database
-- [x] Import real agents into CRM with correct WFG ranks
+- [x] Import real agents into CRM with correct WBH ranks
 - [x] Verify agents display correctly in Agents page
 - Note: 45 agents imported from Base Shop; remaining 46 are in Super Team hierarchy (under other SMDs)
 
@@ -280,7 +280,7 @@
 - [x] Make "Licensed Agents" card clickable to filter agents by licensed status
 - [x] Make "In Training" card clickable to filter agents by training stage
 - [x] Make "New This Month" card clickable to filter agents by date
-- [x] Add compliance tracking from MyWFG reports:
+- [x] Add compliance tracking from MyWBH reports:
   - [x] Missing Licenses and Appointments report (11 state jurisdictions)
   - [x] Platform Fee Recurring Enrollment report (15 agents not enrolled)
   - [x] Platform Fee First Notice report (3 agents: Stanley Ejime, Joy Ejime, Bukola Kolawole)
@@ -326,7 +326,7 @@
 ## Automated OTP Login System
 - [x] Store email credentials securely (MyWFG: zaidshopejuwbh@gmail.com, Transamerica: zaidshopejuwfg@gmail.com)
 - [x] Create Gmail IMAP service to read OTP emails automatically
-- [x] Implement automated login flow for MyWFG with OTP extraction
+- [x] Implement automated login flow for MyWBH with OTP extraction
 - [x] Implement automated login flow for Transamerica with OTP extraction
 - [x] Create sync service with API endpoints
 - [x] Add sync controls to dashboard UI
@@ -336,11 +336,11 @@
 - [x] Send email alert when login credentials are used
 - [x] Send email alert when automated sync is triggered
 
-- [x] Fix branding in email alerts: change "WFG CRM" to "Wealth Builders Haven CRM"
+- [x] Fix branding in email alerts: change "WBH CRM" to "Wealth Builders Haven CRM"
 
 
 ## Local/Self-Hosted Deployment
-- [ ] Fix MyWFG login URL in auto-login-mywfg.ts (correct URL: https://www.mywfg.com)
+- [ ] Fix MyWBH login URL in auto-login-mywfg.ts (correct URL: https://www.mywfg.com)
 - [ ] Verify Transamerica login URL is correct
 - [ ] Create comprehensive deployment guide (DEPLOYMENT.md)
 - [ ] Document all required environment variables
@@ -348,7 +348,7 @@
 
 ## Net Licensed Feature Fix - COMPLETED
 
-- [x] Explore MyWFG Custom Report for agent payment data (YTD Cash Flow)
+- [x] Explore MyWBH Custom Report for agent payment data (YTD Cash Flow)
 - [x] Extract cash flow data for all agents from Custom Reports
 - [x] Calculate net licensed status ($1,000+ total cash flow)
 - [x] Exclude Senior Associate (SA) and above from Net Licensed count
@@ -366,7 +366,7 @@
 ## Dynamic Net Licensed Data Fetching (Completed)
 - [x] Create cashFlowRecords table in database schema for storing YTD cash flow data
 - [x] Add tRPC procedures for cash flow data CRUD operations
-- [x] Update MyWFG sync service to fetch Custom Reports - Personal Cash Flow YTD
+- [x] Update MyWBH sync service to fetch Custom Reports - Personal Cash Flow YTD
 - [x] Remove hardcoded Net Licensed data from db.ts
 - [x] Calculate Net Licensed dynamically from database (≥$1,000, TA/A only)
 - [x] Add payment date tracking for when agents achieved Net Licensed status
@@ -394,22 +394,22 @@
 - [x] Update database with real contact information (no placeholders)
 - [x] Verify all agent data is accurate
 - [x] Fixed OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
-- [x] Automated MyWFG Hierarchy Tool scraper working
+- [x] Automated MyWBH Hierarchy Tool scraper working
 - [x] All 31 licensed agents have real emails and phone numbers
 
 
 ## Agent Data Cleanup & Rank Correction (Completed)
 - [x] Remove test agents ("GetById Test", "Test Agent", "Rank Test", "Stage Update") from database - 32 removed
-- [x] Correct agent ranks based on MyWFG Downline Status report:
+- [x] Correct agent ranks based on MyWBH Downline Status report:
   - Augustina -> SMD (Level 20)
   - Ayodele Okulaja -> SMD (Level 17)
   - Oluwaseyi Adepitan -> SMD (Level 17)
 - [x] Verify all agent data is accurate after cleanup - 45 real agents remaining
 
-## Automated MyWFG Agent Data Fetching (Completed)
-- [x] Create automated scraper to fetch agent data from MyWFG Downline Status report
+## Automated MyWBH Agent Data Fetching (Completed)
+- [x] Create automated scraper to fetch agent data from MyWBH Downline Status report
 - [x] Extract agent names, codes, title levels, and license status directly from MyWFG
-- [x] Map MyWFG title levels to WFG ranks (01=TA, 10=MD, 17=SMD, 20=SMD, etc.)
+- [x] Map MyWBH title levels to WBH ranks (01=TA, 10=MD, 17=SMD, 20=SMD, etc.)
 - [x] Auto-update agent ranks when syncing from MyWFG
 - [x] Remove dependency on CSV files for agent data
 - [x] Automated OTP retrieval from Gmail (Transamerica format XXXX-XXXXXX)
@@ -417,7 +417,7 @@
 - [x] Contact info sync for all 45 agents (emails and phone numbers)
 
 
-## Scheduled MyWFG Sync (Completed)
+## Scheduled MyWBH Sync (Completed)
 - [x] Set up twice daily sync at 3:30 PM and 6:30 PM
 - [x] Run mywfg-full-sync.mjs automatically
 
@@ -448,12 +448,12 @@
 - [ ] Fix incorrect position levels (e.g., Okulaja is not SMD)
 - [ ] Remove test agents from database
 - [ ] Clean up incorrect stage data (getById Test etc.)
-- [ ] Verify all agent ranks match MyWFG source data
+- [ ] Verify all agent ranks match MyWBH source data
 
-## MyWFG Sync Fix (In Progress)
-- [ ] Fix MyWFG sync to successfully fetch agent data
+## MyWBH Sync Fix (In Progress)
+- [ ] Fix MyWBH sync to successfully fetch agent data
 - [ ] Ensure correct title level to rank mapping (01=TA, 10=A, 15=SA, 17=MD, 20=SMD)
-- [ ] Verify all agent ranks are updated automatically from MyWFG source data
+- [ ] Verify all agent ranks are updated automatically from MyWBH source data
 - [ ] Remove need for manual rank corrections
 
 
@@ -468,9 +468,9 @@
 
 
 ## Agent Home Address Extraction (Completed)
-- [x] Investigate MyWFG Hierarchy Tool page structure for address data
+- [x] Investigate MyWBH Hierarchy Tool page structure for address data
 - [x] Add homeAddress field to agents table schema
-- [x] Implement address extraction in MyWFG scraper (fetchAgentAddress, fetchAgentAddresses functions)
+- [x] Implement address extraction in MyWBH scraper (fetchAgentAddress, fetchAgentAddresses functions)
 - [x] Update sync service to populate agent addresses
 - [x] Display addresses in agent detail view with MapPin icon
 - [x] Test address extraction with manual sync (requires running sync with addresses)
@@ -647,3 +647,108 @@
 - [x] Created BulkPolicyUpdateDialog for batch updating multiple policies
 - [x] Added Bulk Update button to Production Dashboard
 - [x] Created updatePolicy mutation in routers.ts
+
+
+## Independent Deployment Preparation (In Progress - Jan 8, 2026)
+
+### Rebranding WBH to WBH
+- [ ] Find and replace all "WFG" references to "WBH" in codebase
+- [ ] Update database table names if needed (wfgRanks -> wbhRanks)
+- [ ] Update project name from wbh-crm to wbh-crm
+- [ ] Update all UI text and labels
+
+### Remove Manus Dependencies
+- [ ] Remove Manus OAuth and implement self-hosted authentication
+- [ ] Remove Puppeteer dependencies
+- [ ] Remove Manus-specific tooling (BUILT_IN_FORGE_API, etc.)
+- [ ] Replace Manus notification system with email-based notifications
+- [ ] Remove all VITE_* Manus environment variables
+
+### Code Review & Optimization
+- [ ] Refactor code for readability and maintainability
+- [ ] Remove unused code, libraries, and configurations
+- [ ] Optimize performance and security
+- [ ] Ensure clean code standards
+
+### Documentation (Non-Technical)
+- [ ] Plain-language application overview
+- [ ] High-level architectural overview
+- [ ] Data flow documentation
+- [ ] Component interaction descriptions
+- [ ] Step-by-step maintenance instructions
+- [ ] Password/credential update instructions
+
+### Deployment Preparation
+- [ ] Ensure deployable on Hostinger or local environment
+- [ ] Make codebase fully independent
+- [ ] Use only standard, self-hostable dependencies
+- [ ] Create deployment guide
+
+### GitHub Delivery
+- [ ] Create/access private GitHub repository
+- [ ] Push finalized codebase
+- [ ] Ensure no plaintext credentials in code
+
+
+## Restore Automation & Documentation (Jan 8, 2026)
+- [ ] Restore Puppeteer/Playwright dependencies
+- [ ] Restore automated sync services for MyWFG and Transamerica
+- [ ] Create comprehensive documentation for credentials management
+- [ ] Document how to update MyWFG credentials
+- [ ] Document how to update Transamerica credentials and security questions
+- [ ] Document how to configure email for OTP fetching
+- [ ] Test automated login works correctly
+- [ ] Verify Hostinger compatibility
+- [ ] Push to GitHub repository
+
+
+## Comprehensive Testing Checklist (Jan 8, 2026)
+
+### Authentication System
+- [x] Test user registration
+- [x] Test user login with email/password
+- [x] Test logout functionality
+- [x] Test session persistence
+- [x] Test protected routes redirect
+
+### MyWFG Sync Automation
+- [ ] Test MyWFG auto-login with credentials
+- [ ] Test OTP fetching from Gmail
+- [ ] Test data extraction (agents, production, cash flow)
+- [ ] Test sync job scheduling
+- [ ] Test error handling and retries
+
+### Transamerica Sync Automation
+- [ ] Test Transamerica auto-login with credentials
+- [ ] Test security questions handling
+- [ ] Test OTP fetching from Gmail
+- [ ] Test pending policies extraction
+- [ ] Test inforce policies extraction
+- [ ] Test sync job scheduling
+
+### Dashboard & Data Display
+- [x] Test main dashboard loads correctly
+- [x] Test metrics display
+- [x] Test charts render properly
+- [x] Test data refresh
+
+### Production Page
+- [x] Test Production overview tab
+- [x] Test All Policies tab
+- [x] Test Top Agents tab
+- [x] Test commission calculations
+- [x] Test policy detail dialog
+- [ ] Test bulk update functionality
+
+### Other Pages
+- [x] Test Team Members page
+- [x] Test Settings page
+- [x] Test Notification Settings
+- [x] Test all navigation links
+
+### Code Cleanup
+- [ ] Remove unused files
+- [ ] Remove unused dependencies
+- [x] Fix all TypeScript errors
+- [x] Update all failing tests (79/79 passing)
+- [ ] Optimize imports

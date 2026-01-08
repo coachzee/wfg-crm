@@ -1,4 +1,4 @@
-# WFG CRM Developer Guide
+# WBH CRM Developer Guide
 
 **Version:** 1.0  
 **Last Updated:** January 8, 2026  
@@ -34,7 +34,7 @@ Before you begin, ensure you have the following installed:
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd wfg-crm
+cd wbh-crm
 
 # Install dependencies
 pnpm install
@@ -58,7 +58,7 @@ The application requires several environment variables. See `OPERATIONS_GUIDE.md
 ## Project Structure
 
 ```
-wfg-crm/
+wbh-crm/
 ├── client/                    # Frontend React application
 │   ├── public/               # Static assets (logo, favicon)
 │   ├── src/
@@ -86,7 +86,7 @@ wfg-crm/
 │   ├── db.ts                # Database helpers
 │   ├── gmail-otp.ts         # Gmail OTP service
 │   ├── auto-login-*.ts      # Portal automation
-│   ├── mywfg-*.ts           # MyWFG services
+│   ├── mywfg-*.ts           # MyWBH services
 │   ├── transamerica-*.ts    # Transamerica services
 │   └── *.test.ts            # Test files
 │
@@ -424,7 +424,7 @@ describe("New Feature", () => {
 
 ### Updating Portal Credentials
 
-See `OPERATIONS_GUIDE.md` for detailed instructions on updating MyWFG and Transamerica credentials in the Manus Secrets panel.
+See `OPERATIONS_GUIDE.md` for detailed instructions on updating MyWBH and Transamerica credentials in the Manus Secrets panel.
 
 ### Debugging Sync Issues
 

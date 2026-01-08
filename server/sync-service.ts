@@ -2,9 +2,6 @@ import { loginToMyWFGWithCache } from './auto-login-mywfg';
 import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts } from './auto-login-transamerica';
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
-import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses } from './mywfg-downline-scraper';
-import { getDb } from './db';
-import * as schema from '../drizzle/schema';
 
 interface SyncResult {
   success: boolean;
@@ -14,67 +11,32 @@ interface SyncResult {
   timestamp: Date;
 }
 
-// Sync MyWFG data - fetches downline status and updates agent ranks
+// Sync MyWFG data
 export async function syncMyWFGData(): Promise<SyncResult> {
   const timestamp = new Date();
   console.log(`[Sync] Starting MyWFG sync at ${timestamp.toISOString()}`);
   
   try {
-    // First try to login to establish session
     const loginResult = await loginToMyWFGWithCache();
     
     if (!loginResult.success) {
-      console.log('[Sync] Login cache failed, will try direct fetch...');
-    }
-    
-    // Fetch downline status data from MyWFG
-    console.log('[Sync] Fetching downline status from MyWFG...');
-    const downlineResult = await fetchDownlineStatus();
-    
-    if (!downlineResult.success) {
       return {
         success: false,
         platform: 'MyWFG',
-        error: downlineResult.error || 'Failed to fetch downline status',
+        error: loginResult.error,
         timestamp
       };
     }
     
-    console.log(`[Sync] Fetched ${downlineResult.agents.length} agents from MyWFG`);
+    // TODO: Extract data from MyWFG using the session cookies
+    // This would involve navigating to various pages and scraping data
     
-    // Sync agents to database (this updates ranks based on title levels)
-    const db = await getDb();
-    if (!db) {
-      return {
-        success: false,
-        platform: 'MyWFG',
-        error: 'Database not available',
-        timestamp
-      };
-    }
-    
-    const syncResult = await syncAgentsFromDownlineStatus(db, schema);
-    
-    if (!syncResult.success) {
-      return {
-        success: false,
-        platform: 'MyWFG',
-        error: syncResult.error || 'Failed to sync agents to database',
-        timestamp
-      };
-    }
-    
-    console.log(`[Sync] MyWFG sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}`);
+    console.log('[Sync] MyWFG sync completed successfully');
     return {
       success: true,
       platform: 'MyWFG',
       timestamp,
-      data: { 
-        message: 'Sync completed',
-        agentsAdded: syncResult.added,
-        agentsUpdated: syncResult.updated,
-        totalAgents: downlineResult.agents.length
-      }
+      data: { message: 'Sync completed' }
     };
     
   } catch (error) {

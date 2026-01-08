@@ -184,7 +184,7 @@ const WeeklySyncSummary = memo(function WeeklySyncSummary() {
               <RefreshCw className="h-5 w-5 text-indigo-500" />
               Weekly Sync Summary
             </CardTitle>
-            <CardDescription>Automated MyWFG sync status (3:30 PM & 6:30 PM daily)</CardDescription>
+            <CardDescription>Automated MyWBH sync status (3:30 PM & 6:30 PM daily)</CardDescription>
           </div>
           <Button 
             variant="outline" 
@@ -381,7 +381,7 @@ export default function Dashboard() {
           subtitle="Team members in your organization"
           icon={Users}
           trend="up"
-          trendValue="MyWFG"
+          trendValue="MyWBH"
           onClick={navigateToAgents}
         />
         <MetricCard
@@ -414,7 +414,7 @@ export default function Dashboard() {
         <MetricCard
           title="Last Sync"
           value={stats?.lastSyncDate ? formatDistanceToNow(new Date(stats.lastSyncDate), { addSuffix: true }) : "Never"}
-          subtitle="MyWFG integration"
+          subtitle="MyWBH integration"
           icon={RefreshCw}
           variant={stats?.lastSyncDate ? "default" : "warning"}
         />
@@ -489,7 +489,7 @@ export default function Dashboard() {
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                 Compliance & Platform Fee Status
               </CardTitle>
-              <CardDescription>Pending items requiring attention from MyWFG reports</CardDescription>
+              <CardDescription>Pending items requiring attention from MyWBH reports</CardDescription>
             </div>
             <Badge variant="outline" className="font-mono text-amber-600 border-amber-500/50">
               {(metrics?.complianceFirstNotice || 3) + (metrics?.complianceFinalNotice || 3)} pending
@@ -722,7 +722,7 @@ export default function Dashboard() {
                 <RefreshCw className="h-5 w-5 text-blue-500" />
                 Automated Data Sync
               </CardTitle>
-              <CardDescription>Sync data from MyWFG and Transamerica automatically</CardDescription>
+              <CardDescription>Sync data from MyWBH and Transamerica automatically</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {autoSyncData?.lastSyncTime && (
@@ -771,7 +771,7 @@ export default function Dashboard() {
               </h4>
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Trigger a manual sync to pull the latest data from MyWFG and Transamerica. You'll receive email alerts during the process.
+                  Trigger a manual sync to pull the latest data from MyWBH and Transamerica. You'll receive email alerts during the process.
                 </p>
                 <Button
                   variant={syncStatus === 'success' ? 'outline' : 'default'}

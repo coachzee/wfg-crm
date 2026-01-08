@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, userId, isActive, lastUsedAt, createdAt FROM credentials;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, userId, isActive, lastUsedAt, createdAt FROM credentials;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "isActive": "1",
+      "lastUsedAt": "NULL",
+      "createdAt": "2026-01-04 22:18:34"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tisActive\tlastUsedAt\tcreatedAt\n1\t1\t1\tNULL\t2026-01-04 22:18:34\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

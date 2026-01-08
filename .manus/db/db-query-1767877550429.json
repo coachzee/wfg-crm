@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, email, name FROM users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, email, name FROM users;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "zaidshopeju@gmail.com",
+      "name": "Zaid Shopeju"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\n1\tzaidshopeju@gmail.com\tZaid Shopeju\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

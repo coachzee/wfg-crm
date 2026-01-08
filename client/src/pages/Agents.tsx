@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// WFG Rank configuration
+// WBH Rank configuration
 const RANK_CONFIG: Record<string, { label: string; icon: string; color: string }> = {
   TRAINING_ASSOCIATE: { label: "TA", icon: "🎓", color: "bg-gray-100 text-gray-700" },
   ASSOCIATE: { label: "A", icon: "📋", color: "bg-blue-100 text-blue-700" },

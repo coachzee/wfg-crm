@@ -46,7 +46,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
     
     // Navigate to MyWFG login page
     console.log('[MyWFG] Navigating to login page...');
-    await page.goto('https://www.mywfg.com/login', { 
+    await page.goto('https://my.wfgconnect.com/login', { 
       waitUntil: 'networkidle2',
       timeout: 30000 
     });

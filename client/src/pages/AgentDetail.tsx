@@ -20,7 +20,7 @@ const STAGE_COLORS: Record<string, string> = {
   CHARGEBACK_PROOF: "bg-red-100 text-red-800",
 };
 
-// WFG Rank display configuration
+// WBH Rank display configuration
 const RANK_CONFIG: Record<string, { label: string; color: string; level: number; icon: string }> = {
   TRAINING_ASSOCIATE: { label: "Training Associate", color: "bg-gray-100 text-gray-800 border-gray-300", level: 1, icon: "🎓" },
   ASSOCIATE: { label: "Associate", color: "bg-blue-100 text-blue-800 border-blue-300", level: 2, icon: "📋" },
@@ -193,7 +193,7 @@ export default function AgentDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5 text-amber-500" />
-              <CardTitle className="text-lg">WFG Rank Progression</CardTitle>
+              <CardTitle className="text-lg">WBH Rank Progression</CardTitle>
             </div>
             <span className="text-sm text-muted-foreground">Level {rankConfig.level}</span>
           </div>
@@ -468,8 +468,8 @@ export default function AgentDetail() {
         <TabsContent value="advancement" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>WFG Rank History</CardTitle>
-              <CardDescription>Career progression through WFG ranks</CardDescription>
+              <CardTitle>WBH Rank History</CardTitle>
+              <CardDescription>Career progression through WBH ranks</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
