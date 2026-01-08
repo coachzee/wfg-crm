@@ -606,3 +606,44 @@
 - [x] Add getTopAgentsByCommission function in db.ts
 - [x] Add router endpoint for getTopAgentsByCommission
 - [x] Write unit tests for getTopAgentsByCommission (3 tests passing)
+
+
+## Top Agents Commission Fix (In Progress - Jan 8, 2026)
+- [ ] Extract writing agent data from all 97 Transamerica policy detail pages
+- [ ] Extract Target Premium from Policy Guidelines section
+- [ ] Extract Split Agent information where applicable
+- [ ] Update database with correct agent attribution
+- [ ] Recalculate commissions with correct agent levels
+- [ ] Verify Top Agents display shows accurate data
+
+
+## Bulk Update & Transamerica Sync Features (In Progress - Jan 8, 2026)
+- [ ] Create bulk update UI for selecting multiple policies
+- [ ] Add ability to set default agent (name, code, level) for selected policies
+- [ ] Add ability to set split agent information for selected policies
+- [ ] Create "Sync from Transamerica" button for automated data extraction
+- [ ] Implement Transamerica login automation for sync
+- [ ] Extract writing agent and target premium from policy detail pages
+- [ ] Update database with extracted data
+- [ ] Test bulk update functionality
+- [ ] Test Transamerica sync functionality
+
+
+## Top Agents Commission Fix (Completed - Jan 8, 2026)
+- [x] Analyzed policy data structure from Transamerica
+- [x] Created bulk update script to set default agent (ZAID SHOPEJU, 65% SMD) for all policies
+- [x] Updated 83 policies with correct Target Premium (annualized from billing frequency)
+- [x] Fixed commission calculation to handle decimal levels correctly (0.65 = 65%)
+- [x] Fixed getTopAgentsByCommission function to properly calculate commission
+- [x] Verified Top Agents display shows accurate data:
+  - ZAID SHOPEJU: $562,111 commission (83 policies, 65% level)
+  - OLUSEYI OGUNLOLU: $6,157 commission (1 policy, 25% level)
+  - NONSO HUMPHREY: $2,676 commission (1 policy, 25% level)
+
+## Bulk Update & Policy Edit Features (Completed - Jan 8, 2026)
+- [x] Created PolicyDetailDialog component for editing individual policies
+- [x] Added Target Premium, Split Agent, and Commission Level fields
+- [x] Implemented live Commission Preview calculation
+- [x] Created BulkPolicyUpdateDialog for batch updating multiple policies
+- [x] Added Bulk Update button to Production Dashboard
+- [x] Created updatePolicy mutation in routers.ts

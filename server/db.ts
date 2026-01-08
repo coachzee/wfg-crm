@@ -1106,8 +1106,12 @@ export async function getTopAgentsByCommission(limit: number = 10) {
     const primaryName = policy.writingAgentName || 'Unknown';
     const primaryCode = policy.writingAgentCode || '';
     const primarySplit = Number(policy.writingAgentSplit) || 100;
-    const primaryLevel = Number(policy.writingAgentLevel) || 55;
-    const primaryCommission = targetPremium * multiplier * (primaryLevel / 100) * (primarySplit / 100);
+    // Level is stored as decimal (0.65 = 65%) - if > 1, it's a percentage, otherwise it's a decimal
+    let primaryLevel = Number(policy.writingAgentLevel) || 0.55;
+    if (primaryLevel > 1) {
+      primaryLevel = primaryLevel / 100; // Convert percentage to decimal
+    }
+    const primaryCommission = targetPremium * multiplier * primaryLevel * (primarySplit / 100);
     
     const existingPrimary = agentMap.get(primaryName) || { 
       name: primaryName, 
@@ -1121,7 +1125,7 @@ export async function getTopAgentsByCommission(limit: number = 10) {
     existingPrimary.totalCommission += primaryCommission;
     existingPrimary.totalPremium += targetPremium * (primarySplit / 100);
     existingPrimary.policyCount += 1;
-    existingPrimary.commissionLevelSum += Number(primaryLevel);
+    existingPrimary.commissionLevelSum += primaryLevel * 100; // Store as percentage for display
     existingPrimary.avgCommissionLevel = existingPrimary.commissionLevelSum / existingPrimary.policyCount;
     if (!existingPrimary.agentCode && primaryCode) {
       existingPrimary.agentCode = primaryCode;
@@ -1133,8 +1137,12 @@ export async function getTopAgentsByCommission(limit: number = 10) {
       const secondaryName = policy.secondAgentName;
       const secondaryCode = policy.secondAgentCode || '';
       const secondarySplit = Number(policy.secondAgentSplit);
-      const secondaryLevel = Number(policy.secondAgentLevel) || 25;
-      const secondaryCommission = targetPremium * multiplier * (secondaryLevel / 100) * (secondarySplit / 100);
+      // Level is stored as decimal (0.25 = 25%) - if > 1, it's a percentage, otherwise it's a decimal
+      let secondaryLevel = Number(policy.secondAgentLevel) || 0.25;
+      if (secondaryLevel > 1) {
+        secondaryLevel = secondaryLevel / 100; // Convert percentage to decimal
+      }
+      const secondaryCommission = targetPremium * multiplier * secondaryLevel * (secondarySplit / 100);
       
       const existingSecondary = agentMap.get(secondaryName) || { 
         name: secondaryName, 
@@ -1148,7 +1156,7 @@ export async function getTopAgentsByCommission(limit: number = 10) {
       existingSecondary.totalCommission += secondaryCommission;
       existingSecondary.totalPremium += targetPremium * (secondarySplit / 100);
       existingSecondary.policyCount += 1;
-      existingSecondary.commissionLevelSum += Number(secondaryLevel);
+      existingSecondary.commissionLevelSum += secondaryLevel * 100; // Store as percentage for display
       existingSecondary.avgCommissionLevel = existingSecondary.commissionLevelSum / existingSecondary.policyCount;
       if (!existingSecondary.agentCode && secondaryCode) {
         existingSecondary.agentCode = secondaryCode;

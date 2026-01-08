@@ -1,0 +1,50 @@
+{
+  "query": "SELECT policyNumber, writingAgentName, writingAgentLevel, writingAgentSplit, targetPremium, calculatedCommission FROM inforcePolicies WHERE writingAgentName = 'ZAID SHOPEJU' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT policyNumber, writingAgentName, writingAgentLevel, writingAgentSplit, targetPremium, calculatedCommission FROM inforcePolicies WHERE writingAgentName = 'ZAID SHOPEJU' LIMIT 5;",
+  "rows": [
+    {
+      "policyNumber": "6602269223",
+      "writingAgentName": "ZAID SHOPEJU",
+      "writingAgentLevel": "0.65",
+      "writingAgentSplit": "100",
+      "targetPremium": "1228.56",
+      "calculatedCommission": "998.20"
+    },
+    {
+      "policyNumber": "6602269192",
+      "writingAgentName": "ZAID SHOPEJU",
+      "writingAgentLevel": "0.65",
+      "writingAgentSplit": "100",
+      "targetPremium": "16720.00",
+      "calculatedCommission": "13585.00"
+    },
+    {
+      "policyNumber": "6602261140",
+      "writingAgentName": "ZAID SHOPEJU",
+      "writingAgentLevel": "0.65",
+      "writingAgentSplit": "100",
+      "targetPremium": "1092.00",
+      "calculatedCommission": "887.25"
+    },
+    {
+      "policyNumber": "6602261128",
+      "writingAgentName": "ZAID SHOPEJU",
+      "writingAgentLevel": "0.65",
+      "writingAgentSplit": "100",
+      "targetPremium": "993.00",
+      "calculatedCommission": "806.81"
+    },
+    {
+      "policyNumber": "6602261107",
+      "writingAgentName": "ZAID SHOPEJU",
+      "writingAgentLevel": "0.65",
+      "writingAgentSplit": "100",
+      "targetPremium": "1145.50",
+      "calculatedCommission": "930.72"
+    }
+  ],
+  "messages": [],
+  "stdout": "policyNumber\twritingAgentName\twritingAgentLevel\twritingAgentSplit\ttargetPremium\tcalculatedCommission\n6602269223\tZAID SHOPEJU\t0.65\t100\t1228.56\t998.20\n6602269192\tZAID SHOPEJU\t0.65\t100\t16720.00\t13585.00\n6602261140\tZAID SHOPEJU\t0.65\t100\t1092.00\t887.25\n6602261128\tZAID SHOPEJU\t0.65\t100\t993.00\t806.81\n6602261107\tZAID SHOPEJU\t0.65\t100\t1145.50\t930.72\n",
+  "stderr": "",
+  "execution_time_ms": 739
+}

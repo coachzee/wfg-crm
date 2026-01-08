@@ -1,0 +1,632 @@
+[
+  {
+    "policyNumber": "6602269223",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:30:59.839Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602269192",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:08.897Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602261140",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:17.955Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602261128",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:26.979Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602261107",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:36.004Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602261087",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:45.025Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602260436",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:31:54.920Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602253476",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:03.972Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602249306",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:12.998Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602248890",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:22.031Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602240821",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:31.054Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602238677",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:40.097Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602238477",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:49.176Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602238442",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:32:58.203Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602238431",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:07.229Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602238411",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:16.255Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602229276",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:25.282Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602229206",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:34.428Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602228160",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:43.456Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602226983",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:33:52.481Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602220773",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:01.518Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602220770",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:10.548Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602220390",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:19.576Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602209351",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:28.604Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602206689",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:37.630Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602206390",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:46.674Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602193338",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:34:55.758Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602193310",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:04.786Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602188517",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:13.818Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602187664",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:22.846Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602187637",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:31.879Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602187565",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:40.905Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602187500",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:49.977Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602182339",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:35:59.003Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602179163",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:08.028Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602170374",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:17.054Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602164027",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:26.080Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602164014",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:35.107Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602163662",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:44.134Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602149144",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:36:53.162Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602144055",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:02.188Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602131194",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:11.213Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602131049",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:20.239Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602130905",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:29.266Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602129205",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:38.294Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602128468",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:47.321Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602127194",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:37:56.350Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602126722",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:05.380Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602125120",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:14.416Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602122713",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:23.444Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602120233",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:32.484Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602112226",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:41.512Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602110189",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:50.538Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602105477",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:38:59.565Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602103743",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:08.593Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602095343",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:17.618Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602093495",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:26.644Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602093453",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:35.674Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602093037",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:44.703Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602093014",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:39:53.730Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602092983",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:02.759Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602089630",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:11.783Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602089626",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:20.809Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602078054",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:29.838Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602076037",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:38.867Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602074840",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:47.898Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602072090",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:40:56.930Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602056904",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:05.956Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602047476",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:14.980Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602037542",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:24.007Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602032636",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:33.037Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602030925",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:42.063Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602016169",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:41:51.089Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602013018",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:00.116Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602012170",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:09.148Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602011183",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:18.172Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602004668",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:27.195Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6602001359",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:36.220Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601990789",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:45.249Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601986273",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:42:54.276Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601985304",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:03.303Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601979120",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:12.329Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601979097",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:21.356Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601972047",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:30.384Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601958027",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:39.411Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601946313",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:48.436Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601935778",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:43:57.465Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601935732",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:44:06.493Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601934000",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:44:15.521Z",
+    "error": null
+  },
+  {
+    "policyNumber": "6601933717",
+    "writingAgents": [],
+    "targetPremium": null,
+    "extractedAt": "2026-01-08T11:44:24.550Z",
+    "error": null
+  }
+]
