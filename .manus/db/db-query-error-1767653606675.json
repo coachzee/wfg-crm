@@ -1,8 +1,0 @@
-{
-  "query": "UPDATE agents SET team_type = 'BASE_SHOP' WHERE team_type IS NULL",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute UPDATE agents SET team_type = 'BASE_SHOP' WHERE team_type IS NULL",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'team_type' in 'where clause'"
-  ]
-}

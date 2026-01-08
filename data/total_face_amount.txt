@@ -1,4 +1,0 @@
-Total Face Amount: $26,025,000
-Total Policies: 52
-Display Format: $26.02M
-Raw Value: 26025000
