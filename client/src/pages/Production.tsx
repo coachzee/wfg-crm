@@ -83,7 +83,7 @@ const LeaderboardRow = memo(function LeaderboardRow({
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{agent.name}</p>
-        <p className="text-xs text-muted-foreground">{agent.stage.replace(/_/g, " ")}</p>
+        <p className="text-xs text-muted-foreground">{agent.stage ? agent.stage.replace(/_/g, " ") : "Unknown"}</p>
       </div>
       <div className="text-right">
         <p className="font-bold text-emerald-600">${agent.production.toLocaleString()}</p>
@@ -156,7 +156,7 @@ export default function Production() {
     const top10 = sorted.slice(0, 10);
 
     const stages = agents.reduce((acc: any, agent: any) => {
-      const stage = agent.workflowStage.replace(/_/g, " ");
+      const stage = (agent.workflowStage || "unknown").replace(/_/g, " ");
       const existing = acc.find((s: any) => s.name === stage);
       if (existing) {
         existing.value += 1;
