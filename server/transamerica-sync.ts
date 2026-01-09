@@ -164,29 +164,98 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
       }
     }, TRANSAMERICA_USERNAME, TRANSAMERICA_PASSWORD);
 
-    // Click login button
-    await page.click('button[type="submit"], input[type="submit"], button:has-text("Login"), button:has-text("Sign In")');
+    // Click login button - use specific #formLogin ID first
+    console.log("[Transamerica Login] Clicking login button...");
+    await page.evaluate(() => {
+      // First try the specific login button ID
+      const formLoginBtn = document.querySelector('#formLogin') as HTMLElement;
+      if (formLoginBtn) {
+        console.log('Found #formLogin button');
+        formLoginBtn.click();
+        return;
+      }
+      
+      // Try button with Login text inside the login form
+      const loginForm = document.querySelector('form[action*="login"], form[id*="login"], .login-form, #loginForm');
+      if (loginForm) {
+        const formBtn = loginForm.querySelector('button[type="submit"], input[type="submit"]') as HTMLElement;
+        if (formBtn) {
+          formBtn.click();
+          return;
+        }
+      }
+      
+      // Fallback: find button with Login text
+      const buttons = Array.from(document.querySelectorAll('button'));
+      for (const btn of buttons) {
+        const text = btn.textContent?.toLowerCase() || '';
+        if (text === 'login' || text === 'sign in') {
+          btn.click();
+          return;
+        }
+      }
+    });
 
-    // Wait for navigation or OTP page
-    await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 30000 }).catch(() => {});
+    // Wait for page to load after login click
+    await new Promise(resolve => setTimeout(resolve, 8000));
 
     // Check for OTP requirement
-    const pageContent = await page.content();
-    if (pageContent.includes("Extra Security") || pageContent.includes("verification code")) {
+    let pageContent = await page.content();
+    const currentUrlAfterLogin = page.url();
+    console.log(`[Transamerica Login] Checking for OTP requirement... URL: ${currentUrlAfterLogin}`);
+    
+    // Check URL or page content for OTP requirement
+    const otpRequired = currentUrlAfterLogin.includes('securityCode') || 
+                        currentUrlAfterLogin.includes('OTP') ||
+                        pageContent.includes("Extra Security") || 
+                        pageContent.includes("validation code") || 
+                        pageContent.includes("verification code") ||
+                        pageContent.includes("security validation");
+    
+    if (otpRequired) {
       console.log("[Transamerica Login] OTP required, handling...");
       await handleOtpVerification(page);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      pageContent = await page.content();
     }
 
     // Check for security question
     if (pageContent.includes("Unrecognized Device") || pageContent.includes("security question")) {
       console.log("[Transamerica Login] Security question required, handling...");
       await handleSecurityQuestion(page);
+      await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
-    // Verify login success
-    await page.waitForSelector('[class*="dashboard"], [class*="home"], [class*="menu"]', { timeout: 30000 });
-    console.log("[Transamerica Login] Login successful");
-    return true;
+    // Verify login success by checking for dashboard elements or successful redirect
+    const currentUrl = page.url();
+    console.log(`[Transamerica Login] Current URL: ${currentUrl}`);
+    
+    // Check if we're on the agent home page or dashboard
+    if (currentUrl.includes('agent-home') || currentUrl.includes('dashboard') || currentUrl.includes('home')) {
+      console.log("[Transamerica Login] Login successful (URL check)");
+      return true;
+    }
+    
+    // Try to find any dashboard-like element
+    try {
+      await page.waitForSelector('[class*="dashboard"], [class*="home"], [class*="menu"], [class*="card"], .app-container', { timeout: 15000 });
+      console.log("[Transamerica Login] Login successful (element check)");
+      return true;
+    } catch (e) {
+      // Take screenshot for debugging
+      await page.screenshot({ path: '/home/ubuntu/transamerica-login-result.png' });
+      console.log("[Transamerica Login] Could not verify dashboard, checking page content...");
+      
+      // Check if we have any indication of being logged in
+      const bodyText = await page.evaluate(() => document.body.innerText);
+      if (bodyText.includes('Welcome') || bodyText.includes('Agent Home') || bodyText.includes('Launch')) {
+        console.log("[Transamerica Login] Login successful (content check)");
+        return true;
+      }
+    }
+    
+    console.log("[Transamerica Login] Login verification failed");
+    return false;
 
   } catch (error) {
     console.error("[Transamerica Login] Error:", error);
@@ -199,9 +268,39 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
  */
 async function handleOtpVerification(page: Page): Promise<void> {
   try {
-    // Select email option
-    await page.click('input[value*="email"], label:has-text("email")').catch(() => {});
-    await page.click('button:has-text("Submit"), button:has-text("Send")').catch(() => {});
+    // Select email option using JavaScript
+    await page.evaluate(() => {
+      // Find and click email radio button or label
+      const labels = Array.from(document.querySelectorAll('label'));
+      for (const label of labels) {
+        if (label.textContent?.toLowerCase().includes('email')) {
+          label.click();
+          break;
+        }
+      }
+      // Also try radio buttons
+      const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+      for (const radio of radios) {
+        const parent = radio.parentElement;
+        if (parent?.textContent?.toLowerCase().includes('email')) {
+          (radio as HTMLElement).click();
+          break;
+        }
+      }
+    });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Click Submit/Send button
+    await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      for (const btn of buttons) {
+        const text = btn.textContent?.toLowerCase() || '';
+        if (text.includes('submit') || text.includes('send')) {
+          btn.click();
+          return;
+        }
+      }
+    });
 
     // Wait for OTP email
     await new Promise(resolve => setTimeout(resolve, 10000));
@@ -214,8 +313,31 @@ async function handleOtpVerification(page: Page): Promise<void> {
     }
 
     // Enter OTP
-    await page.type('input[name="otp"], input[placeholder*="code" i], input[type="text"]', otp);
-    await page.click('button:has-text("Submit"), button:has-text("Verify")');
+    await page.evaluate((otpCode) => {
+      const inputs = Array.from(document.querySelectorAll('input'));
+      for (const input of inputs) {
+        const name = input.name?.toLowerCase() || '';
+        const placeholder = input.placeholder?.toLowerCase() || '';
+        const type = input.type?.toLowerCase() || '';
+        if (name.includes('otp') || name.includes('code') || placeholder.includes('code') || type === 'tel') {
+          input.value = otpCode;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          return;
+        }
+      }
+    }, otp);
+    
+    // Click Submit/Verify button
+    await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      for (const btn of buttons) {
+        const text = btn.textContent?.toLowerCase() || '';
+        if (text.includes('submit') || text.includes('verify')) {
+          btn.click();
+          return;
+        }
+      }
+    });
 
     await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 30000 }).catch(() => {});
 
@@ -245,7 +367,16 @@ async function handleSecurityQuestion(page: Page): Promise<void> {
       // Check "Remember this device"
       await page.click('input[type="checkbox"]').catch(() => {});
       
-      await page.click('button:has-text("Submit"), button:has-text("Continue")');
+      await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        for (const btn of buttons) {
+          const text = btn.textContent?.toLowerCase() || '';
+          if (text.includes('submit') || text.includes('continue')) {
+            btn.click();
+            return;
+          }
+        }
+      });
       await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 30000 }).catch(() => {});
     }
 
@@ -260,8 +391,8 @@ async function handleSecurityQuestion(page: Page): Promise<void> {
  */
 async function navigateToLifeAccess(page: Page): Promise<void> {
   try {
-    // Look for Life Access launch button
-    await page.waitForSelector('button:has-text("Launch"), a:has-text("Life Access")', { timeout: 30000 });
+    // Wait for dashboard to load
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Click Launch for Transamerica Life Access
     const buttons = await page.$$('button');
@@ -281,7 +412,7 @@ async function navigateToLifeAccess(page: Page): Promise<void> {
 
     // Wait for Life Access to load
     await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 }).catch(() => {});
-    await page.waitForSelector('[class*="book"], [class*="pending"], a:has-text("My Book")', { timeout: 30000 });
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
   } catch (error) {
     console.error("[Transamerica Life Access] Error:", error);
@@ -294,9 +425,17 @@ async function navigateToLifeAccess(page: Page): Promise<void> {
  */
 async function navigateToPendingPolicies(page: Page): Promise<void> {
   try {
-    // Click My Book
-    await page.click('a:has-text("My Book")');
-    await page.waitForSelector('[class*="pending"], button:has-text("VIEW")', { timeout: 30000 });
+    // Click My Book using JavaScript
+    await page.evaluate(() => {
+      const links = Array.from(document.querySelectorAll('a'));
+      for (const link of links) {
+        if (link.textContent?.toLowerCase().includes('my book')) {
+          link.click();
+          return;
+        }
+      }
+    });
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
   } catch (error) {
     console.error("[Transamerica Navigate] Error:", error);

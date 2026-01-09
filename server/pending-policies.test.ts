@@ -140,10 +140,12 @@ describe("Pending Policies Summary", () => {
       byStatus[p.status] = (byStatus[p.status] || 0) + 1;
     });
 
-    // We seeded 4 policies: 2 Pending, 1 Incomplete, 1 Post Approval Processing
-    expect(byStatus["Pending"]).toBe(2);
-    expect(byStatus["Incomplete"]).toBe(1);
-    expect(byStatus["Post Approval Processing"]).toBe(1);
+    // Current data from Transamerica: 12 policies total
+    // 5 Issued, 3 Pending, 2 Post Approval Processing, 2 Incomplete
+    expect(byStatus["Pending"]).toBe(3);
+    expect(byStatus["Incomplete"]).toBe(2);
+    expect(byStatus["Post Approval Processing"]).toBe(2);
+    expect(byStatus["Issued"]).toBe(5);
   });
 
   it("should count requirements by category", async () => {

@@ -645,4 +645,62 @@
 - [x] Document all features and how to use them
 - [x] Document environment variables and configuration
 - [x] Document database setup and migrations
-- [x] Push documentation to GitHub
+- [ ] Push documentation to GitHub
+
+
+## API Documentation & Tutorials - In Progress
+- [ ] Create comprehensive API documentation (API_REFERENCE.md)
+- [ ] Document all tRPC procedures and endpoints
+- [ ] Document request/response schemas
+- [ ] Create video tutorial scripts for key features
+- [ ] Set up uptime monitoring with UptimeRobot
+- [ ] Push all documentation to GitHub
+
+
+## Health Check Endpoint
+- [ ] Create /api/health endpoint that returns 200 OK
+- [ ] Update UptimeRobot monitors to use health endpoint
+- [ ] Remove invalid API endpoint monitors
+
+
+## Health Check Endpoint & Monitoring - COMPLETED
+- [x] Create /api/health endpoint that returns 200 OK with status, timestamp, uptime, and service name
+- [x] Remove invalid tRPC API endpoint monitors from UptimeRobot (agents.getAll, auth.me, inforcePolicies)
+- [x] Add health endpoint monitor to UptimeRobot (wealthbuildershaven.com/api/health)
+- [x] Verify main site monitor is working (wealthbuildershaven.com - 100% uptime)
+
+
+## Written Tutorial Guides with Screenshots - In Progress
+- [ ] Capture screenshots of all key workflows
+- [ ] Create Tutorial 1: Getting Started & Onboarding Guide
+- [ ] Create Tutorial 2: Agent Management Guide
+- [ ] Create Tutorial 3: Production & Commission Tracking Guide
+- [ ] Create Tutorial 4: Task Management Guide
+- [ ] Push guides to GitHub
+
+
+## Written Tutorial Guides with Screenshots - COMPLETED
+- [x] Capture screenshots of all key workflows (7 screenshots in docs/screenshots/)
+- [x] Create Tutorial 1: Getting Started & Onboarding (TUTORIAL_01_GETTING_STARTED.md)
+- [x] Create Tutorial 2: Agent Management (TUTORIAL_02_AGENT_MANAGEMENT.md)
+- [x] Create Tutorial 3: Production Tracking (TUTORIAL_03_PRODUCTION_TRACKING.md)
+- [x] Create Tutorial 4: Task Management (TUTORIAL_04_TASK_MANAGEMENT.md)
+- [x] Create Tutorial 5: Settings & Integration (TUTORIAL_05_SETTINGS_INTEGRATION.md)
+- [x] Create docs/README.md index file for all documentation
+
+
+## Transamerica Auto-Sync with OTP Automation - Completed (Jan 8, 2026)
+- [x] Review existing Transamerica login service
+- [x] Test browser-based login (session cookies maintained, no OTP needed when device remembered)
+- [x] Navigate to Transamerica Life Access portal
+- [x] Extract pending policies data (12 policies: 5 Issued, 3 Pending, 2 Post Approval, 2 Incomplete)
+- [x] Download CSV export of pending policies
+- [x] Import pending policies to database (8 inserted, 4 updated)
+- [x] Create import script: scripts/import-pending-policies.mjs
+- [ ] Push changes to GitHub
+
+## Key Discovery - Transamerica Login
+- Browser session maintains login state (device remembered)
+- Direct navigation to Life Access works without OTP/security questions
+- Security question automation not needed when using persistent browser session
+- Total pending pipeline: $7.25M face amount across 12 policies
