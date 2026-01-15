@@ -480,6 +480,93 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Projected Income Card - Based on 65% SMD Commission Rate */}
+      {metrics?.projectedIncome && (
+        <Card className="card-hover border-green-500/30 bg-gradient-to-br from-green-500/5 to-emerald-500/10">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  Projected Income
+                </CardTitle>
+                <CardDescription>Based on 65% SMD commission rate (Target Premium × 125% × 65%)</CardDescription>
+              </div>
+              <Badge variant="outline" className="font-mono text-green-600 border-green-500/50">
+                {metrics.projectedIncome.pendingPoliciesCount + metrics.projectedIncome.inforcePoliciesCount} policies
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Total Projected Income */}
+              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium text-green-600">Total Projected</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">
+                  ${metrics.projectedIncome.totalProjected >= 1000 
+                    ? (metrics.projectedIncome.totalProjected / 1000).toFixed(1) + 'K'
+                    : metrics.projectedIncome.totalProjected.toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Combined pending + inforce</p>
+              </div>
+              
+              {/* From Pending Policies (Issued) */}
+              <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-600">Pending (Issued)</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600">
+                  ${metrics.projectedIncome.breakdown.pendingIssued >= 1000 
+                    ? (metrics.projectedIncome.breakdown.pendingIssued / 1000).toFixed(1) + 'K'
+                    : metrics.projectedIncome.breakdown.pendingIssued.toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Ready for delivery</p>
+              </div>
+              
+              {/* From Pending Policies (Underwriting) */}
+              <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium text-amber-600">In Underwriting</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-600">
+                  ${metrics.projectedIncome.breakdown.pendingUnderwriting >= 1000 
+                    ? (metrics.projectedIncome.breakdown.pendingUnderwriting / 1000).toFixed(1) + 'K'
+                    : metrics.projectedIncome.breakdown.pendingUnderwriting.toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">70% probability factor</p>
+              </div>
+              
+              {/* From Inforce Policies */}
+              <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm font-medium text-emerald-600">Inforce Active</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-600">
+                  ${metrics.projectedIncome.breakdown.inforceActive >= 1000 
+                    ? (metrics.projectedIncome.breakdown.inforceActive / 1000).toFixed(1) + 'K'
+                    : metrics.projectedIncome.breakdown.inforceActive.toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Calculated commission</p>
+              </div>
+            </div>
+            
+            {/* Commission Formula Explanation */}
+            <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
+              <p className="text-xs text-muted-foreground">
+                <strong>Formula:</strong> Target Premium × 125% (Transamerica constant) × 65% (SMD agent level) = Commission.
+                Pending policies in underwriting are weighted at 70% probability.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Compliance & Platform Fee Tracking */}
       <Card className="card-hover border-amber-500/20">
         <CardHeader className="pb-2">

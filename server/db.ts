@@ -262,6 +262,101 @@ export async function getLatestSyncLog() {
   return result[0] || null;
 }
 
+// Calculate projected income based on pending policies and inforce policies
+// Uses the WFG commission formula: Target Premium x 125% (Transamerica constant) x Agent Level (65% for SMD)
+async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
+  const SMD_AGENT_LEVEL = 0.65; // 65% for SMD and above
+  const TRANSAMERICA_CONSTANT = 1.25; // 125%
+  
+  // Default values if no database
+  const defaultResult = {
+    fromPendingPolicies: 0,
+    fromInforcePolicies: 0,
+    totalProjected: 0,
+    pendingPoliciesCount: 0,
+    inforcePoliciesCount: 0,
+    breakdown: {
+      pendingIssued: 0,
+      pendingUnderwriting: 0,
+      inforceActive: 0,
+    },
+    agentLevel: SMD_AGENT_LEVEL,
+    transamericaConstant: TRANSAMERICA_CONSTANT,
+  };
+  
+  if (!db) return defaultResult;
+  
+  try {
+    // Import pending policies table (already imported at bottom of file)
+    const { pendingPolicies } = await import("../drizzle/schema");
+    
+    // Get pending policies with target premium
+    const pending = await db.select().from(pendingPolicies);
+    
+    // Get inforce policies
+    const inforce = await db.select().from(inforcePolicies);
+    
+    // Calculate projected income from pending policies
+    // Only count policies that are likely to result in commission (Issued, Pending, Post Approval Processing)
+    const pendingIssued = pending.filter(p => p.status === 'Issued');
+    const pendingUnderwriting = pending.filter(p => ['Pending', 'Post Approval Processing'].includes(p.status));
+    
+    // For pending policies, estimate based on target premium if available, otherwise use face amount / 1000 as rough estimate
+    let pendingIssuedIncome = 0;
+    let pendingUnderwritingIncome = 0;
+    
+    pendingIssued.forEach(p => {
+      // Use premium field (targetPremium is not in schema, premium is the available field)
+      const targetPremium = parseFloat(p.premium?.toString() || '0');
+      if (targetPremium > 0) {
+        pendingIssuedIncome += targetPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL;
+      } else {
+        // Estimate from face amount (rough approximation: $10 per $1000 face amount for term life)
+        const faceAmount = parseFloat(p.faceAmount?.toString() || '0');
+        const estimatedPremium = faceAmount / 1000 * 10; // $10 per $1000
+        pendingIssuedIncome += estimatedPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL;
+      }
+    });
+    
+    pendingUnderwriting.forEach(p => {
+      const targetPremium = parseFloat(p.premium?.toString() || '0');
+      if (targetPremium > 0) {
+        pendingUnderwritingIncome += targetPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL * 0.7; // 70% probability factor
+      } else {
+        const faceAmount = parseFloat(p.faceAmount?.toString() || '0');
+        const estimatedPremium = faceAmount / 1000 * 10;
+        pendingUnderwritingIncome += estimatedPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL * 0.7;
+      }
+    });
+    
+    // Calculate actual commission from inforce policies (already calculated in DB)
+    const inforceActive = inforce.filter(p => p.status === 'Active');
+    const inforceCommission = inforceActive.reduce((sum, p) => {
+      return sum + parseFloat(p.calculatedCommission?.toString() || '0');
+    }, 0);
+    
+    const fromPendingPolicies = pendingIssuedIncome + pendingUnderwritingIncome;
+    
+    return {
+      fromPendingPolicies: Math.round(fromPendingPolicies * 100) / 100,
+      fromInforcePolicies: Math.round(inforceCommission * 100) / 100,
+      totalProjected: Math.round((fromPendingPolicies + inforceCommission) * 100) / 100,
+      pendingPoliciesCount: pending.length,
+      inforcePoliciesCount: inforce.length,
+      breakdown: {
+        pendingIssued: Math.round(pendingIssuedIncome * 100) / 100,
+        pendingUnderwriting: Math.round(pendingUnderwritingIncome * 100) / 100,
+        inforceActive: Math.round(inforceCommission * 100) / 100,
+      },
+      agentLevel: SMD_AGENT_LEVEL,
+      transamericaConstant: TRANSAMERICA_CONSTANT,
+    };
+  } catch (error) {
+    console.error('[calculateProjectedIncome] Error:', error);
+    return defaultResult;
+  }
+}
+
 // Dashboard metrics for face amount and families protected
 // Note: Some values are pulled from MyWFG data exploration (Jan 2025 - Dec 2025)
 export async function getDashboardMetrics() {
@@ -349,6 +444,8 @@ export async function getDashboardMetrics() {
     transamericaAlerts: transamericaAlerts,
     // Net Licensed data
     netLicensedData: netLicensedData,
+    // Projected income placeholder (will be calculated below)
+    projectedIncome: null as any,
   };
 
   // Get total face amount from production records (manual entries)
@@ -390,6 +487,8 @@ export async function getDashboardMetrics() {
     transamericaAlerts: transamericaAlerts,
     // Net Licensed data
     netLicensedData: netLicensedData,
+    // Projected income (calculated from pending policies and inforce data)
+    projectedIncome: await calculateProjectedIncome(db),
   };
 }
 

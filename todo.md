@@ -744,3 +744,11 @@
 - [x] Sync history page already exists in dashboard
 - [x] Set up Manus scheduled tasks for development environment (3:30 PM & 6:30 PM EST)
 - [ ] Test sync endpoint works correctly (pending deployment)
+
+
+## Dashboard Projected Income Feature - Completed (Jan 15, 2026)
+- [x] Review current dashboard metrics and commission calculations
+- [x] Add projected income calculation based on 65% SMD rate
+- [x] Update dashboard UI to display projected income card
+- [x] Include breakdown by pending policies and inforce policies
+- [x] Test projected income calculations (7 tests passing)
