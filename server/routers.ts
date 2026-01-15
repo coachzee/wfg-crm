@@ -451,6 +451,87 @@ export const appRouter = router({
       );
       return { success };
     }),
+    
+    // Get agents with missing licenses (not licensed yet)
+    getMissingLicenses: protectedProcedure.query(async () => {
+      const allAgents = await getAgents();
+      // Filter agents who are not licensed (in RECRUITMENT or EXAM_PREP stages)
+      const missingLicenses = allAgents.filter((a: Agent) => 
+        a.currentStage === 'RECRUITMENT' || a.currentStage === 'EXAM_PREP'
+      );
+      return missingLicenses.map((a: Agent) => ({
+        id: a.id,
+        firstName: a.firstName,
+        lastName: a.lastName,
+        email: a.email,
+        phone: a.phone,
+        currentStage: a.currentStage,
+        currentRank: a.currentRank,
+        examDate: a.examDate,
+        uplineAgentId: a.uplineAgentId,
+      }));
+    }),
+    
+    // Get policies/agents without recurring premium enrollment
+    getNoRecurring: protectedProcedure.query(async () => {
+      const policies = await getInforcePolicies();
+      // Filter policies where recurring is not set up (Annual payment frequency)
+      const noRecurring = policies.filter((p: InforcePolicy) => 
+        !p.premiumFrequency || p.premiumFrequency === 'Annual' || p.premiumFrequency === 'Flexible'
+      );
+      return noRecurring.slice(0, 20).map((p: InforcePolicy) => ({
+        id: p.id,
+        policyNumber: p.policyNumber,
+        ownerName: p.ownerName,
+        writingAgentName: p.writingAgentName,
+        productType: p.productType,
+        faceAmount: p.faceAmount,
+        premium: p.premium,
+        premiumFrequency: p.premiumFrequency,
+        status: p.status,
+      }));
+    }),
+    
+    // Get pending policies that are issued (ready for delivery)
+    getPendingIssued: protectedProcedure.query(async () => {
+      const pending = await getPendingPolicies();
+      const issued = pending.filter((p: any) => 
+        p.status?.toLowerCase() === 'issued' || 
+        p.status?.toLowerCase() === 'policy issued'
+      );
+      return issued.map((p: any) => ({
+        id: p.id,
+        policyNumber: p.policyNumber,
+        insuredName: p.insuredName,
+        writingAgent: p.writingAgent,
+        product: p.product,
+        faceAmount: p.faceAmount,
+        premium: p.premium,
+        status: p.status,
+        submittedDate: p.submittedDate,
+      }));
+    }),
+    
+    // Get pending policies in underwriting
+    getInUnderwriting: protectedProcedure.query(async () => {
+      const pending = await getPendingPolicies();
+      const inUnderwriting = pending.filter((p: any) => 
+        p.status?.toLowerCase() === 'pending' || 
+        p.status?.toLowerCase() === 'in underwriting' ||
+        p.status?.toLowerCase() === 'underwriting'
+      );
+      return inUnderwriting.map((p: any) => ({
+        id: p.id,
+        policyNumber: p.policyNumber,
+        insuredName: p.insuredName,
+        writingAgent: p.writingAgent,
+        product: p.product,
+        faceAmount: p.faceAmount,
+        premium: p.premium,
+        status: p.status,
+        submittedDate: p.submittedDate,
+      }));
+    }),
   }),
 
   // MyWFG Integration

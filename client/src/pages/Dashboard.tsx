@@ -613,6 +613,10 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
  const [notificationSent, setNotificationSent] = useState(false);
   const [showNetLicensedModal, setShowNetLicensedModal] = useState(false);
+  const [showMissingLicensesModal, setShowMissingLicensesModal] = useState(false);
+  const [showNoRecurringModal, setShowNoRecurringModal] = useState(false);
+  const [showPendingIssuedModal, setShowPendingIssuedModal] = useState(false);
+  const [showInUnderwritingModal, setShowInUnderwritingModal] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   
@@ -875,7 +879,10 @@ export default function Dashboard() {
               </div>
               
               {/* From Pending Policies (Issued) */}
-              <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+              <div 
+                className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20 cursor-pointer hover:bg-blue-500/10 transition-colors"
+                onClick={() => setShowPendingIssuedModal(true)}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium text-blue-600">Pending (Issued)</span>
@@ -885,11 +892,14 @@ export default function Dashboard() {
                     ? (metrics.projectedIncome.breakdown.pendingIssued / 1000).toFixed(1) + 'K'
                     : metrics.projectedIncome.breakdown.pendingIssued.toFixed(0)}
                 </p>
-                <p className="text-xs text-muted-foreground">Ready for delivery</p>
+                <p className="text-xs text-muted-foreground">Click to view policies</p>
               </div>
               
               {/* From Pending Policies (Underwriting) */}
-              <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+              <div 
+                className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 cursor-pointer hover:bg-amber-500/10 transition-colors"
+                onClick={() => setShowInUnderwritingModal(true)}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-amber-500" />
                   <span className="text-sm font-medium text-amber-600">In Underwriting</span>
@@ -899,7 +909,7 @@ export default function Dashboard() {
                     ? (metrics.projectedIncome.breakdown.pendingUnderwriting / 1000).toFixed(1) + 'K'
                     : metrics.projectedIncome.breakdown.pendingUnderwriting.toFixed(0)}
                 </p>
-                <p className="text-xs text-muted-foreground">70% probability factor</p>
+                <p className="text-xs text-muted-foreground">Click to view policies</p>
               </div>
               
               {/* From Inforce Policies */}
@@ -953,23 +963,29 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Missing Licenses */}
-            <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+            <div 
+              className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20 cursor-pointer hover:bg-blue-500/10 transition-colors"
+              onClick={() => setShowMissingLicensesModal(true)}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <FileWarning className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium text-blue-600">Missing Licenses</span>
               </div>
               <p className="text-2xl font-bold text-blue-600">{metrics?.missingLicenses || 11}</p>
-              <p className="text-xs text-muted-foreground">State appointments needed</p>
+              <p className="text-xs text-muted-foreground">Click to view agents</p>
             </div>
             
             {/* Not Enrolled in Recurring */}
-            <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
+            <div 
+              className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20 cursor-pointer hover:bg-purple-500/10 transition-colors"
+              onClick={() => setShowNoRecurringModal(true)}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="h-4 w-4 text-purple-500" />
                 <span className="text-sm font-medium text-purple-600">No Recurring</span>
               </div>
               <p className="text-2xl font-bold text-purple-600">{metrics?.notEnrolledRecurring || 15}</p>
-              <p className="text-xs text-muted-foreground">Need recurring enrollment</p>
+              <p className="text-xs text-muted-foreground">Click to view policies</p>
             </div>
             
             {/* First Notice */}
@@ -1620,6 +1636,223 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Missing Licenses Modal */}
+      <Dialog open={showMissingLicensesModal} onOpenChange={setShowMissingLicensesModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileWarning className="h-5 w-5 text-blue-600" />
+              Missing Licenses
+            </DialogTitle>
+            <DialogDescription>
+              Agents who are not yet licensed (in Recruitment or Exam Prep stages)
+            </DialogDescription>
+          </DialogHeader>
+          <MissingLicensesContent />
+        </DialogContent>
+      </Dialog>
+
+      {/* No Recurring Modal */}
+      <Dialog open={showNoRecurringModal} onOpenChange={setShowNoRecurringModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-purple-600" />
+              Policies Without Recurring Enrollment
+            </DialogTitle>
+            <DialogDescription>
+              Policies with Annual or Flexible payment frequency that could benefit from recurring enrollment
+            </DialogDescription>
+          </DialogHeader>
+          <NoRecurringContent />
+        </DialogContent>
+      </Dialog>
+
+      {/* Pending Issued Modal */}
+      <Dialog open={showPendingIssuedModal} onOpenChange={setShowPendingIssuedModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              Pending Policies - Issued
+            </DialogTitle>
+            <DialogDescription>
+              Policies that have been issued and are ready for delivery
+            </DialogDescription>
+          </DialogHeader>
+          <PendingIssuedContent />
+        </DialogContent>
+      </Dialog>
+
+      {/* In Underwriting Modal */}
+      <Dialog open={showInUnderwritingModal} onOpenChange={setShowInUnderwritingModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-600" />
+              Pending Policies - In Underwriting
+            </DialogTitle>
+            <DialogDescription>
+              Policies currently being reviewed by underwriting (70% probability factor applied)
+            </DialogDescription>
+          </DialogHeader>
+          <InUnderwritingContent />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Modal content components
+function MissingLicensesContent() {
+  const { data, isLoading } = trpc.dashboard.getMissingLicenses.useQuery();
+  
+  if (isLoading) return <div className="p-4 text-center">Loading...</div>;
+  if (!data || data.length === 0) return <div className="p-4 text-center text-muted-foreground">No unlicensed agents found</div>;
+  
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Phone</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Stage</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Exam Date</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {data.map((agent: any) => (
+            <tr key={agent.id} className="hover:bg-muted/50">
+              <td className="px-4 py-3 text-sm font-medium">{agent.firstName} {agent.lastName}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{agent.email || '-'}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{agent.phone || '-'}</td>
+              <td className="px-4 py-3 text-sm">
+                <Badge variant={agent.currentStage === 'EXAM_PREP' ? 'secondary' : 'outline'}>
+                  {agent.currentStage?.replace('_', ' ')}
+                </Badge>
+              </td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{agent.examDate || 'Not scheduled'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function NoRecurringContent() {
+  const { data, isLoading } = trpc.dashboard.getNoRecurring.useQuery();
+  
+  if (isLoading) return <div className="p-4 text-center">Loading...</div>;
+  if (!data || data.length === 0) return <div className="p-4 text-center text-muted-foreground">All policies have recurring enrollment</div>;
+  
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-medium">Policy #</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Owner</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Writing Agent</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Product</th>
+            <th className="px-4 py-3 text-right text-sm font-medium">Premium</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Frequency</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {data.map((policy: any) => (
+            <tr key={policy.id} className="hover:bg-muted/50">
+              <td className="px-4 py-3 text-sm font-medium">{policy.policyNumber}</td>
+              <td className="px-4 py-3 text-sm">{policy.ownerName}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.writingAgentName || '-'}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.productType || '-'}</td>
+              <td className="px-4 py-3 text-sm text-right">${Number(policy.premium || 0).toLocaleString()}</td>
+              <td className="px-4 py-3 text-sm">
+                <Badge variant="outline">{policy.premiumFrequency || 'Unknown'}</Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PendingIssuedContent() {
+  const { data, isLoading } = trpc.dashboard.getPendingIssued.useQuery();
+  
+  if (isLoading) return <div className="p-4 text-center">Loading...</div>;
+  if (!data || data.length === 0) return <div className="p-4 text-center text-muted-foreground">No issued pending policies</div>;
+  
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-medium">Policy #</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Insured</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Writing Agent</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Product</th>
+            <th className="px-4 py-3 text-right text-sm font-medium">Face Amount</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {data.map((policy: any) => (
+            <tr key={policy.id} className="hover:bg-muted/50">
+              <td className="px-4 py-3 text-sm font-medium">{policy.policyNumber}</td>
+              <td className="px-4 py-3 text-sm">{policy.insuredName}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.writingAgent || '-'}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.product || '-'}</td>
+              <td className="px-4 py-3 text-sm text-right">${Number(policy.faceAmount || 0).toLocaleString()}</td>
+              <td className="px-4 py-3 text-sm">
+                <Badge variant="default" className="bg-blue-500">{policy.status}</Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function InUnderwritingContent() {
+  const { data, isLoading } = trpc.dashboard.getInUnderwriting.useQuery();
+  
+  if (isLoading) return <div className="p-4 text-center">Loading...</div>;
+  if (!data || data.length === 0) return <div className="p-4 text-center text-muted-foreground">No policies in underwriting</div>;
+  
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-medium">Policy #</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Insured</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Writing Agent</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Product</th>
+            <th className="px-4 py-3 text-right text-sm font-medium">Face Amount</th>
+            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {data.map((policy: any) => (
+            <tr key={policy.id} className="hover:bg-muted/50">
+              <td className="px-4 py-3 text-sm font-medium">{policy.policyNumber}</td>
+              <td className="px-4 py-3 text-sm">{policy.insuredName}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.writingAgent || '-'}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">{policy.product || '-'}</td>
+              <td className="px-4 py-3 text-sm text-right">${Number(policy.faceAmount || 0).toLocaleString()}</td>
+              <td className="px-4 py-3 text-sm">
+                <Badge variant="secondary" className="bg-amber-100 text-amber-700">{policy.status}</Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

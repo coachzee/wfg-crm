@@ -777,3 +777,12 @@
 - [x] Add insight text analyzing projection accuracy trend
 - [x] Add to dashboard below the Income Tracking chart
 - [x] All 97 tests passing
+
+
+## Clickable Dashboard Items - Completed (Jan 15, 2026)
+- [x] Make "Missing Licenses" clickable with agent details modal
+- [x] Make "No Recurring" clickable with policy/agent details modal
+- [x] Make "Pending (Issued)" clickable with pending policies modal
+- [x] Make "In Underwriting" clickable with pending policies modal
+- [x] Add backend queries for each item's detailed data
+- [x] Test all clickable items (7 tests passing)
