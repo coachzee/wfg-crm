@@ -431,6 +431,183 @@ const IncomeTrackingChart = memo(function IncomeTrackingChart() {
   );
 });
 
+// Income Discrepancy Chart - Shows variance between projected and actual income over 90 days
+const IncomeDiscrepancyChart = memo(function IncomeDiscrepancyChart() {
+  const { data: history, isLoading } = trpc.dashboard.getIncomeHistory.useQuery({ period: 'quarter' });
+
+  if (isLoading) {
+    return (
+      <Card className="card-hover border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+        <CardContent className="p-6">
+          <div className="h-[300px] shimmer rounded-lg" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Calculate discrepancy data - only include entries with actual income
+  const discrepancyData = (history || [])
+    .filter(h => h.actualIncome > 0)
+    .map(h => {
+      const variance = h.actualIncome - h.projectedTotal;
+      const variancePercent = h.projectedTotal > 0 
+        ? Math.round((variance / h.projectedTotal) * 100) 
+        : 0;
+      return {
+        date: format(new Date(h.date), 'MMM d'),
+        fullDate: format(new Date(h.date), 'MMM d, yyyy'),
+        projected: h.projectedTotal,
+        actual: h.actualIncome,
+        variance: variance,
+        variancePercent: variancePercent,
+        isPositive: variance >= 0,
+      };
+    });
+
+  const hasData = discrepancyData.length > 0;
+
+  // Calculate summary statistics
+  const totalVariance = discrepancyData.reduce((sum, d) => sum + d.variance, 0);
+  const avgVariancePercent = discrepancyData.length > 0
+    ? Math.round(discrepancyData.reduce((sum, d) => sum + d.variancePercent, 0) / discrepancyData.length)
+    : 0;
+  const positiveCount = discrepancyData.filter(d => d.isPositive).length;
+  const negativeCount = discrepancyData.filter(d => !d.isPositive).length;
+
+  return (
+    <Card className="card-hover border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-orange-500" />
+              Income Discrepancy Analysis
+            </CardTitle>
+            <CardDescription>Variance between projected and actual income (last 90 days)</CardDescription>
+          </div>
+          {hasData && (
+            <Badge 
+              variant="outline" 
+              className={`font-mono ${totalVariance >= 0 ? 'text-emerald-600 border-emerald-500/50' : 'text-red-600 border-red-500/50'}`}
+            >
+              {totalVariance >= 0 ? '+' : ''}{totalVariance.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!hasData ? (
+          <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
+            <TrendingUp className="h-12 w-12 mb-4 opacity-50" />
+            <p className="text-sm">No discrepancy data available</p>
+            <p className="text-xs mt-1">Add actual income data to see variance analysis</p>
+          </div>
+        ) : (
+          <>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={discrepancyData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-xs" 
+                    tick={{ fill: 'currentColor' }}
+                  />
+                  <YAxis 
+                    className="text-xs" 
+                    tick={{ fill: 'currentColor' }}
+                    tickFormatter={(value) => {
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1000) {
+                        return `${value >= 0 ? '' : '-'}$${(absValue / 1000).toFixed(0)}K`;
+                      }
+                      return `$${value}`;
+                    }}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0]?.payload;
+                        return (
+                          <div className="glass rounded-lg p-3 shadow-soft border bg-background">
+                            <p className="text-sm font-medium mb-2">{data?.fullDate}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Projected: ${data?.projected?.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Actual: ${data?.actual?.toLocaleString()}
+                            </p>
+                            <p className={`text-sm font-medium mt-1 ${data?.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                              Variance: {data?.isPositive ? '+' : ''}{data?.variance?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                              <span className="text-xs ml-1">({data?.variancePercent}%)</span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar 
+                    dataKey="variance" 
+                    name="Variance"
+                    radius={[4, 4, 0, 0]}
+                  >
+                    {discrepancyData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.isPositive ? '#10b981' : '#ef4444'}
+                        fillOpacity={0.8}
+                      />
+                    ))}
+                  </Bar>
+                  {/* Reference line at zero */}
+                  <CartesianGrid horizontal={false} vertical={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Summary Statistics */}
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className={`text-lg font-bold ${totalVariance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {totalVariance >= 0 ? '+' : ''}{(totalVariance / 1000).toFixed(1)}K
+                </div>
+                <div className="text-xs text-muted-foreground">Total Variance</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className={`text-lg font-bold ${avgVariancePercent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent}%
+                </div>
+                <div className="text-xs text-muted-foreground">Avg Variance</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-lg font-bold text-emerald-600">{positiveCount}</div>
+                <div className="text-xs text-muted-foreground">Over Projected</div>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border">
+                <div className="text-lg font-bold text-red-600">{negativeCount}</div>
+                <div className="text-xs text-muted-foreground">Under Projected</div>
+              </div>
+            </div>
+            
+            {/* Insight */}
+            <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
+              <p className="text-xs text-muted-foreground">
+                <strong>Insight:</strong> {positiveCount > negativeCount 
+                  ? `Your projections tend to be conservative. Actual income exceeded projections ${positiveCount} out of ${discrepancyData.length} times.`
+                  : positiveCount < negativeCount
+                  ? `Your projections tend to be optimistic. Actual income fell short ${negativeCount} out of ${discrepancyData.length} times. Consider adjusting probability factors.`
+                  : `Your projections are balanced. Actual income matched or exceeded projections about half the time.`
+                }
+              </p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -753,6 +930,9 @@ export default function Dashboard() {
 
       {/* Income Tracking Chart - Projected vs Actual Over Time */}
       <IncomeTrackingChart />
+
+      {/* Income Discrepancy Analysis - Variance Chart */}
+      <IncomeDiscrepancyChart />
 
       {/* Compliance & Platform Fee Tracking */}
       <Card className="card-hover border-amber-500/20">

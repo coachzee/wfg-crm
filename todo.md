@@ -768,3 +768,12 @@
 - [x] Integrate saveIncomeSnapshot() into sync-service.ts runFullSync()
 - [x] Cron sync endpoint already calls runFullSync() which now saves snapshots
 - [x] All 97 tests passing
+
+
+## Income Discrepancy Chart - Completed (Jan 15, 2026)
+- [x] Create IncomeDiscrepancyChart component showing variance between projected and actual
+- [x] Add bar chart with positive/negative variance visualization (green for over, red for under)
+- [x] Include summary statistics (total variance, avg variance %, over/under counts)
+- [x] Add insight text analyzing projection accuracy trend
+- [x] Add to dashboard below the Income Tracking chart
+- [x] All 97 tests passing
