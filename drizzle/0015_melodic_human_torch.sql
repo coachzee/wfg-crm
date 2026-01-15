@@ -1,0 +1,20 @@
+CREATE TABLE `incomeHistory` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`snapshotDate` timestamp NOT NULL,
+	`projectedTotal` decimal(12,2) NOT NULL,
+	`projectedFromPending` decimal(12,2) DEFAULT '0',
+	`projectedFromInforce` decimal(12,2) DEFAULT '0',
+	`projectedPendingIssued` decimal(12,2) DEFAULT '0',
+	`projectedPendingUnderwriting` decimal(12,2) DEFAULT '0',
+	`projectedInforceActive` decimal(12,2) DEFAULT '0',
+	`actualIncome` decimal(12,2) DEFAULT '0',
+	`pendingPoliciesCount` int DEFAULT 0,
+	`inforcePoliciesCount` int DEFAULT 0,
+	`agentLevel` decimal(4,2) DEFAULT '0.65',
+	`transamericaConstant` decimal(4,2) DEFAULT '1.25',
+	`actualIncomeSource` varchar(100),
+	`actualIncomeUpdatedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `incomeHistory_id` PRIMARY KEY(`id`)
+);

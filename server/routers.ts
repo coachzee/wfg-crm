@@ -50,6 +50,10 @@ import {
   getTopProducersByPremium,
   getProductionByWritingAgent,
   getTopAgentsByCommission,
+  saveIncomeSnapshot,
+  updateActualIncome,
+  getIncomeHistory,
+  getIncomeAccuracyStats,
   type Agent,
   type Client,
   type WorkflowTask,
@@ -409,6 +413,43 @@ export const appRouter = router({
       
       const result = await verifyGmailCredentials(credentials);
       return result;
+    }),
+    
+    // Income History - Get history for charting
+    getIncomeHistory: protectedProcedure.input(
+      z.object({
+        period: z.enum(['week', 'month', 'quarter', 'year']).optional(),
+      }).optional()
+    ).query(async ({ input }) => {
+      const period = input?.period || 'month';
+      return getIncomeHistory(period);
+    }),
+    
+    // Income History - Get accuracy statistics
+    getIncomeAccuracyStats: protectedProcedure.query(async () => {
+      return getIncomeAccuracyStats();
+    }),
+    
+    // Income History - Save a snapshot (called during sync or manually)
+    saveIncomeSnapshot: protectedProcedure.mutation(async () => {
+      const snapshotId = await saveIncomeSnapshot();
+      return { success: !!snapshotId, snapshotId };
+    }),
+    
+    // Income History - Update actual income for a date
+    updateActualIncome: protectedProcedure.input(
+      z.object({
+        date: z.string(), // ISO date string
+        actualIncome: z.number(),
+        source: z.string(),
+      })
+    ).mutation(async ({ input }) => {
+      const success = await updateActualIncome(
+        new Date(input.date),
+        input.actualIncome,
+        input.source
+      );
+      return { success };
     }),
   }),
 

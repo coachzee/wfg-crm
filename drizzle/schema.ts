@@ -641,3 +641,44 @@ export const inforcePoliciesRelations = relations(inforcePolicies, ({ one }) => 
 
 // Update syncLogs to include TRANSAMERICA_INFORCE sync type
 // Note: This is handled by adding the enum value in the existing syncLogs table
+
+
+// Income History - Track projected vs actual income over time for accuracy analysis
+export const incomeHistory = mysqlTable("incomeHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Date of the snapshot (stored as date for grouping by day/week/month)
+  snapshotDate: timestamp("snapshotDate").notNull(),
+  
+  // Projected income values (calculated at time of snapshot)
+  projectedTotal: decimal("projectedTotal", { precision: 12, scale: 2 }).notNull(),
+  projectedFromPending: decimal("projectedFromPending", { precision: 12, scale: 2 }).default("0"),
+  projectedFromInforce: decimal("projectedFromInforce", { precision: 12, scale: 2 }).default("0"),
+  
+  // Breakdown of projected income
+  projectedPendingIssued: decimal("projectedPendingIssued", { precision: 12, scale: 2 }).default("0"),
+  projectedPendingUnderwriting: decimal("projectedPendingUnderwriting", { precision: 12, scale: 2 }).default("0"),
+  projectedInforceActive: decimal("projectedInforceActive", { precision: 12, scale: 2 }).default("0"),
+  
+  // Actual income (updated when commission is received)
+  actualIncome: decimal("actualIncome", { precision: 12, scale: 2 }).default("0"),
+  
+  // Policy counts at time of snapshot
+  pendingPoliciesCount: int("pendingPoliciesCount").default(0),
+  inforcePoliciesCount: int("inforcePoliciesCount").default(0),
+  
+  // Commission parameters used for calculation
+  agentLevel: decimal("agentLevel", { precision: 4, scale: 2 }).default("0.65"), // 65% for SMD
+  transamericaConstant: decimal("transamericaConstant", { precision: 4, scale: 2 }).default("1.25"), // 125%
+  
+  // Source of actual income data (for tracking where the actual number came from)
+  actualIncomeSource: varchar("actualIncomeSource", { length: 100 }), // e.g., "MyWFG Commission Statement", "Manual Entry"
+  actualIncomeUpdatedAt: timestamp("actualIncomeUpdatedAt"),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IncomeHistory = typeof incomeHistory.$inferSelect;
+export type InsertIncomeHistory = typeof incomeHistory.$inferInsert;

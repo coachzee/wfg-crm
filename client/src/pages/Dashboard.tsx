@@ -247,6 +247,190 @@ const WeeklySyncSummary = memo(function WeeklySyncSummary() {
   );
 });
 
+// Income Tracking Chart Component - Shows projected vs actual income over time
+const IncomeTrackingChart = memo(function IncomeTrackingChart() {
+  const [period, setPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const { data: history, isLoading } = trpc.dashboard.getIncomeHistory.useQuery({ period });
+  const { data: accuracyStats } = trpc.dashboard.getIncomeAccuracyStats.useQuery();
+  const saveSnapshot = trpc.dashboard.saveIncomeSnapshot.useMutation();
+
+  if (isLoading) {
+    return (
+      <Card className="card-hover border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+        <CardContent className="p-6">
+          <div className="h-[300px] shimmer rounded-lg" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Format data for Recharts
+  const chartData = (history || []).map(h => ({
+    date: format(new Date(h.date), 'MMM d'),
+    fullDate: format(new Date(h.date), 'MMM d, yyyy'),
+    projected: h.projectedTotal,
+    actual: h.actualIncome || 0,
+    accuracy: h.accuracy,
+  }));
+
+  const hasData = chartData.length > 0;
+  const hasActualData = chartData.some(d => d.actual > 0);
+
+  return (
+    <Card className="card-hover border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className="h-5 w-5 text-cyan-500" />
+              Income Tracking
+            </CardTitle>
+            <CardDescription>Projected vs Actual income over time</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Tabs value={period} onValueChange={(v) => setPeriod(v as any)} className="w-auto">
+              <TabsList className="h-8">
+                <TabsTrigger value="week" className="text-xs px-2">Week</TabsTrigger>
+                <TabsTrigger value="month" className="text-xs px-2">Month</TabsTrigger>
+                <TabsTrigger value="quarter" className="text-xs px-2">Quarter</TabsTrigger>
+                <TabsTrigger value="year" className="text-xs px-2">Year</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => saveSnapshot.mutate()}
+              disabled={saveSnapshot.isPending}
+              className="gap-1"
+            >
+              <RefreshCw className={`h-3 w-3 ${saveSnapshot.isPending ? 'animate-spin' : ''}`} />
+              Snapshot
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!hasData ? (
+          <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
+            <Activity className="h-12 w-12 mb-4 opacity-50" />
+            <p className="text-sm">No income history data yet</p>
+            <p className="text-xs mt-1">Click "Snapshot" to start tracking projected income</p>
+          </div>
+        ) : (
+          <>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="projectedGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-xs" 
+                    tick={{ fill: 'currentColor' }}
+                  />
+                  <YAxis 
+                    className="text-xs" 
+                    tick={{ fill: 'currentColor' }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="glass rounded-lg p-3 shadow-soft border bg-background">
+                            <p className="text-sm font-medium mb-2">{payload[0]?.payload?.fullDate}</p>
+                            <p className="text-sm text-cyan-600">
+                              Projected: ${payload[0]?.value?.toLocaleString()}
+                            </p>
+                            {(payload[1]?.value as number) > 0 && (
+                              <p className="text-sm text-emerald-600">
+                                Actual: ${payload[1]?.value?.toLocaleString()}
+                              </p>
+                            )}
+                            {payload[0]?.payload?.accuracy && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Accuracy: {payload[0]?.payload?.accuracy}%
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="projected"
+                    name="Projected"
+                    stroke="#06b6d4"
+                    fill="url(#projectedGradient)"
+                    strokeWidth={2}
+                  />
+                  {hasActualData && (
+                    <Area
+                      type="monotone"
+                      dataKey="actual"
+                      name="Actual"
+                      stroke="#10b981"
+                      fill="url(#actualGradient)"
+                      strokeWidth={2}
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Accuracy Stats */}
+            {accuracyStats && accuracyStats.snapshotsWithActual > 0 && (
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-3 rounded-lg bg-background/50 border">
+                  <div className="text-lg font-bold text-cyan-600">{accuracyStats.totalSnapshots}</div>
+                  <div className="text-xs text-muted-foreground">Total Snapshots</div>
+                </div>
+                <div className="p-3 rounded-lg bg-background/50 border">
+                  <div className="text-lg font-bold text-emerald-600">{accuracyStats.snapshotsWithActual}</div>
+                  <div className="text-xs text-muted-foreground">With Actual Data</div>
+                </div>
+                <div className="p-3 rounded-lg bg-background/50 border">
+                  <div className="text-lg font-bold">{accuracyStats.averageAccuracy}%</div>
+                  <div className="text-xs text-muted-foreground">Avg Accuracy</div>
+                </div>
+                <div className="p-3 rounded-lg bg-background/50 border">
+                  <div className="text-lg font-bold text-blue-600">
+                    ${(accuracyStats.totalActual / 1000).toFixed(1)}K
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total Actual</div>
+                </div>
+              </div>
+            )}
+            
+            {!hasActualData && (
+              <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <p className="text-xs text-amber-700 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>
+                    <strong>No actual income data yet.</strong> Update actual income from MyWFG commission statements to track projection accuracy.
+                  </span>
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -566,6 +750,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Income Tracking Chart - Projected vs Actual Over Time */}
+      <IncomeTrackingChart />
 
       {/* Compliance & Platform Fee Tracking */}
       <Card className="card-hover border-amber-500/20">

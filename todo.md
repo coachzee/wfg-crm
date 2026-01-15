@@ -752,3 +752,13 @@
 - [x] Update dashboard UI to display projected income card
 - [x] Include breakdown by pending policies and inforce policies
 - [x] Test projected income calculations (7 tests passing)
+
+
+## Income Tracking Chart Feature - Completed (Jan 15, 2026)
+- [x] Design income history data model (projected vs actual over time)
+- [x] Create incomeHistory table in database schema
+- [x] Add backend functions to store daily income snapshots
+- [x] Add backend function to retrieve income history for charting
+- [x] Create income tracking chart component using Recharts
+- [x] Add chart to dashboard showing projected vs actual income
+- [x] Test income tracking functionality (8 tests passing)
