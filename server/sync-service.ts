@@ -202,6 +202,19 @@ export async function runFullSync(): Promise<SyncResult[]> {
     console.error('[Sync] Failed to send sync completed alert:', e);
   }
   
+  // Save income snapshot after successful sync to track projections over time
+  try {
+    const { saveIncomeSnapshot } = await import('./db');
+    const snapshotId = await saveIncomeSnapshot();
+    if (snapshotId) {
+      console.log(`[Sync] Income snapshot saved (ID: ${snapshotId})`);
+    } else {
+      console.log('[Sync] No income snapshot saved (no projected income data available)');
+    }
+  } catch (e) {
+    console.error('[Sync] Failed to save income snapshot:', e);
+  }
+  
   console.log('[Sync] Full sync completed');
   return results;
 }

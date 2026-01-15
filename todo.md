@@ -762,3 +762,9 @@
 - [x] Create income tracking chart component using Recharts
 - [x] Add chart to dashboard showing projected vs actual income
 - [x] Test income tracking functionality (8 tests passing)
+
+
+## Income Snapshot Auto-Capture - Completed (Jan 15, 2026)
+- [x] Integrate saveIncomeSnapshot() into sync-service.ts runFullSync()
+- [x] Cron sync endpoint already calls runFullSync() which now saves snapshots
+- [x] All 97 tests passing
