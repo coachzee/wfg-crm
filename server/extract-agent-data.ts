@@ -353,7 +353,7 @@ export async function extractAllPolicyAgentData(): Promise<void> {
         if (agentData) {
           // Calculate commission with extracted data
           const targetPremium = agentData.targetPremium || parseFloat(policy.premium?.toString() || '0');
-          const primaryCommission = targetPremium * TRANSAMERICA_MULTIPLIER * 0.55 * (agentData.writingAgentSplit / 100);
+          const primaryCommission = targetPremium * TRANSAMERICA_MULTIPLIER * 0.65 * (agentData.writingAgentSplit / 100);
           const secondaryCommission = agentData.secondAgentSplit > 0 
             ? targetPremium * TRANSAMERICA_MULTIPLIER * 0.25 * (agentData.secondAgentSplit / 100)
             : 0;

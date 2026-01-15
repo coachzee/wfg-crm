@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+/**
+ * Standalone Cron Sync Script for Hostinger/Self-Hosted Deployments
+ * 
+ * This script can be called directly by cron jobs to trigger the MyWFG and Transamerica sync.
+ * It makes an HTTP request to the /api/cron/sync endpoint with the SYNC_SECRET.
+ * 
+ * Usage:
+ *   node scripts/cron-sync.mjs
+ * 
+ * Environment Variables Required:
+ *   - APP_URL: The base URL of your CRM (e.g., https://your-domain.com)
+ *   - SYNC_SECRET: The secret key for authenticating sync requests
+ * 
+ * Hostinger Cron Job Setup:
+ *   1. Go to Hostinger hPanel > Advanced > Cron Jobs
+ *   2. Add two cron jobs:
+ *      - 3:30 PM EST: 30 20 * * * (20:30 UTC)
+ *      - 6:30 PM EST: 30 23 * * * (23:30 UTC)
+ *   3. Command: cd /path/to/your/app && node scripts/cron-sync.mjs
+ * 
+ * Alternative: Use the HTTP endpoint directly with curl:
+ *   curl -X GET "https://your-domain.com/api/cron/sync?secret=YOUR_SYNC_SECRET"
+ */
+
+import https from 'https';
+import http from 'http';
+
+// Configuration
+const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+const SYNC_SECRET = process.env.SYNC_SECRET;
+
+if (!SYNC_SECRET) {
+  console.error('[Cron Sync] Error: SYNC_SECRET environment variable is required');
+  process.exit(1);
+}
+
+const syncUrl = new URL('/api/cron/sync', APP_URL);
+syncUrl.searchParams.set('secret', SYNC_SECRET);
+
+console.log(`[Cron Sync] Starting sync at ${new Date().toISOString()}`);
+console.log(`[Cron Sync] Target URL: ${syncUrl.origin}${syncUrl.pathname}`);
+
+const protocol = syncUrl.protocol === 'https:' ? https : http;
+
+const req = protocol.get(syncUrl.toString(), (res) => {
+  let data = '';
+  
+  res.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  res.on('end', () => {
+    try {
+      const result = JSON.parse(data);
+      
+      if (result.success) {
+        console.log('[Cron Sync] ✓ Sync completed successfully');
+        console.log('[Cron Sync] Results:');
+        result.results.forEach((r) => {
+          const status = r.success ? '✓' : '✗';
+          console.log(`  ${status} ${r.platform}: ${r.success ? 'Success' : r.error}`);
+        });
+        process.exit(0);
+      } else {
+        console.error('[Cron Sync] ✗ Sync failed:', result.error);
+        process.exit(1);
+      }
+    } catch (e) {
+      console.error('[Cron Sync] ✗ Failed to parse response:', data);
+      process.exit(1);
+    }
+  });
+});
+
+req.on('error', (error) => {
+  console.error('[Cron Sync] ✗ Request failed:', error.message);
+  process.exit(1);
+});
+
+req.setTimeout(300000, () => { // 5 minute timeout
+  console.error('[Cron Sync] ✗ Request timed out after 5 minutes');
+  req.destroy();
+  process.exit(1);
+});

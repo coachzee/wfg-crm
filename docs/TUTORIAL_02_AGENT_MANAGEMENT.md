@@ -309,8 +309,8 @@ Each rank has a distinctive icon for quick identification:
 | 📋 | Associate (A) | 5-9 | 35% |
 | 📊 | Senior Associate (SA) | 10-14 | 45% |
 | 🎯 | Marketing Director (MD) | 15-19 | 50% |
-| ⭐ | Senior Marketing Director (SMD) | 20-24 | 55% |
-| 💎 | Executive Marketing Director (EMD) | 25-29 | 60% |
+| ⭐ | Senior Marketing Director (SMD) | 20-24 | 65% |
+| 💎 | Executive Marketing Director (EMD) | 25-29 | 65% |
 | 👑 | CEO | 30+ | 65% |
 
 ---

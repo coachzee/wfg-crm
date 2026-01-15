@@ -704,3 +704,43 @@
 - Direct navigation to Life Access works without OTP/security questions
 - Security question automation not needed when using persistent browser session
 - Total pending pipeline: $7.25M face amount across 12 policies
+
+
+## Commission Calculation Fixes (Jan 8, 2026)
+- [ ] Review WFG commission structure from MyWFG documentation
+- [ ] Fix SMD commission level from 55% to 65%
+- [ ] Review and fix all agent commission levels across codebase
+- [ ] Update commission calculation formulas
+- [ ] Run tests to verify commission calculations
+
+## MyWFG Sync Script Fix (Jan 8, 2026)
+- [ ] Fix "repository not available in sandbox" error
+- [ ] Ensure wfg-crm project is properly loaded
+- [ ] Test MyWFG full sync script execution
+
+
+## Commission Calculation Fixes - Completed (Jan 14, 2026)
+- [x] Review WFG commission structure from official compensation documents (US_Compensation_Brochure.pdf)
+- [x] Fix SMD commission level from 55% to 65%
+- [x] Confirm all ranks SMD and above are 65% (base commission cap at Total Base Shop level)
+- [x] Fix transamerica-inforce-sync.ts DEFAULT_AGENT_LEVEL from 0.55 to 0.65
+- [x] Fix schema.ts default writingAgentLevel from 0.55 to 0.65
+- [x] Fix routers.ts commission calculations (2 occurrences)
+- [x] Fix extract-agent-data.ts commission calculations
+- [x] Update USER_GUIDE.md commission table (all ranks SMD+ = 65%)
+- [x] Update TUTORIAL_02_AGENT_MANAGEMENT.md rank icons table
+- [x] Update TUTORIAL_03_PRODUCTION_TRACKING.md commission examples
+- [x] Create WFG_COMMISSION_STRUCTURE.md official documentation
+- [x] Update test files to match new commission levels
+
+**Key Finding:** WFG base commission caps at 65% for SMD and all higher ranks. Additional income at higher ranks comes from generational overrides (12% 1st gen, 6% 2nd gen, etc.), bonus pools (6.5%), and executive quarterly pools (2.5%).
+
+
+## Self-Hosted MyWFG Sync Solution for Hostinger - Completed (Jan 15, 2026)
+- [x] Create HTTP endpoint for MyWFG sync (/api/cron/sync)
+- [x] Add authentication/secret key for sync endpoint security (SYNC_SECRET env var)
+- [x] Create standalone sync script for Hostinger cron jobs (scripts/cron-sync.mjs)
+- [x] Update DEPLOYMENT_HOSTINGER.md with cron setup instructions (3:30 PM & 6:30 PM EST)
+- [x] Sync history page already exists in dashboard
+- [x] Set up Manus scheduled tasks for development environment (3:30 PM & 6:30 PM EST)
+- [ ] Test sync endpoint works correctly (pending deployment)

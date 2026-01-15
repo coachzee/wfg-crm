@@ -158,13 +158,13 @@ The agent detail page shows a visual progress bar indicating advancement toward 
 | Associate (A) | 2 | 35% |
 | Senior Associate (SA) | 3 | 45% |
 | Marketing Director (MD) | 4 | 50% |
-| Senior Marketing Director (SMD) | 5 | 55% |
-| Executive Marketing Director (EMD) | 6 | 60% |
+| Senior Marketing Director (SMD) | 5 | 65% |
+| Executive Marketing Director (EMD) | 6 | 65% |
 | CEO Marketing Director (CEO MD) | 7 | 65% |
-| Executive Vice Chairman (EVC) | 8 | 70% |
-| Senior Executive Vice Chairman (SEVC) | 9 | 75% |
-| Field Chairman (FC) | 10 | 80% |
-| Executive Chairman (EC) | 11 | 85% |
+| Executive Vice Chairman (EVC) | 8 | 65% |
+| Senior Executive Vice Chairman (SEVC) | 9 | 65% |
+| Field Chairman (FC) | 10 | 65% |
+| Executive Chairman (EC) | 11 | 65% |
 
 ---
 
@@ -242,8 +242,8 @@ Commissions are calculated using the WFG compensation formula:
 Commission = Target Premium × 125% × Agent Level % × Split %
 ```
 
-For example, a $10,000 target premium policy with a 55% SMD level agent:
-- $10,000 × 1.25 × 0.55 = $6,875 commission
+For example, a $10,000 target premium policy with a 65% SMD level agent:
+- $10,000 × 1.25 × 0.65 = $8,125 commission
 
 ---
 

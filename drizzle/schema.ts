@@ -591,7 +591,7 @@ export const inforcePolicies = mysqlTable("inforcePolicies", {
   writingAgentName: varchar("writingAgentName", { length: 255 }),
   writingAgentCode: varchar("writingAgentCode", { length: 50 }),
   writingAgentSplit: int("writingAgentSplit").default(100), // Percentage split (0-100)
-  writingAgentLevel: decimal("writingAgentLevel", { precision: 5, scale: 2 }).default("0.55"), // Agent commission level (e.g., 0.55 = 55%)
+  writingAgentLevel: decimal("writingAgentLevel", { precision: 5, scale: 2 }).default("0.65"), // Agent commission level (e.g., 0.65 = 65% for SMD)
   writingAgentCommission: decimal("writingAgentCommission", { precision: 12, scale: 2 }), // Calculated commission for this agent
   
   // Link to our agents table

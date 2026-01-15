@@ -23,7 +23,7 @@ const SECURITY_Q_PET = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo';
 
 // Commission constants
 const TRANSAMERICA_MULTIPLIER = 1.25; // 125%
-const DEFAULT_AGENT_LEVEL = 0.55; // 55% default for new agents
+const DEFAULT_AGENT_LEVEL = 0.65; // 65% default for SMD level agents (per official WFG compensation grid)
 
 interface InforcePolicyData {
   policyNumber: string;

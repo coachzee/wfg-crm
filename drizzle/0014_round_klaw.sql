@@ -1,0 +1,1 @@
+ALTER TABLE `inforcePolicies` MODIFY COLUMN `writingAgentLevel` decimal(5,2) DEFAULT '0.65';

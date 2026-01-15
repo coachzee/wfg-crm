@@ -430,32 +430,27 @@ sudo systemctl reload nginx
 
 ---
 
-## Automated Sync Setup
+### Automated Sync Setup
 
-### Step 1: Create Sync Script
+The CRM includes a built-in sync endpoint that can be triggered by cron jobs. This syncs data from MyWFG and Transamerica portals automatically.
 
-Create `/var/www/wfgcrm/scripts/daily-sync.sh`:
+### Step 1: Configure SYNC_SECRET
 
-```bash
-#!/bin/bash
-cd /var/www/wfgcrm
-node dist/server/run-mywfg-sync.js >> /var/log/wfgcrm/sync.log 2>&1
+Add a secure sync secret to your `.env` file:
+
+```env
+# Sync Authentication (generate a random 32+ character string)
+SYNC_SECRET=your_very_long_random_sync_secret_at_least_32_chars
+APP_URL=https://yourdomain.com
 ```
 
-Make it executable:
+Generate a secure secret:
 
 ```bash
-chmod +x /var/www/wfgcrm/scripts/daily-sync.sh
+openssl rand -hex 32
 ```
 
-### Step 2: Create Log Directory
-
-```bash
-sudo mkdir -p /var/log/wfgcrm
-sudo chown wfgcrm:wfgcrm /var/log/wfgcrm
-```
-
-### Step 3: Configure Cron Job
+### Step 2: Configure Cron Jobs
 
 Edit crontab:
 
@@ -463,11 +458,66 @@ Edit crontab:
 crontab -e
 ```
 
-Add the following line to run sync daily at 6 AM:
+Add the following lines to run sync at **3:30 PM and 6:30 PM EST** (adjust for your timezone):
 
 ```cron
-0 6 * * * /var/www/wfgcrm/scripts/daily-sync.sh
+# MyWFG/Transamerica Sync - 3:30 PM EST (20:30 UTC)
+30 20 * * * curl -s "https://yourdomain.com/api/cron/sync?secret=YOUR_SYNC_SECRET" >> /var/log/wfgcrm/sync.log 2>&1
+
+# MyWFG/Transamerica Sync - 6:30 PM EST (23:30 UTC)
+30 23 * * * curl -s "https://yourdomain.com/api/cron/sync?secret=YOUR_SYNC_SECRET" >> /var/log/wfgcrm/sync.log 2>&1
 ```
+
+**Note:** Replace `YOUR_SYNC_SECRET` with your actual SYNC_SECRET value and `yourdomain.com` with your actual domain.
+
+### Step 3: Alternative - Use the Sync Script
+
+If you prefer using a Node.js script instead of curl:
+
+```bash
+# 3:30 PM EST (20:30 UTC)
+30 20 * * * cd /var/www/wfgcrm && APP_URL=https://yourdomain.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
+
+# 6:30 PM EST (23:30 UTC)
+30 23 * * * cd /var/www/wfgcrm && APP_URL=https://yourdomain.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
+```
+
+### Step 4: Create Log Directory
+
+```bash
+sudo mkdir -p /var/log/wfgcrm
+sudo chown wfgcrm:wfgcrm /var/log/wfgcrm
+```
+
+### Step 5: Test the Sync Endpoint
+
+Test that the sync endpoint works:
+
+```bash
+curl -X GET "https://yourdomain.com/api/cron/sync?secret=YOUR_SYNC_SECRET"
+```
+
+Expected response:
+
+```json
+{
+  "success": true,
+  "timestamp": "2026-01-15T20:30:00.000Z",
+  "results": [
+    {"platform": "MyWFG", "success": true},
+    {"platform": "Transamerica", "success": true}
+  ]
+}
+```
+
+### Timezone Reference
+
+| EST Time | UTC Time | Cron Expression |
+|----------|----------|----------------|
+| 3:30 PM | 20:30 | `30 20 * * *` |
+| 6:30 PM | 23:30 | `30 23 * * *` |
+
+**Note:** During Daylight Saving Time (EDT), subtract 1 hour from UTC times.
 
 ---
 

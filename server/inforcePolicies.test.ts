@@ -17,12 +17,12 @@ describe('Inforce Policies Commission Calculation', () => {
     it('should calculate commission correctly with 100% split', () => {
       const targetPremium = 37740;
       const multiplier = 1.25;
-      const agentLevel = 0.55;
+      const agentLevel = 0.65; // SMD level per official WFG compensation grid
       const split = 100;
       
       const commission = targetPremium * multiplier * agentLevel * (split / 100);
       
-      expect(commission).toBeCloseTo(25946.25, 2);
+      expect(commission).toBeCloseTo(30663.75, 2); // 37740 * 1.25 * 0.65 * 1.0
     });
 
     it('should calculate commission correctly with split agents', () => {
@@ -51,8 +51,8 @@ describe('Inforce Policies Commission Calculation', () => {
       const multiplier = 1.25;
       const split = 100;
       
-      const levels = [0.25, 0.35, 0.45, 0.55, 0.65];
-      const expectedCommissions = [3125, 4375, 5625, 6875, 8125];
+      const levels = [0.25, 0.35, 0.45, 0.50, 0.65]; // TA, A, SA, MD, SMD
+      const expectedCommissions = [3125, 4375, 5625, 6250, 8125]; // TA, A, SA, MD, SMD
       
       levels.forEach((level, index) => {
         const commission = targetPremium * multiplier * level * (split / 100);
@@ -80,12 +80,12 @@ describe('Inforce Policies Commission Calculation', () => {
       const targetPremium = 10000;
       const multiplier = 1.25;
       
-      const agent1Commission = targetPremium * multiplier * 0.55 * (100 / 100);
+      const agent1Commission = targetPremium * multiplier * 0.65 * (100 / 100); // SMD level
       const agent2Commission = 0; // 0% split means no commission
       
       const totalCommission = agent1Commission + agent2Commission;
       
-      expect(totalCommission).toBeCloseTo(6875, 2);
+      expect(totalCommission).toBeCloseTo(8125, 2); // 10000 * 1.25 * 0.65 = 8125
     });
   });
 

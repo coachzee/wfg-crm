@@ -760,7 +760,7 @@ export const appRouter = router({
         const multiplier = 1.25; // 125% Transamerica multiplier
         
         const writingAgentSplit = input.writingAgentSplit ?? existing.writingAgentSplit ?? 100;
-        const writingAgentLevel = input.writingAgentLevel ?? parseFloat(existing.writingAgentLevel?.toString() || '0.55');
+        const writingAgentLevel = input.writingAgentLevel ?? parseFloat(existing.writingAgentLevel?.toString() || '0.65');
         const writingAgentCommission = targetPremium * multiplier * writingAgentLevel * (writingAgentSplit / 100);
         
         let secondAgentCommission: number | null = null;
@@ -809,7 +809,7 @@ export const appRouter = router({
           const existing = await getInforcePolicyByNumber(policy.policyNumber);
           if (existing) {
             const multiplier = 1.25;
-            const writingAgentLevel = parseFloat(existing.writingAgentLevel?.toString() || '0.55');
+            const writingAgentLevel = parseFloat(existing.writingAgentLevel?.toString() || '0.65');
             const writingAgentSplit = existing.writingAgentSplit ?? 100;
             const writingAgentCommission = policy.targetPremium * multiplier * writingAgentLevel * (writingAgentSplit / 100);
             
