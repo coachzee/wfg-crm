@@ -163,6 +163,7 @@ export const workflowTasks = mysqlTable("workflowTasks", {
     "CHARGEBACK_MONITORING",
     "GENERAL_FOLLOW_UP",
     "ADVANCEMENT_TRACKING",
+    "POLICY_REVIEW",
   ]).notNull(),
   dueDate: date("dueDate").notNull(),
   completedAt: timestamp("completedAt"),

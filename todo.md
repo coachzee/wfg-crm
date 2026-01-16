@@ -804,3 +804,13 @@
 - [x] Fix policy age calculation to use actual Issue Date (upcoming anniversary year - issue year)
 - [x] Add Policy Anniversaries summary section to Dashboard landing page
 - [x] Test all changes (112 tests passing)
+
+
+## Schedule Review Task Integration - Completed (Jan 16, 2026)
+- [x] Add filter for policy type (IUL, Term, Whole Life, etc.)
+- [x] Add filter for premium amount range
+- [x] Add filter for anniversary date range
+- [x] Create backend endpoint to create policy review tasks (createPolicyReviewTask)
+- [x] Update Schedule Review button to call task creation endpoint
+- [x] Pre-fill task with policy owner name, policy number, anniversary date, face amount, premium, product type
+- [x] Test task creation and filters (116 tests passing)

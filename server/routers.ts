@@ -94,7 +94,7 @@ const ClientSchema = z.object({
 const WorkflowTaskSchema = z.object({
   agentId: z.number().optional(),
   clientId: z.number().optional(),
-  taskType: z.enum(["EXAM_PREP_FOLLOW_UP", "LICENSE_VERIFICATION", "PRODUCT_TRAINING", "BUSINESS_LAUNCH_PREP", "RENEWAL_REMINDER", "CHARGEBACK_MONITORING", "GENERAL_FOLLOW_UP"]),
+  taskType: z.enum(["EXAM_PREP_FOLLOW_UP", "LICENSE_VERIFICATION", "PRODUCT_TRAINING", "BUSINESS_LAUNCH_PREP", "RENEWAL_REMINDER", "CHARGEBACK_MONITORING", "GENERAL_FOLLOW_UP", "ADVANCEMENT_TRACKING", "POLICY_REVIEW"]),
   dueDate: z.date(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   description: z.string().optional(),
@@ -546,6 +546,46 @@ export const appRouter = router({
     getAnniversarySummary: protectedProcedure.query(async () => {
       return getAnniversarySummary();
     }),
+    
+    // Create policy review task from anniversary
+    createPolicyReviewTask: protectedProcedure
+      .input(z.object({
+        policyNumber: z.string(),
+        ownerName: z.string(),
+        anniversaryDate: z.string(),
+        policyAge: z.number(),
+        faceAmount: z.number(),
+        premium: z.number(),
+        productType: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const dueDate = new Date(input.anniversaryDate);
+        // Schedule review 7 days before anniversary
+        dueDate.setDate(dueDate.getDate() - 7);
+        
+        const description = `Policy Review for ${input.ownerName}\n` +
+          `Policy #: ${input.policyNumber}\n` +
+          `Anniversary Date: ${input.anniversaryDate}\n` +
+          `Policy Age: ${input.policyAge} year(s)\n` +
+          `Face Amount: $${input.faceAmount.toLocaleString()}\n` +
+          `Premium: $${input.premium.toLocaleString()}\n` +
+          `Product Type: ${input.productType || 'N/A'}\n\n` +
+          `Review Topics:\n` +
+          `- Coverage adequacy\n` +
+          `- Beneficiary updates\n` +
+          `- Premium payment status\n` +
+          `- Additional coverage needs`;
+        
+        await createWorkflowTask({
+          taskType: 'POLICY_REVIEW',
+          dueDate: dueDate,
+          priority: 'MEDIUM',
+          description: description,
+          assignedToUserId: ctx.user.id,
+        });
+        
+        return { success: true };
+      }),
   }),
 
   // MyWFG Integration

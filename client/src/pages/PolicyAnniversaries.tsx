@@ -1,16 +1,26 @@
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   Calendar, 
   Clock, 
-  Phone, 
-  Mail, 
-  User, 
   DollarSign, 
   FileText, 
   RefreshCw,
@@ -18,10 +28,14 @@ import {
   CalendarDays,
   CalendarRange,
   Gift,
-  AlertCircle
+  AlertCircle,
+  Filter,
+  X,
+  CheckCircle,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 
 // Stats card component
 const StatsCard = memo(function StatsCard({ 
@@ -65,10 +79,12 @@ const StatsCard = memo(function StatsCard({
 // Anniversary row component
 const AnniversaryRow = memo(function AnniversaryRow({ 
   policy,
-  onScheduleReview
+  onScheduleReview,
+  isCreatingTask
 }: { 
   policy: any;
   onScheduleReview?: (policy: any) => void;
+  isCreatingTask?: boolean;
 }) {
   const daysUntil = policy.daysUntilAnniversary;
   const isUrgent = daysUntil <= 7;
@@ -114,6 +130,16 @@ const AnniversaryRow = memo(function AnniversaryRow({
         </p>
       </div>
       
+      {/* Premium */}
+      <div className="hidden lg:block text-right">
+        <p className="text-sm font-medium">
+          ${policy.premium?.toLocaleString() || '0'}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Premium
+        </p>
+      </div>
+      
       {/* Anniversary Date */}
       <div className="hidden lg:block text-right">
         <p className="text-sm font-medium">
@@ -135,9 +161,14 @@ const AnniversaryRow = memo(function AnniversaryRow({
         variant="outline" 
         size="sm"
         onClick={() => onScheduleReview?.(policy)}
+        disabled={isCreatingTask}
         className="shrink-0"
       >
-        <Calendar className="h-4 w-4 mr-1" />
+        {isCreatingTask ? (
+          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+        ) : (
+          <Calendar className="h-4 w-4 mr-1" />
+        )}
         Schedule Review
       </Button>
     </div>
@@ -147,6 +178,14 @@ const AnniversaryRow = memo(function AnniversaryRow({
 export default function PolicyAnniversaries() {
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '60' | '90'>('30');
   const [searchQuery, setSearchQuery] = useState('');
+  const [creatingTaskForPolicy, setCreatingTaskForPolicy] = useState<string | null>(null);
+  
+  // Filter states
+  const [policyTypeFilter, setPolicyTypeFilter] = useState<string>('all');
+  const [premiumMinFilter, setPremiumMinFilter] = useState<string>('');
+  const [premiumMaxFilter, setPremiumMaxFilter] = useState<string>('');
+  const [dateFromFilter, setDateFromFilter] = useState<string>('');
+  const [dateToFilter, setDateToFilter] = useState<string>('');
   
   // Fetch anniversary data
   const { data: anniversaries, isLoading, refetch, isRefetching } = trpc.dashboard.getAnniversaries.useQuery(
@@ -158,29 +197,106 @@ export default function PolicyAnniversaries() {
     staleTime: 30000
   });
   
-  // Filter by search
-  const filteredAnniversaries = anniversaries?.filter(policy => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      policy.ownerName?.toLowerCase().includes(query) ||
-      policy.policyNumber?.toLowerCase().includes(query) ||
-      policy.writingAgentName?.toLowerCase().includes(query)
-    );
-  }) || [];
+  // Task creation mutation
+  const createTaskMutation = trpc.dashboard.createPolicyReviewTask.useMutation({
+    onSuccess: (data, variables) => {
+      toast.success(`Review task created for ${variables.ownerName}`, {
+        description: `Task scheduled for 7 days before anniversary (${variables.anniversaryDate})`,
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+      });
+      setCreatingTaskForPolicy(null);
+    },
+    onError: (error) => {
+      toast.error('Failed to create task', {
+        description: error.message,
+      });
+      setCreatingTaskForPolicy(null);
+    },
+  });
   
-  // Handle schedule review
-  const handleScheduleReview = (policy: any) => {
-    toast.success(`Review scheduled for ${policy.ownerName}`, {
-      description: `Policy ${policy.policyNumber} anniversary on ${format(new Date(policy.anniversaryDate), 'MMM d, yyyy')}`,
+  // Get unique policy types for filter
+  const policyTypes = useMemo(() => {
+    if (!anniversaries) return [];
+    const types = new Set(anniversaries.map(p => p.productType || 'Unknown').filter(Boolean));
+    return Array.from(types).sort();
+  }, [anniversaries]);
+  
+  // Check if any filters are active
+  const hasActiveFilters = policyTypeFilter !== 'all' || premiumMinFilter || premiumMaxFilter || dateFromFilter || dateToFilter;
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setPolicyTypeFilter('all');
+    setPremiumMinFilter('');
+    setPremiumMaxFilter('');
+    setDateFromFilter('');
+    setDateToFilter('');
+  };
+  
+  // Filter anniversaries
+  const filteredAnniversaries = useMemo(() => {
+    if (!anniversaries) return [];
+    
+    return anniversaries.filter(policy => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          policy.ownerName?.toLowerCase().includes(query) ||
+          policy.policyNumber?.toLowerCase().includes(query) ||
+          policy.writingAgentName?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
+      // Policy type filter
+      if (policyTypeFilter !== 'all') {
+        const policyType = policy.productType || 'Unknown';
+        if (policyType !== policyTypeFilter) return false;
+      }
+      
+      // Premium range filter
+      if (premiumMinFilter) {
+        const minPremium = parseFloat(premiumMinFilter);
+        if (!isNaN(minPremium) && (policy.premium || 0) < minPremium) return false;
+      }
+      if (premiumMaxFilter) {
+        const maxPremium = parseFloat(premiumMaxFilter);
+        if (!isNaN(maxPremium) && (policy.premium || 0) > maxPremium) return false;
+      }
+      
+      // Anniversary date range filter
+      if (dateFromFilter) {
+        const fromDate = new Date(dateFromFilter);
+        const anniversaryDate = new Date(policy.anniversaryDate);
+        if (anniversaryDate < fromDate) return false;
+      }
+      if (dateToFilter) {
+        const toDate = new Date(dateToFilter);
+        const anniversaryDate = new Date(policy.anniversaryDate);
+        if (anniversaryDate > toDate) return false;
+      }
+      
+      return true;
     });
-    // TODO: Create a task/reminder for this review
+  }, [anniversaries, searchQuery, policyTypeFilter, premiumMinFilter, premiumMaxFilter, dateFromFilter, dateToFilter]);
+  
+  // Handle schedule review - create task
+  const handleScheduleReview = (policy: any) => {
+    setCreatingTaskForPolicy(policy.policyNumber);
+    createTaskMutation.mutate({
+      policyNumber: policy.policyNumber,
+      ownerName: policy.ownerName,
+      anniversaryDate: format(new Date(policy.anniversaryDate), 'yyyy-MM-dd'),
+      policyAge: policy.policyAge,
+      faceAmount: policy.faceAmount || 0,
+      premium: policy.premium || 0,
+      productType: policy.productType,
+    });
   };
   
   // Calculate stats
   const urgentCount = anniversaries?.filter(p => p.daysUntilAnniversary <= 7).length || 0;
-  const upcomingCount = anniversaries?.filter(p => p.daysUntilAnniversary <= 14 && p.daysUntilAnniversary > 7).length || 0;
-  const totalFaceAmount = anniversaries?.reduce((sum, p) => sum + (p.faceAmount || 0), 0) || 0;
+  const totalFaceAmount = filteredAnniversaries.reduce((sum, p) => sum + (p.faceAmount || 0), 0);
   
   return (
     <div className="space-y-6">
@@ -254,7 +370,7 @@ export default function PolicyAnniversaries() {
               </CardDescription>
             </div>
             
-            {/* Search & Filter */}
+            {/* Search & Filters */}
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -265,8 +381,115 @@ export default function PolicyAnniversaries() {
                   className="pl-9 w-[200px]"
                 />
               </div>
+              
+              {/* Filter Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Filter className="h-4 w-4" />
+                    {hasActiveFilters && (
+                      <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Filters</h4>
+                      {hasActiveFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                          <X className="h-3 w-3 mr-1" />
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* Policy Type Filter */}
+                    <div className="space-y-2">
+                      <Label>Policy Type</Label>
+                      <Select value={policyTypeFilter} onValueChange={setPolicyTypeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          {policyTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Premium Range Filter */}
+                    <div className="space-y-2">
+                      <Label>Premium Range</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Min"
+                          value={premiumMinFilter}
+                          onChange={(e) => setPremiumMinFilter(e.target.value)}
+                          className="w-full"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="number"
+                          placeholder="Max"
+                          value={premiumMaxFilter}
+                          onChange={(e) => setPremiumMaxFilter(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Anniversary Date Range Filter */}
+                    <div className="space-y-2">
+                      <Label>Anniversary Date Range</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={dateFromFilter}
+                          onChange={(e) => setDateFromFilter(e.target.value)}
+                          className="w-full"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="date"
+                          value={dateToFilter}
+                          onChange={(e) => setDateToFilter(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
+          
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {policyTypeFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  Type: {policyTypeFilter}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => setPolicyTypeFilter('all')} />
+                </Badge>
+              )}
+              {(premiumMinFilter || premiumMaxFilter) && (
+                <Badge variant="secondary" className="gap-1">
+                  Premium: ${premiumMinFilter || '0'} - ${premiumMaxFilter || '∞'}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => { setPremiumMinFilter(''); setPremiumMaxFilter(''); }} />
+                </Badge>
+              )}
+              {(dateFromFilter || dateToFilter) && (
+                <Badge variant="secondary" className="gap-1">
+                  Date: {dateFromFilter || 'Any'} - {dateToFilter || 'Any'}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => { setDateFromFilter(''); setDateToFilter(''); }} />
+                </Badge>
+              )}
+            </div>
+          )}
         </CardHeader>
         
         <CardContent>
@@ -296,8 +519,13 @@ export default function PolicyAnniversaries() {
               <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-lg font-medium text-muted-foreground">No upcoming anniversaries</p>
               <p className="text-sm text-muted-foreground/70">
-                {searchQuery ? 'Try adjusting your search' : `No policy anniversaries in the next ${selectedPeriod} days`}
+                {searchQuery || hasActiveFilters ? 'Try adjusting your search or filters' : `No policy anniversaries in the next ${selectedPeriod} days`}
               </p>
+              {hasActiveFilters && (
+                <Button variant="link" onClick={clearFilters} className="mt-2">
+                  Clear all filters
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-1">
@@ -306,6 +534,7 @@ export default function PolicyAnniversaries() {
                   key={policy.id} 
                   policy={policy}
                   onScheduleReview={handleScheduleReview}
+                  isCreatingTask={creatingTaskForPolicy === policy.policyNumber}
                 />
               ))}
             </div>
