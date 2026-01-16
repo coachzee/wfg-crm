@@ -1504,9 +1504,9 @@ export async function getPolicyAnniversaries(daysAhead: number = 30) {
         // Calculate days until anniversary
         const daysUntil = Math.ceil((anniversaryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
-        // Calculate policy age in years
-        const policyAge = currentYear - issueDate.getFullYear() + 
-          (anniversaryDate.getFullYear() > currentYear ? 0 : 1);
+        // Calculate policy age in years (how many complete years since issue date)
+        // The upcoming anniversary marks the completion of this many years
+        const policyAge = anniversaryDate.getFullYear() - issueDate.getFullYear();
         
         return {
           id: policy.id,

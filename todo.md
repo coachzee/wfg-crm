@@ -797,3 +797,10 @@
 - [x] Add "Schedule Review" action button
 - [x] Add sidebar navigation link (Anniversaries)
 - [x] Test policy anniversaries functionality (8 tests passing, 112 total)
+
+
+## Policy Anniversaries Improvements - Completed (Jan 16, 2026)
+- [x] Rename "Anniversaries" to "Policy Anniversaries" in sidebar navigation
+- [x] Fix policy age calculation to use actual Issue Date (upcoming anniversary year - issue year)
+- [x] Add Policy Anniversaries summary section to Dashboard landing page
+- [x] Test all changes (112 tests passing)

@@ -40,7 +40,7 @@ const menuItems = [
   { icon: FileText, label: "Clients", path: "/clients", description: "Client relationships" },
   { icon: BarChart3, label: "Production", path: "/production", description: "Performance metrics" },
   { icon: ClipboardList, label: "Pending Policies", path: "/pending-policies", description: "Transamerica pending" },
-  { icon: CalendarDays, label: "Anniversaries", path: "/anniversaries", description: "Policy anniversaries" },
+  { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
   { icon: Users, label: "Team", path: "/team", description: "Team members" },
   { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
