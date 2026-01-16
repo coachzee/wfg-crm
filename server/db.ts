@@ -1454,3 +1454,106 @@ export async function getIncomeAccuracyStats() {
     return null;
   }
 }
+
+
+// ============================================
+// Policy Anniversaries (Client Follow-up Tracking)
+// ============================================
+
+// Get policies with upcoming anniversaries
+export async function getPolicyAnniversaries(daysAhead: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    // Get all active inforce policies with issue dates
+    const policies = await db.select()
+      .from(inforcePolicies)
+      .where(eq(inforcePolicies.status, 'Active'));
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    
+    // Calculate anniversaries
+    const anniversaries = policies
+      .filter(policy => policy.issueDate)
+      .map(policy => {
+        // Parse issue date (format: "MM/DD/YYYY" or "YYYY-MM-DD")
+        let issueDate: Date;
+        const issueDateStr = policy.issueDate as string;
+        
+        if (issueDateStr.includes('/')) {
+          const [month, day, year] = issueDateStr.split('/');
+          issueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+          issueDate = new Date(issueDateStr);
+        }
+        
+        if (isNaN(issueDate.getTime())) return null;
+        
+        // Calculate this year's anniversary
+        let anniversaryDate = new Date(currentYear, issueDate.getMonth(), issueDate.getDate());
+        
+        // If anniversary has passed this year, use next year
+        if (anniversaryDate < today) {
+          anniversaryDate = new Date(currentYear + 1, issueDate.getMonth(), issueDate.getDate());
+        }
+        
+        // Calculate days until anniversary
+        const daysUntil = Math.ceil((anniversaryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Calculate policy age in years
+        const policyAge = currentYear - issueDate.getFullYear() + 
+          (anniversaryDate.getFullYear() > currentYear ? 0 : 1);
+        
+        return {
+          id: policy.id,
+          policyNumber: policy.policyNumber,
+          ownerName: policy.ownerName,
+          productType: policy.productType,
+          faceAmount: parseFloat(policy.faceAmount?.toString() || '0'),
+          premium: parseFloat(policy.premium?.toString() || '0'),
+          issueDate: issueDateStr,
+          anniversaryDate: anniversaryDate.toISOString().split('T')[0],
+          daysUntilAnniversary: daysUntil,
+          policyAge,
+          writingAgentName: policy.writingAgentName,
+          writingAgentCode: policy.writingAgentCode,
+          status: policy.status,
+        };
+      })
+      .filter((a): a is NonNullable<typeof a> => a !== null && a.daysUntilAnniversary <= daysAhead)
+      .sort((a, b) => a.daysUntilAnniversary - b.daysUntilAnniversary);
+    
+    return anniversaries;
+  } catch (error) {
+    console.error('[getPolicyAnniversaries] Error:', error);
+    return [];
+  }
+}
+
+// Get anniversary summary stats
+export async function getAnniversarySummary() {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    const thisWeek = await getPolicyAnniversaries(7);
+    const thisMonth = await getPolicyAnniversaries(30);
+    const next60Days = await getPolicyAnniversaries(60);
+    const next90Days = await getPolicyAnniversaries(90);
+    
+    return {
+      thisWeek: thisWeek.length,
+      thisMonth: thisMonth.length,
+      next60Days: next60Days.length,
+      next90Days: next90Days.length,
+      upcomingAnniversaries: thisMonth,
+    };
+  } catch (error) {
+    console.error('[getAnniversarySummary] Error:', error);
+    return null;
+  }
+}

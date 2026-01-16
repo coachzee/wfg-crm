@@ -18,6 +18,7 @@ import TeamMembers from "./pages/TeamMembers";
 import Team from "./pages/Team";
 import SyncHistory from "./pages/SyncHistory";
 import PendingPolicies from "./pages/PendingPolicies";
+import PolicyAnniversaries from "./pages/PolicyAnniversaries";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -70,6 +71,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <PendingPolicies />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/anniversaries"}>
+        {() => (
+          <DashboardLayout>
+            <PolicyAnniversaries />
           </DashboardLayout>
         )}
       </Route>

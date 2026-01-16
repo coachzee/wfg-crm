@@ -786,3 +786,14 @@
 - [x] Make "In Underwriting" clickable with pending policies modal
 - [x] Add backend queries for each item's detailed data
 - [x] Test all clickable items (7 tests passing)
+
+
+## Policy Anniversaries Section - Completed (Jan 16, 2026)
+- [x] Design policy anniversaries data model using existing inforce policies
+- [x] Create backend query to get upcoming anniversaries (next 30/60/90 days)
+- [x] Create Policy Anniversaries page with table view
+- [x] Add filters for time period (This Week, This Month, Next 30/60/90 Days)
+- [x] Add client contact info (policy owner name, agent info)
+- [x] Add "Schedule Review" action button
+- [x] Add sidebar navigation link (Anniversaries)
+- [x] Test policy anniversaries functionality (8 tests passing, 112 total)

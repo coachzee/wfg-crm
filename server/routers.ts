@@ -54,6 +54,8 @@ import {
   updateActualIncome,
   getIncomeHistory,
   getIncomeAccuracyStats,
+  getPolicyAnniversaries,
+  getAnniversarySummary,
   type Agent,
   type Client,
   type WorkflowTask,
@@ -531,6 +533,18 @@ export const appRouter = router({
         status: p.status,
         submittedDate: p.submittedDate,
       }));
+    }),
+    
+    // Get policy anniversaries
+    getAnniversaries: protectedProcedure
+      .input(z.object({ daysAhead: z.number().default(30) }).optional())
+      .query(async ({ input }) => {
+        return getPolicyAnniversaries(input?.daysAhead || 30);
+      }),
+    
+    // Get anniversary summary
+    getAnniversarySummary: protectedProcedure.query(async () => {
+      return getAnniversarySummary();
     }),
   }),
 
