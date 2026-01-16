@@ -814,3 +814,12 @@
 - [x] Update Schedule Review button to call task creation endpoint
 - [x] Pre-fill task with policy owner name, policy number, anniversary date, face amount, premium, product type
 - [x] Test task creation and filters (116 tests passing)
+
+
+## Policy Anniversary Email Notifications - Completed (Jan 16, 2026)
+- [x] Create email notification function for policy anniversaries (alertPolicyAnniversary)
+- [x] Design email template with policy details, face amount, premium, and review tips
+- [x] Add function to get policies with anniversaries in exactly 7 days (getPoliciesWithAnniversaryInDays)
+- [x] Integrate with daily cron sync to send notifications automatically (in runFullSync)
+- [x] Notifications sent during 3:30 PM and 6:30 PM daily syncs
+- [x] Test email notification functionality (125 tests passing)

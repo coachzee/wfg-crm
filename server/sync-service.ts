@@ -215,6 +215,24 @@ export async function runFullSync(): Promise<SyncResult[]> {
     console.error('[Sync] Failed to save income snapshot:', e);
   }
   
+  // Send policy anniversary reminders (7 days before)
+  try {
+    const { getPoliciesWithAnniversaryInDays } = await import('./db');
+    const { alertPolicyAnniversary } = await import('./email-alert');
+    
+    const policiesIn7Days = await getPoliciesWithAnniversaryInDays(7);
+    
+    if (policiesIn7Days.length > 0) {
+      console.log(`[Sync] Found ${policiesIn7Days.length} policies with anniversaries in 7 days`);
+      await alertPolicyAnniversary(policiesIn7Days);
+      console.log(`[Sync] Sent anniversary reminder email for ${policiesIn7Days.length} policies`);
+    } else {
+      console.log('[Sync] No policy anniversaries in 7 days');
+    }
+  } catch (e) {
+    console.error('[Sync] Failed to send anniversary reminders:', e);
+  }
+  
   console.log('[Sync] Full sync completed');
   return results;
 }

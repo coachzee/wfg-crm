@@ -154,3 +154,94 @@ export async function alertSyncCompleted(results: { platform: string; success: b
     `,
   });
 }
+
+
+// Policy anniversary reminder email
+export async function alertPolicyAnniversary(policies: {
+  policyNumber: string;
+  ownerName: string;
+  anniversaryDate: string;
+  policyAge: number;
+  faceAmount: number | string;
+  premium: number | string;
+  productType?: string | null;
+  writingAgentName?: string | null;
+}[]): Promise<boolean> {
+  if (policies.length === 0) return true;
+  
+  const totalFaceAmount = policies.reduce((sum, p) => sum + (typeof p.faceAmount === 'number' ? p.faceAmount : parseFloat(String(p.faceAmount)) || 0), 0);
+  
+  return sendEmailAlert({
+    subject: `📅 ${policies.length} Policy Anniversary Reminder${policies.length > 1 ? 's' : ''} - 7 Days Away`,
+    message: `
+      <p>The following ${policies.length > 1 ? 'policies have anniversaries' : 'policy has an anniversary'} coming up in <strong>7 days</strong>. 
+      Now is a great time to reach out and schedule a policy review!</p>
+      
+      <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+        <strong>📊 Summary:</strong> ${policies.length} ${policies.length > 1 ? 'policies' : 'policy'} | 
+        <strong>Total Face Amount:</strong> $${totalFaceAmount.toLocaleString()}
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Client</th>
+          <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Policy #</th>
+          <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Anniversary</th>
+          <th style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">Face Amount</th>
+          <th style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">Premium</th>
+        </tr>
+        ${policies.map((p, i) => `
+          <tr style="background: ${i % 2 === 0 ? '#f8f9fa' : 'white'};">
+            <td style="padding: 12px; border: 1px solid #dee2e6;">
+              <strong>${p.ownerName}</strong>
+              ${p.writingAgentName ? `<br><span style="font-size: 11px; color: #666;">Agent: ${p.writingAgentName}</span>` : ''}
+            </td>
+            <td style="padding: 12px; border: 1px solid #dee2e6; font-family: monospace;">${p.policyNumber}</td>
+            <td style="padding: 12px; border: 1px solid #dee2e6;">
+              ${p.anniversaryDate}
+              <br><span style="font-size: 11px; color: #666;">${p.policyAge} year${p.policyAge !== 1 ? 's' : ''}</span>
+            </td>
+            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: right;">$${(p.faceAmount || 0).toLocaleString()}</td>
+            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: right;">$${(p.premium || 0).toLocaleString()}</td>
+          </tr>
+        `).join('')}
+      </table>
+      
+      <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #ffc107;">
+        <strong>💡 Review Tips:</strong>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+          <li>Review coverage adequacy based on life changes</li>
+          <li>Confirm beneficiary information is up to date</li>
+          <li>Discuss additional coverage opportunities</li>
+          <li>Ask for referrals to friends and family</li>
+        </ul>
+      </div>
+      
+      <p style="margin-top: 20px;">
+        <a href="https://wfg-crm.manus.space/policy-anniversaries" 
+           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                  color: white; 
+                  padding: 12px 24px; 
+                  text-decoration: none; 
+                  border-radius: 6px; 
+                  display: inline-block;">
+          View All Anniversaries in CRM →
+        </a>
+      </p>
+    `,
+  });
+}
+
+// Single policy anniversary reminder
+export async function alertSinglePolicyAnniversary(policy: {
+  policyNumber: string;
+  ownerName: string;
+  anniversaryDate: string;
+  policyAge: number;
+  faceAmount: number;
+  premium: number;
+  productType?: string;
+  writingAgentName?: string;
+}): Promise<boolean> {
+  return alertPolicyAnniversary([policy]);
+}

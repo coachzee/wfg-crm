@@ -1557,3 +1557,94 @@ export async function getAnniversarySummary() {
     return null;
   }
 }
+
+
+// Get policies with anniversaries in exactly N days (for email notifications)
+export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    // Get all active inforce policies with issue dates
+    const policies = await db.select()
+      .from(inforcePolicies)
+      .where(eq(inforcePolicies.status, 'Active'));
+    
+    const today = new Date();
+    const targetDate = new Date(today);
+    targetDate.setDate(targetDate.getDate() + days);
+    
+    const targetMonth = targetDate.getMonth();
+    const targetDay = targetDate.getDate();
+    const currentYear = today.getFullYear();
+    
+    // Filter policies where anniversary falls on the target date
+    const matchingPolicies = policies
+      .filter(policy => policy.issueDate)
+      .filter(policy => {
+        // Parse issue date
+        let issueDate: Date;
+        const issueDateStr = policy.issueDate as string;
+        
+        if (issueDateStr.includes('/')) {
+          const parts = issueDateStr.split('/');
+          if (parts.length === 3) {
+            const month = parseInt(parts[0], 10) - 1;
+            const day = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            issueDate = new Date(year, month, day);
+          } else {
+            return false;
+          }
+        } else {
+          issueDate = new Date(issueDateStr);
+        }
+        
+        if (isNaN(issueDate.getTime())) return false;
+        
+        // Check if the anniversary month/day matches the target date
+        return issueDate.getMonth() === targetMonth && issueDate.getDate() === targetDay;
+      })
+      .map(policy => {
+        // Parse issue date again for calculations
+        let issueDate: Date;
+        const issueDateStr = policy.issueDate as string;
+        
+        if (issueDateStr.includes('/')) {
+          const parts = issueDateStr.split('/');
+          const month = parseInt(parts[0], 10) - 1;
+          const day = parseInt(parts[1], 10);
+          const year = parseInt(parts[2], 10);
+          issueDate = new Date(year, month, day);
+        } else {
+          issueDate = new Date(issueDateStr);
+        }
+        
+        const issueYear = issueDate.getFullYear();
+        const anniversaryYear = targetDate.getFullYear();
+        const policyAge = anniversaryYear - issueYear;
+        
+        return {
+          id: policy.id,
+          policyNumber: policy.policyNumber,
+          ownerName: policy.ownerName || 'Unknown',
+          anniversaryDate: targetDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          policyAge,
+          faceAmount: policy.faceAmount || 0,
+          premium: policy.premium || 0,
+          productType: policy.productType,
+          writingAgentName: policy.writingAgentName,
+          writingAgentCode: policy.writingAgentCode,
+        };
+      });
+    
+    return matchingPolicies;
+  } catch (error) {
+    console.error('[getPoliciesWithAnniversaryInDays] Error:', error);
+    return [];
+  }
+}
