@@ -47,6 +47,9 @@ export default function Team() {
     totalBaseShopPoints: agent.totalBaseShopPoints || "0",
     directRecruits: agent.directRecruits || 0,
     isActive: agent.isActive !== false,
+    isLifeLicensed: agent.isLifeLicensed || false,
+    email: agent.email,
+    phone: agent.phone,
   }));
 
   // Calculate total points for commission calculator

@@ -979,3 +979,22 @@
 - [x] Fixed MyWFG scraper to extract data from embedded iframe in report page
 - [x] Fixed OTP handling with proper prefix matching
 - [x] Set correct report filters (Type: Life Licensed, Team: Super Base, Title Levels: TA/A/SA/MD)
+
+
+## Agent Hierarchy Visualization - In Progress (Jan 17, 2026)
+- [ ] Design hierarchy data structure with upline/downline relationships
+- [ ] Create visual hierarchy tree component
+- [ ] Add hierarchy view to Team page or create dedicated page
+- [ ] Show agent details on hover/click (name, rank, licensed status, production)
+- [ ] Color-code nodes by rank (TA, A, SA, MD, SMD)
+- [ ] Add expand/collapse functionality for large teams
+
+
+## Agent Hierarchy Visualization (Completed)
+- [x] Enhance TeamHierarchy component with visual org chart layout
+- [x] Add connecting lines between parent-child nodes in tree view
+- [x] Add horizontal org chart view option for better visualization
+- [x] Display agent details in hierarchy nodes (rank, licensed status, production)
+- [x] Add zoom and pan controls for large hierarchies
+- [x] Add search/filter within hierarchy view
+- [ ] Add ability to highlight specific agent's upline/downline path (partial - search highlights matches)
