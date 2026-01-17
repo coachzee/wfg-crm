@@ -226,12 +226,16 @@ const StatsCard = memo(function StatsCard({
 });
 
 export default function Agents() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [rankFilter, setRankFilter] = useState<string>("all");
-  const [quickFilter, setQuickFilter] = useState<string | null>(null);
+  const [quickFilter, setQuickFilter] = useState<string | null>(() => {
+    // Check URL for filter parameter on initial load
+    const params = new URLSearchParams(window.location.search);
+    return params.get('filter');
+  });
   const [teamFilter, setTeamFilter] = useState<"BASE_SHOP" | "SUPER_TEAM">("BASE_SHOP");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -278,7 +282,9 @@ export default function Agents() {
       if (quickFilter === "total") {
         matchesQuickFilter = true; // Show all
       } else if (quickFilter === "licensed") {
-        matchesQuickFilter = agent.currentStage === "LICENSED" || agent.currentStage === "NET_LICENSED" || agent.currentStage === "PRODUCT_TRAINING" || agent.currentStage === "BUSINESS_LAUNCH" || agent.currentStage === "CLIENT_TRACKING" || agent.currentStage === "CHARGEBACK_PROOF";
+        matchesQuickFilter = agent.currentStage === "NET_LICENSED";
+      } else if (quickFilter === "lifeLicensed") {
+        matchesQuickFilter = agent.isLifeLicensed === true;
       } else if (quickFilter === "training") {
         matchesQuickFilter = ["EXAM_PREP", "PRODUCT_TRAINING"].includes(agent.currentStage);
       } else if (quickFilter === "newThisMonth") {
@@ -291,13 +297,14 @@ export default function Agents() {
 
   // Memoized stats (based on current team filter)
   const stats = useMemo(() => {
-    if (!agents) return { total: 0, netLicensed: 0, inTraining: 0, newThisMonth: 0 };
+    if (!agents) return { total: 0, netLicensed: 0, licensed: 0, inTraining: 0, newThisMonth: 0 };
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const teamAgents = agents.filter((a: any) => a.teamType === teamFilter);
     return {
       total: teamAgents.length,
       netLicensed: teamAgents.filter((a: any) => a.currentStage === "NET_LICENSED").length,
+      licensed: teamAgents.filter((a: any) => a.isLifeLicensed === true).length,
       inTraining: teamAgents.filter((a: any) => ["EXAM_PREP", "PRODUCT_TRAINING"].includes(a.currentStage)).length,
       newThisMonth: teamAgents.filter((a: any) => new Date(a.createdAt) >= startOfMonth).length,
     };
@@ -470,6 +477,14 @@ export default function Agents() {
           color="bg-emerald-500/10 text-emerald-600"
           onClick={() => setQuickFilter(quickFilter === "licensed" ? null : "licensed")}
           active={quickFilter === "licensed"}
+        />
+        <StatsCard 
+          icon={Award} 
+          label="Licensed" 
+          value={stats.licensed} 
+          color="bg-green-500/10 text-green-600"
+          onClick={() => setQuickFilter(quickFilter === "lifeLicensed" ? null : "lifeLicensed")}
+          active={quickFilter === "lifeLicensed"}
         />
         <StatsCard 
           icon={Clock} 

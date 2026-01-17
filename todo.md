@@ -958,3 +958,24 @@
 - [x] Tested the sync process end-to-end
   - Successfully extracted 31 licensed agents from MyWFG
   - Updated 9 agents in database to LICENSED status
+
+
+## Import Missing Licensed Agents & Daily Sync - In Progress (Jan 16, 2026)
+- [ ] Import 15 missing licensed agents from MyWFG to CRM database
+- [ ] Set up daily automated sync for agent licensing status (3:30 PM & 6:30 PM EST)
+- [ ] Add Licensed Agents widget to Agents page (similar to "In Training" widget)
+- [ ] Make Net Licensed clickable and linked to dashboard Net Licensed widget
+- [ ] Test all features end-to-end
+
+
+## Import Missing Licensed Agents & Daily Sync - Completed (Jan 17, 2026)
+- [x] Import 27 licensed agents from MyWFG to CRM database
+- [x] Set up daily automated sync for agent licensing status (runs at 3:30 PM & 6:30 PM EST)
+- [x] Created agent-licensing-sync.ts module with syncAgentLicensingStatus() and importMissingLicensedAgents()
+- [x] Integrated licensing sync into cron sync endpoint
+- [x] Add Licensed Agents widget to Agents page (shows all life-licensed agents)
+- [x] Make Licensed Agents card on Dashboard clickable (navigates to Agents page with filter)
+- [x] Net Licensed card already has modal with detailed breakdown
+- [x] Fixed MyWFG scraper to extract data from embedded iframe in report page
+- [x] Fixed OTP handling with proper prefix matching
+- [x] Set correct report filters (Type: Life Licensed, Team: Super Base, Title Levels: TA/A/SA/MD)

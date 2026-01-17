@@ -1169,6 +1169,7 @@ export default function Dashboard() {
           variant="success"
           trend="up"
           trendValue={`${Math.round(((metrics?.licensedAgents || 27) / (metrics?.activeAssociates || 91)) * 100)}% licensed`}
+          onClick={() => setLocation('/agents?filter=lifeLicensed')}
         />
         <MetricCard
           title="Net Licensed"

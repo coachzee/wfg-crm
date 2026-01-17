@@ -80,6 +80,18 @@ async function startServer() {
       const emailResults = await processScheduledEmails();
       console.log(`[Cron Sync] Scheduled emails processed: ${emailResults.processed} (${emailResults.succeeded} succeeded, ${emailResults.failed} failed)`);
       
+      // Sync agent licensing status from MyWFG
+      console.log('[Cron Sync] Syncing agent licensing status...');
+      let licensingSyncResult: { success: boolean; updated: number; error?: string } = { success: false, updated: 0 };
+      try {
+        const { syncAgentLicensingStatus } = await import('../agent-licensing-sync');
+        licensingSyncResult = await syncAgentLicensingStatus();
+        console.log(`[Cron Sync] Licensing sync: ${licensingSyncResult.updated} agents updated`);
+      } catch (err) {
+        licensingSyncResult.error = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[Cron Sync] Licensing sync error:', licensingSyncResult.error);
+      }
+      
       const successCount = results.filter(r => r.success).length;
       const failureCount = results.filter(r => !r.success).length;
       
