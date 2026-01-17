@@ -14,7 +14,7 @@ import {
   Users, Target, CheckCircle, Clock, TrendingUp, 
   ArrowUpRight, ArrowDownRight, Activity, Zap,
   UserPlus, Award, Calendar, RefreshCw, DollarSign, Heart, Shield,
-  AlertTriangle, AlertCircle, FileWarning, CreditCard, Bell, Send, Mail
+  AlertTriangle, AlertCircle, FileWarning, CreditCard, Bell, Send, Mail, CalendarClock, X
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useMemo, useCallback, memo, useState } from "react";
@@ -731,6 +731,9 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     personalNote: "",
     closingMessage: "",
   });
+  const [sendOption, setSendOption] = useState<"now" | "schedule">("now");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
   const utils = trpc.useUtils();
   
   const { data: stats, isLoading } = trpc.dashboard.getAnniversaryEmailStats.useQuery(undefined, {
@@ -748,11 +751,41 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
       toast.success("Email resent successfully!");
       utils.dashboard.getAnniversaryEmailStats.invalidate();
       utils.dashboard.getEmailsEligibleForResend.invalidate();
+      utils.dashboard.getScheduledEmails.invalidate();
       setResendingId(null);
     },
     onError: (error) => {
       toast.error(`Failed to resend: ${error.message}`);
       setResendingId(null);
+    },
+  });
+
+  const scheduleMutation = trpc.dashboard.scheduleEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Email scheduled successfully!");
+      utils.dashboard.getScheduledEmails.invalidate();
+      utils.dashboard.getEmailsEligibleForResend.invalidate();
+      setResendingId(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to schedule: ${error.message}`);
+      setResendingId(null);
+    },
+  });
+
+  const { data: scheduledEmails } = trpc.dashboard.getScheduledEmails.useQuery(
+    undefined,
+    { enabled: showResendSection, staleTime: 60000 }
+  );
+
+  const cancelScheduleMutation = trpc.dashboard.cancelScheduledEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Scheduled email cancelled");
+      utils.dashboard.getScheduledEmails.invalidate();
+      utils.dashboard.getEmailsEligibleForResend.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Failed to cancel: ${error.message}`);
     },
   });
   
@@ -784,6 +817,9 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     setConfirmEmail(email);
     setEditedContent(getDefaultContent(email));
     setIsEditMode(false);
+    setSendOption("now");
+    setScheduledDate("");
+    setScheduledTime("");
   };
 
   const handleConfirmResend = () => {
@@ -797,22 +833,41 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
       editedContent.personalNote !== "" ||
       editedContent.closingMessage !== defaultContent.closingMessage;
     
-    resendMutation.mutate({ 
-      trackingId: confirmEmail.trackingId,
-      customContent: hasCustomContent ? {
-        greetingMessage: editedContent.greetingMessage || undefined,
-        personalNote: editedContent.personalNote || undefined,
-        closingMessage: editedContent.closingMessage || undefined,
-      } : undefined,
-    });
+    const customContent = hasCustomContent ? {
+      greetingMessage: editedContent.greetingMessage || undefined,
+      personalNote: editedContent.personalNote || undefined,
+      closingMessage: editedContent.closingMessage || undefined,
+    } : undefined;
+
+    if (sendOption === "schedule" && scheduledDate && scheduledTime) {
+      // Schedule the email
+      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      scheduleMutation.mutate({
+        trackingId: confirmEmail.trackingId,
+        scheduledFor: scheduledDateTime.getTime(),
+        customContent,
+      });
+    } else {
+      // Send immediately
+      resendMutation.mutate({ 
+        trackingId: confirmEmail.trackingId,
+        customContent,
+      });
+    }
     setConfirmEmail(null);
     setIsEditMode(false);
+    setSendOption("now");
+    setScheduledDate("");
+    setScheduledTime("");
   };
 
   const handleCancelResend = () => {
     setConfirmEmail(null);
     setIsEditMode(false);
     setEditedContent({ greetingMessage: "", personalNote: "", closingMessage: "" });
+    setSendOption("now");
+    setScheduledDate("");
+    setScheduledTime("");
   };
 
   if (isLoading) {
@@ -961,6 +1016,40 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
               </div>
             ) : (
               <p className="text-xs text-amber-700">All recent emails have been opened!</p>
+            )}
+
+            {/* Scheduled Emails */}
+            {scheduledEmails && scheduledEmails.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm font-medium text-purple-700 mb-2 flex items-center gap-1">
+                  <CalendarClock className="h-4 w-4" /> Scheduled Emails ({scheduledEmails.length})
+                </p>
+                <div className="space-y-2">
+                  {scheduledEmails.map((email) => (
+                    <div key={email.id} className="flex items-center justify-between bg-purple-50 rounded-lg p-2">
+                      <div className="flex items-center gap-2">
+                        <CalendarClock className="h-4 w-4 text-purple-500" />
+                        <div>
+                          <p className="text-sm font-medium truncate max-w-[120px]">
+                            {email.recipientName || email.recipientEmail}
+                          </p>
+                          <p className="text-xs text-purple-600">
+                            {format(new Date(email.scheduledFor), 'MMM d, h:mm a')}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => cancelScheduleMutation.mutate({ scheduledId: email.id })}
+                        className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="h-3 w-3 mr-1" /> Cancel
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -1206,8 +1295,64 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
                   </div>
                 )}
 
+                {/* Scheduling Options */}
+                <div className="border rounded-lg p-3 space-y-3">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sendOption"
+                        checked={sendOption === "now"}
+                        onChange={() => setSendOption("now")}
+                        className="w-4 h-4 text-purple-600"
+                      />
+                      <Send className="h-4 w-4 text-purple-600" />
+                      <span className="text-sm font-medium">Send Now</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sendOption"
+                        checked={sendOption === "schedule"}
+                        onChange={() => setSendOption("schedule")}
+                        className="w-4 h-4 text-purple-600"
+                      />
+                      <CalendarClock className="h-4 w-4 text-purple-600" />
+                      <span className="text-sm font-medium">Schedule for Later</span>
+                    </label>
+                  </div>
+                  
+                  {sendOption === "schedule" && (
+                    <div className="flex gap-2 pt-2">
+                      <div className="flex-1">
+                        <label className="text-xs text-muted-foreground block mb-1">Date</label>
+                        <input
+                          type="date"
+                          value={scheduledDate}
+                          onChange={(e) => setScheduledDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-muted-foreground block mb-1">Time</label>
+                        <input
+                          type="time"
+                          value={scheduledTime}
+                          onChange={(e) => setScheduledTime(e.target.value)}
+                          className="w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <p className="text-xs text-muted-foreground text-center">
-                  {isEditMode ? "Switch to Preview Mode to see how your email will look." : "A new email will be sent with fresh tracking."}
+                  {sendOption === "schedule" 
+                    ? (scheduledDate && scheduledTime 
+                        ? `Email will be sent on ${new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString()}`
+                        : "Select a date and time to schedule the email")
+                    : (isEditMode ? "Switch to Preview Mode to see how your email will look." : "A new email will be sent with fresh tracking.")}
                 </p>
               </div>
             )}
@@ -1215,9 +1360,16 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
               <Button variant="outline" onClick={handleCancelResend}>
                 Cancel
               </Button>
-              <Button onClick={handleConfirmResend} className="bg-purple-600 hover:bg-purple-700">
-                <Send className="h-4 w-4 mr-2" />
-                {isEditMode ? "Send Edited Email" : "Confirm Resend"}
+              <Button 
+                onClick={handleConfirmResend} 
+                className="bg-purple-600 hover:bg-purple-700"
+                disabled={sendOption === "schedule" && (!scheduledDate || !scheduledTime)}
+              >
+                {sendOption === "schedule" ? (
+                  <><CalendarClock className="h-4 w-4 mr-2" /> Schedule Email</>
+                ) : (
+                  <><Send className="h-4 w-4 mr-2" /> {isEditMode ? "Send Edited Email" : "Confirm Resend"}</>
+                )}
               </Button>
             </div>
           </DialogContent>

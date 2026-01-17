@@ -74,6 +74,12 @@ async function startServer() {
       const { runFullSync } = await import('../sync-service');
       const results = await runFullSync();
       
+      // Process scheduled emails
+      console.log('[Cron Sync] Processing scheduled emails...');
+      const { processScheduledEmails } = await import('../email-tracking');
+      const emailResults = await processScheduledEmails();
+      console.log(`[Cron Sync] Scheduled emails processed: ${emailResults.processed} (${emailResults.succeeded} succeeded, ${emailResults.failed} failed)`);
+      
       const successCount = results.filter(r => r.success).length;
       const failureCount = results.filter(r => !r.success).length;
       
@@ -87,7 +93,8 @@ async function startServer() {
           success: r.success,
           error: r.error,
           data: r.data
-        }))
+        })),
+        scheduledEmails: emailResults
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -115,6 +122,12 @@ async function startServer() {
       const { runFullSync } = await import('../sync-service');
       const results = await runFullSync();
       
+      // Process scheduled emails
+      console.log('[Cron Sync GET] Processing scheduled emails...');
+      const { processScheduledEmails } = await import('../email-tracking');
+      const emailResults = await processScheduledEmails();
+      console.log(`[Cron Sync GET] Scheduled emails processed: ${emailResults.processed} (${emailResults.succeeded} succeeded, ${emailResults.failed} failed)`);
+      
       res.status(200).json({
         success: results.every(r => r.success),
         timestamp: new Date().toISOString(),
@@ -122,7 +135,8 @@ async function startServer() {
           platform: r.platform,
           success: r.success,
           error: r.error
-        }))
+        })),
+        scheduledEmails: emailResults
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

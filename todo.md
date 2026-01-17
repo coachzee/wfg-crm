@@ -913,3 +913,14 @@
 - [x] Show edit/preview toggle to switch between modes
 - [x] Add "Reset to Default" button to restore original content
 - [x] Preview mode shows edited content in real-time
+
+
+## Scheduled Email Resend - Completed (Jan 16, 2026)
+- [x] Add "Send Now" / "Schedule for Later" toggle in resend modal
+- [x] Add date/time picker for scheduling
+- [x] Create scheduledEmails database table
+- [x] Create backend endpoint for scheduling emails
+- [x] Implement scheduled email processor (integrated with cron sync)
+- [x] Show scheduled emails in Email Tracking Widget
+- [x] Allow canceling scheduled emails
+- [x] Process scheduled emails during twice-daily sync (3:30 PM & 6:30 PM EST)

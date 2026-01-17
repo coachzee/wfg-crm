@@ -737,3 +737,50 @@ export const emailTracking = mysqlTable("emailTracking", {
 
 export type EmailTracking = typeof emailTracking.$inferSelect;
 export type InsertEmailTracking = typeof emailTracking.$inferInsert;
+
+
+// Scheduled Emails - For emails scheduled to be sent at a future time
+export const scheduledEmails = mysqlTable("scheduledEmails", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Reference to original email tracking (for resends)
+  originalTrackingId: varchar("originalTrackingId", { length: 64 }),
+  
+  // Email details
+  emailType: mysqlEnum("emailType", [
+    "ANNIVERSARY_GREETING",
+    "ANNIVERSARY_REMINDER",
+    "POLICY_REVIEW_REMINDER",
+    "CHARGEBACK_ALERT",
+    "GENERAL_NOTIFICATION",
+  ]).notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 255 }).notNull(),
+  recipientName: varchar("recipientName", { length: 255 }),
+  
+  // Related entity
+  relatedEntityType: varchar("relatedEntityType", { length: 50 }),
+  relatedEntityId: varchar("relatedEntityId", { length: 100 }),
+  
+  // Custom content (for edited emails)
+  customContent: json("customContent"), // { greetingMessage, personalNote, closingMessage }
+  
+  // Scheduling
+  scheduledFor: timestamp("scheduledFor").notNull(),
+  status: mysqlEnum("status", ["PENDING", "SENT", "CANCELLED", "FAILED"]).default("PENDING").notNull(),
+  
+  // Processing info
+  processedAt: timestamp("processedAt"),
+  newTrackingId: varchar("newTrackingId", { length: 64 }), // Tracking ID of the sent email
+  errorMessage: text("errorMessage"),
+  
+  // Metadata (policy details, agent info, etc.)
+  metadata: json("metadata"),
+  
+  // Audit
+  createdBy: int("createdBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ScheduledEmail = typeof scheduledEmails.$inferSelect;
+export type InsertScheduledEmail = typeof scheduledEmails.$inferInsert;

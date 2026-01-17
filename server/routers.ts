@@ -66,7 +66,7 @@ import { productionRecords, inforcePolicies } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { encryptCredential, decryptCredential } from "./encryption";
 import { TRPCError } from "@trpc/server";
-import { getEmailTrackingStats, getRecentEmailTracking, getAnniversaryEmailStats, getEmailsEligibleForResend, getEmailByTrackingId, markEmailResent } from "./email-tracking";
+import { getEmailTrackingStats, getRecentEmailTracking, getAnniversaryEmailStats, getEmailsEligibleForResend, getEmailByTrackingId, markEmailResent, scheduleEmail, getScheduledEmails, cancelScheduledEmail, processScheduledEmails } from "./email-tracking";
 
 // Validation schemas
 const AgentSchema = z.object({
@@ -680,6 +680,73 @@ export const appRouter = router({
           message: result.success ? "Email resent successfully" : "Failed to resend email",
           newTrackingId: result.trackingId,
         };
+      }),
+
+    // Schedule an email for later
+    scheduleEmail: protectedProcedure
+      .input(z.object({
+        trackingId: z.string(),
+        scheduledFor: z.number(), // Unix timestamp in milliseconds
+        customContent: z.object({
+          greetingMessage: z.string().optional(),
+          personalNote: z.string().optional(),
+          closingMessage: z.string().optional(),
+        }).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Get the original email details
+        const emailRecord = await getEmailByTrackingId(input.trackingId);
+        if (!emailRecord) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Email record not found" });
+        }
+        
+        // Only allow scheduling anniversary greetings
+        if (emailRecord.emailType !== "ANNIVERSARY_GREETING") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only anniversary greeting emails can be scheduled" });
+        }
+        
+        // Schedule the email
+        const scheduled = await scheduleEmail({
+          originalTrackingId: input.trackingId,
+          emailType: emailRecord.emailType,
+          recipientEmail: emailRecord.recipientEmail,
+          recipientName: emailRecord.recipientName,
+          relatedEntityType: emailRecord.relatedEntityType,
+          relatedEntityId: emailRecord.relatedEntityId,
+          scheduledFor: new Date(input.scheduledFor),
+          customContent: input.customContent,
+          metadata: emailRecord.metadata as Record<string, unknown>,
+          createdBy: ctx.user.id,
+        });
+        
+        return {
+          success: true,
+          scheduledId: scheduled.id,
+          scheduledFor: input.scheduledFor,
+        };
+      }),
+
+    // Get scheduled emails
+    getScheduledEmails: protectedProcedure
+      .query(async () => {
+        return getScheduledEmails();
+      }),
+
+    // Cancel a scheduled email
+    cancelScheduledEmail: protectedProcedure
+      .input(z.object({
+        scheduledId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await cancelScheduledEmail(input.scheduledId);
+        return { success: true };
+      }),
+
+    // Process scheduled emails (called by cron job)
+    processScheduledEmails: protectedProcedure
+      .mutation(async () => {
+        const result = await processScheduledEmails();
+        return result;
       }),
   }),
 

@@ -1,6 +1,6 @@
 import { getDb } from "./db";
-import { emailTracking } from "../drizzle/schema";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { emailTracking, scheduledEmails } from "../drizzle/schema";
+import { eq, desc, and, gte, lte, isNull } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 // Create a new email tracking record
@@ -429,5 +429,208 @@ export async function getEmailByTrackingId(trackingId: string): Promise<{
     relatedEntityType: email.relatedEntityType,
     relatedEntityId: email.relatedEntityId,
     metadata: email.metadata as Record<string, unknown> | null,
+  };
+}
+
+
+// ============================================
+// SCHEDULED EMAILS FUNCTIONS
+// ============================================
+
+// Schedule an email for later sending
+export async function scheduleEmail(params: {
+  originalTrackingId: string;
+  emailType: "ANNIVERSARY_GREETING" | "ANNIVERSARY_REMINDER" | "POLICY_REVIEW_REMINDER" | "CHARGEBACK_ALERT" | "GENERAL_NOTIFICATION";
+  recipientEmail: string;
+  recipientName?: string | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: string | null;
+  scheduledFor: Date;
+  customContent?: {
+    greetingMessage?: string;
+    personalNote?: string;
+    closingMessage?: string;
+  };
+  metadata?: Record<string, unknown> | null;
+  createdBy: number;
+}): Promise<{ id: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database connection not available");
+  
+  const result = await db.insert(scheduledEmails).values({
+    originalTrackingId: params.originalTrackingId,
+    emailType: params.emailType,
+    recipientEmail: params.recipientEmail,
+    recipientName: params.recipientName || null,
+    relatedEntityType: params.relatedEntityType || null,
+    relatedEntityId: params.relatedEntityId || null,
+    scheduledFor: params.scheduledFor,
+    customContent: params.customContent || null,
+    metadata: params.metadata || null,
+    createdBy: params.createdBy,
+    status: "PENDING",
+  });
+  
+  return { id: Number((result as unknown as { insertId: number }).insertId) };
+}
+
+// Get all pending scheduled emails
+export async function getScheduledEmails(): Promise<Array<{
+  id: number;
+  originalTrackingId: string | null;
+  emailType: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  relatedEntityId: string | null;
+  scheduledFor: Date;
+  status: string;
+  customContent: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: Date;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const records = await db
+    .select()
+    .from(scheduledEmails)
+    .where(eq(scheduledEmails.status, "PENDING"))
+    .orderBy(scheduledEmails.scheduledFor);
+  
+  return records.map((r) => ({
+    id: r.id,
+    originalTrackingId: r.originalTrackingId,
+    emailType: r.emailType,
+    recipientEmail: r.recipientEmail,
+    recipientName: r.recipientName,
+    relatedEntityId: r.relatedEntityId,
+    scheduledFor: r.scheduledFor,
+    status: r.status,
+    customContent: r.customContent as Record<string, unknown> | null,
+    metadata: r.metadata as Record<string, unknown> | null,
+    createdAt: r.createdAt,
+  }));
+}
+
+// Cancel a scheduled email
+export async function cancelScheduledEmail(scheduledId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db
+    .update(scheduledEmails)
+    .set({
+      status: "CANCELLED",
+    })
+    .where(eq(scheduledEmails.id, scheduledId));
+}
+
+// Process scheduled emails that are due
+export async function processScheduledEmails(): Promise<{
+  processed: number;
+  succeeded: number;
+  failed: number;
+}> {
+  const db = await getDb();
+  if (!db) return { processed: 0, succeeded: 0, failed: 0 };
+  
+  const now = new Date();
+  
+  // Get all pending emails that are due
+  const dueEmails = await db
+    .select()
+    .from(scheduledEmails)
+    .where(
+      and(
+        eq(scheduledEmails.status, "PENDING"),
+        lte(scheduledEmails.scheduledFor, now)
+      )
+    );
+  
+  let succeeded = 0;
+  let failed = 0;
+  
+  for (const email of dueEmails) {
+    try {
+      // Import the email sending function
+      const { sendClientAnniversaryGreeting } = await import("./email-alert");
+      
+      // Get metadata for the email
+      const metadata = (email.metadata || {}) as Record<string, unknown>;
+      const customContent = (email.customContent || {}) as {
+        greetingMessage?: string;
+        personalNote?: string;
+        closingMessage?: string;
+      };
+      
+      // Parse client name
+      const clientName = email.recipientName || "Valued Client";
+      const nameParts = clientName.split(" ");
+      const firstName = nameParts[0] || "Valued";
+      const lastName = nameParts.slice(1).join(" ") || "Client";
+      
+      // Send the email
+      const result = await sendClientAnniversaryGreeting({
+        email: email.recipientEmail,
+        firstName,
+        lastName,
+        policyNumber: email.relatedEntityId || "",
+        faceAmount: (metadata.faceAmount as string) || "N/A",
+        policyAge: (metadata.policyAge as number) || 1,
+        productType: (metadata.productType as string) || "Life Insurance",
+        agentName: (metadata.agentName as string) || "Your WFG Agent",
+        agentPhone: (metadata.agentPhone as string) || "",
+        agentEmail: (metadata.agentEmail as string) || "",
+      }, {
+        customContent: Object.keys(customContent).length > 0 ? customContent : undefined,
+      });
+      
+      if (result.success) {
+        // Mark as sent
+        await db
+          .update(scheduledEmails)
+          .set({
+            status: "SENT",
+            processedAt: new Date(),
+            newTrackingId: result.trackingId,
+          })
+          .where(eq(scheduledEmails.id, email.id));
+        
+        // Mark original email as resent if applicable
+        if (email.originalTrackingId) {
+          await markEmailResent(email.originalTrackingId);
+        }
+        
+        succeeded++;
+      } else {
+        // Mark as failed
+        await db
+          .update(scheduledEmails)
+          .set({
+            status: "FAILED",
+            processedAt: new Date(),
+            errorMessage: "Email sending failed",
+          })
+          .where(eq(scheduledEmails.id, email.id));
+        failed++;
+      }
+    } catch (error) {
+      // Mark as failed
+      await db
+        .update(scheduledEmails)
+        .set({
+          status: "FAILED",
+          processedAt: new Date(),
+          errorMessage: error instanceof Error ? error.message : "Unknown error",
+        })
+        .where(eq(scheduledEmails.id, email.id));
+      failed++;
+    }
+  }
+  
+  return {
+    processed: dueEmails.length,
+    succeeded,
+    failed,
   };
 }
