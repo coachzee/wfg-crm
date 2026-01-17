@@ -625,6 +625,11 @@ export const appRouter = router({
     resendAnniversaryEmail: protectedProcedure
       .input(z.object({
         trackingId: z.string(),
+        customContent: z.object({
+          greetingMessage: z.string().optional(),
+          personalNote: z.string().optional(),
+          closingMessage: z.string().optional(),
+        }).optional(),
       }))
       .mutation(async ({ input }) => {
         const { sendClientAnniversaryGreeting } = await import("./email-alert");
@@ -651,7 +656,7 @@ export const appRouter = router({
         const firstName = nameParts[0] || "Valued";
         const lastName = nameParts.slice(1).join(" ") || "Client";
         
-        // Resend the email
+        // Resend the email with optional custom content
         const result = await sendClientAnniversaryGreeting({
           email: clientEmail,
           firstName,
@@ -663,6 +668,8 @@ export const appRouter = router({
           agentName: (metadata.agentName as string) || "Your WFG Agent",
           agentPhone: (metadata.agentPhone as string) || "",
           agentEmail: (metadata.agentEmail as string) || "",
+        }, {
+          customContent: input.customContent,
         });
         
         // Mark the original email as resent

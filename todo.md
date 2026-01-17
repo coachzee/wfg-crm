@@ -902,3 +902,14 @@
 - [x] Show styled preview matching actual email appearance
 - [x] Display policy summary (policy number, product type, coverage amount, years protected)
 - [x] Show CTA button preview and agent signature
+
+
+## Editable Email Content in Preview Modal - Completed (Jan 16, 2026)
+- [x] Add editable greeting message field in preview modal
+- [x] Add editable personal note field (appears in highlighted box)
+- [x] Add editable closing message field
+- [x] Update backend to accept custom content when resending
+- [x] Pass custom content to sendClientAnniversaryGreeting function
+- [x] Show edit/preview toggle to switch between modes
+- [x] Add "Reset to Default" button to restore original content
+- [x] Preview mode shows edited content in real-time

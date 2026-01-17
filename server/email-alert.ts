@@ -263,6 +263,11 @@ export async function sendClientAnniversaryGreeting(client: {
 }, options?: {
   baseUrl?: string;
   enableTracking?: boolean;
+  customContent?: {
+    greetingMessage?: string;
+    personalNote?: string;
+    closingMessage?: string;
+  };
 }): Promise<{ success: boolean; trackingId?: string }> {
   const credentials = getGmailCredentials();
   const enableTracking = options?.enableTracking !== false; // Default to true
@@ -325,6 +330,14 @@ export async function sendClientAnniversaryGreeting(client: {
   
   const scheduleReviewUrl = `mailto:${client.agentEmail || credentials.email}?subject=Policy Review Request - ${client.policyNumber}`;
   
+  // Custom content with defaults
+  const customContent = options?.customContent || {};
+  const greetingMessage = customContent.greetingMessage || 
+    `Congratulations on your <strong>${ordinalSuffix(client.policyAge)} policy anniversary</strong>! We want to take a moment to thank you for trusting us with your family's financial protection.`;
+  const personalNote = customContent.personalNote || '';
+  const closingMessage = customContent.closingMessage || 
+    `Thank you for being part of our family. We're honored to help protect what matters most to you.`;
+  
   try {
     const transporter = createTransporter();
     
@@ -351,8 +364,7 @@ export async function sendClientAnniversaryGreeting(client: {
             </p>
             
             <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 0 0 20px 0;">
-              Congratulations on your <strong>${ordinalSuffix(client.policyAge)} policy anniversary</strong>! 
-              We want to take a moment to thank you for trusting us with your family's financial protection.
+              ${greetingMessage}
             </p>
             
             <!-- Policy summary card -->
@@ -387,6 +399,15 @@ export async function sendClientAnniversaryGreeting(client: {
               Life changes—marriages, new children, home purchases, career advancements—may mean your protection needs have changed too.
             </p>
             
+            ${personalNote ? `
+            <!-- Personal Note -->
+            <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 0; font-style: italic;">
+                ${personalNote}
+              </p>
+            </div>
+            ` : ''}
+            
             <!-- CTA Button -->
             <div style="text-align: center; margin: 30px 0;">
               <a href="${trackLink(scheduleReviewUrl)}" 
@@ -403,7 +424,7 @@ export async function sendClientAnniversaryGreeting(client: {
             </div>
             
             <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 20px 0 0 0;">
-              Thank you for being part of our family. We're honored to help protect what matters most to you.
+              ${closingMessage}
             </p>
           </div>
           

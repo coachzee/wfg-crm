@@ -725,6 +725,12 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     relatedEntityId: string | null;
     metadata: Record<string, unknown> | null;
   } | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedContent, setEditedContent] = useState({
+    greetingMessage: "",
+    personalNote: "",
+    closingMessage: "",
+  });
   const utils = trpc.useUtils();
   
   const { data: stats, isLoading } = trpc.dashboard.getAnniversaryEmailStats.useQuery(undefined, {
@@ -750,6 +756,21 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     },
   });
   
+  const getDefaultContent = (email: typeof confirmEmail) => {
+    if (!email) return { greetingMessage: "", personalNote: "", closingMessage: "" };
+    const policyAge = email.metadata?.policyAge ? Number(email.metadata.policyAge) : 1;
+    const ordinalSuffix = (n: number) => {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+    return {
+      greetingMessage: `Congratulations on your ${ordinalSuffix(policyAge)} policy anniversary! We want to take a moment to thank you for trusting us with your family's financial protection.`,
+      personalNote: "",
+      closingMessage: "Thank you for being part of our family. We're honored to help protect what matters most to you.",
+    };
+  };
+
   const handleResendClick = (email: {
     trackingId: string;
     recipientName: string | null;
@@ -761,17 +782,37 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     metadata: Record<string, unknown> | null;
   }) => {
     setConfirmEmail(email);
+    setEditedContent(getDefaultContent(email));
+    setIsEditMode(false);
   };
 
   const handleConfirmResend = () => {
     if (!confirmEmail) return;
     setResendingId(confirmEmail.trackingId);
-    resendMutation.mutate({ trackingId: confirmEmail.trackingId });
+    
+    // Only include custom content if user made edits
+    const defaultContent = getDefaultContent(confirmEmail);
+    const hasCustomContent = 
+      editedContent.greetingMessage !== defaultContent.greetingMessage ||
+      editedContent.personalNote !== "" ||
+      editedContent.closingMessage !== defaultContent.closingMessage;
+    
+    resendMutation.mutate({ 
+      trackingId: confirmEmail.trackingId,
+      customContent: hasCustomContent ? {
+        greetingMessage: editedContent.greetingMessage || undefined,
+        personalNote: editedContent.personalNote || undefined,
+        closingMessage: editedContent.closingMessage || undefined,
+      } : undefined,
+    });
     setConfirmEmail(null);
+    setIsEditMode(false);
   };
 
   const handleCancelResend = () => {
     setConfirmEmail(null);
+    setIsEditMode(false);
+    setEditedContent({ greetingMessage: "", personalNote: "", closingMessage: "" });
   };
 
   if (isLoading) {
@@ -980,10 +1021,10 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Send className="h-5 w-5 text-purple-600" />
-                Confirm Email Resend
+                {isEditMode ? "Edit Email Content" : "Confirm Email Resend"}
               </DialogTitle>
               <DialogDescription>
-                Review the email content below before resending.
+                {isEditMode ? "Customize the email content before sending." : "Review the email content below before resending."}
               </DialogDescription>
             </DialogHeader>
             {confirmEmail && (
@@ -1013,86 +1054,160 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
                   </div>
                 </div>
 
-                {/* Email Preview */}
-                <div className="border rounded-lg overflow-hidden shadow-sm">
-                  <div className="text-xs text-muted-foreground bg-gray-100 px-3 py-1.5 border-b flex items-center gap-1">
-                    <Mail className="h-3 w-3" /> Email Preview
-                  </div>
-                  <div className="bg-white">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-5 text-center">
-                      <h3 className="text-white font-semibold text-lg">🎉 Happy Policy Anniversary!</h3>
-                      <p className="text-purple-100 text-sm mt-1">
-                        Celebrating {confirmEmail.metadata?.policyAge ? String(confirmEmail.metadata.policyAge) : "your"} year{confirmEmail.metadata?.policyAge && Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""} of protection
-                      </p>
-                    </div>
-                    
-                    {/* Body */}
-                    <div className="p-4 space-y-3 text-sm">
-                      <p className="text-gray-700">
-                        Dear <strong>{confirmEmail.recipientName?.split(" ")[0] || "Valued Client"}</strong>,
-                      </p>
-                      <p className="text-gray-600 text-xs leading-relaxed">
-                        Congratulations on your policy anniversary! We want to thank you for trusting us with your family's financial protection.
-                      </p>
-                      
-                      {/* Policy Summary Card */}
-                      <div className="bg-gray-50 rounded-lg p-3 border">
-                        <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">Policy Summary</p>
-                        <div className="space-y-1 text-xs">
-                          {confirmEmail.relatedEntityId && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Policy Number:</span>
-                              <span className="font-mono font-medium">{confirmEmail.relatedEntityId}</span>
-                            </div>
-                          )}
-                          {confirmEmail.metadata?.productType ? (
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Product Type:</span>
-                              <span className="font-medium">{String(confirmEmail.metadata.productType)}</span>
-                            </div>
-                          ) : null}
-                          {confirmEmail.metadata?.faceAmount ? (
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Coverage Amount:</span>
-                              <span className="font-medium">
-                                ${typeof confirmEmail.metadata.faceAmount === "number" 
-                                  ? (confirmEmail.metadata.faceAmount as number).toLocaleString() 
-                                  : String(confirmEmail.metadata.faceAmount)}
-                              </span>
-                            </div>
-                          ) : null}
-                          {confirmEmail.metadata?.policyAge ? (
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Years Protected:</span>
-                              <span className="font-medium">
-                                {String(confirmEmail.metadata.policyAge)} year{Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""}
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                      
-                      {/* CTA Button Preview */}
-                      <div className="text-center py-2">
-                        <span className="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs px-4 py-2 rounded-md">
-                          📅 Schedule Your Free Policy Review
-                        </span>
-                      </div>
-                      
-                      {/* Agent Signature */}
-                      <div className="border-t pt-3 mt-3">
-                        <p className="font-medium text-gray-700 text-xs">
-                          {confirmEmail.metadata?.agentName ? String(confirmEmail.metadata.agentName) : "Your Financial Professional"}
-                        </p>
-                        <p className="text-gray-500 text-xs">Wealth Builders Haven | World Financial Group</p>
-                      </div>
-                    </div>
-                  </div>
+                {/* Edit/Preview Toggle */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className="text-xs h-7 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                  >
+                    {isEditMode ? (
+                      <><Mail className="h-3 w-3 mr-1" /> Preview Mode</>
+                    ) : (
+                      <><AlertCircle className="h-3 w-3 mr-1" /> Edit Content</>
+                    )}
+                  </Button>
                 </div>
 
+                {isEditMode ? (
+                  /* Edit Mode */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">Greeting Message</label>
+                      <textarea
+                        value={editedContent.greetingMessage}
+                        onChange={(e) => setEditedContent(prev => ({ ...prev, greetingMessage: e.target.value }))}
+                        className="w-full text-sm border rounded-md p-2 min-h-[80px] focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Congratulations on your policy anniversary..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Personal Note <span className="text-muted-foreground">(optional)</span>
+                      </label>
+                      <textarea
+                        value={editedContent.personalNote}
+                        onChange={(e) => setEditedContent(prev => ({ ...prev, personalNote: e.target.value }))}
+                        className="w-full text-sm border rounded-md p-2 min-h-[60px] focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Add a personal message to the client..."
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">This will appear in a highlighted box before the CTA button.</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">Closing Message</label>
+                      <textarea
+                        value={editedContent.closingMessage}
+                        onChange={(e) => setEditedContent(prev => ({ ...prev, closingMessage: e.target.value }))}
+                        className="w-full text-sm border rounded-md p-2 min-h-[60px] focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="Thank you for being part of our family..."
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditedContent(getDefaultContent(confirmEmail))}
+                      className="text-xs"
+                    >
+                      Reset to Default
+                    </Button>
+                  </div>
+                ) : (
+                  /* Preview Mode */
+                  <div className="border rounded-lg overflow-hidden shadow-sm">
+                    <div className="text-xs text-muted-foreground bg-gray-100 px-3 py-1.5 border-b flex items-center gap-1">
+                      <Mail className="h-3 w-3" /> Email Preview
+                    </div>
+                    <div className="bg-white">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-5 text-center">
+                        <h3 className="text-white font-semibold text-lg">🎉 Happy Policy Anniversary!</h3>
+                        <p className="text-purple-100 text-sm mt-1">
+                          Celebrating {confirmEmail.metadata?.policyAge ? String(confirmEmail.metadata.policyAge) : "your"} year{confirmEmail.metadata?.policyAge && Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""} of protection
+                        </p>
+                      </div>
+                      
+                      {/* Body */}
+                      <div className="p-4 space-y-3 text-sm">
+                        <p className="text-gray-700">
+                          Dear <strong>{confirmEmail.recipientName?.split(" ")[0] || "Valued Client"}</strong>,
+                        </p>
+                        <p className="text-gray-600 text-xs leading-relaxed">
+                          {editedContent.greetingMessage || "Congratulations on your policy anniversary! We want to thank you for trusting us with your family's financial protection."}
+                        </p>
+                        
+                        {/* Policy Summary Card */}
+                        <div className="bg-gray-50 rounded-lg p-3 border">
+                          <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">Policy Summary</p>
+                          <div className="space-y-1 text-xs">
+                            {confirmEmail.relatedEntityId && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Policy Number:</span>
+                                <span className="font-mono font-medium">{confirmEmail.relatedEntityId}</span>
+                              </div>
+                            )}
+                            {confirmEmail.metadata?.productType ? (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Product Type:</span>
+                                <span className="font-medium">{String(confirmEmail.metadata.productType)}</span>
+                              </div>
+                            ) : null}
+                            {confirmEmail.metadata?.faceAmount ? (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Coverage Amount:</span>
+                                <span className="font-medium">
+                                  ${typeof confirmEmail.metadata.faceAmount === "number" 
+                                    ? (confirmEmail.metadata.faceAmount as number).toLocaleString() 
+                                    : String(confirmEmail.metadata.faceAmount)}
+                                </span>
+                              </div>
+                            ) : null}
+                            {confirmEmail.metadata?.policyAge ? (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Years Protected:</span>
+                                <span className="font-medium">
+                                  {String(confirmEmail.metadata.policyAge)} year{Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Personal Note Preview (if added) */}
+                        {editedContent.personalNote && (
+                          <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded-r-md">
+                            <p className="text-gray-600 text-xs italic leading-relaxed">
+                              {editedContent.personalNote}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* CTA Button Preview */}
+                        <div className="text-center py-2">
+                          <span className="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs px-4 py-2 rounded-md">
+                            📅 Schedule Your Free Policy Review
+                          </span>
+                        </div>
+
+                        {/* Closing Message */}
+                        <p className="text-gray-600 text-xs leading-relaxed">
+                          {editedContent.closingMessage || "Thank you for being part of our family. We're honored to help protect what matters most to you."}
+                        </p>
+                        
+                        {/* Agent Signature */}
+                        <div className="border-t pt-3 mt-3">
+                          <p className="font-medium text-gray-700 text-xs">
+                            {confirmEmail.metadata?.agentName ? String(confirmEmail.metadata.agentName) : "Your Financial Professional"}
+                          </p>
+                          <p className="text-gray-500 text-xs">Wealth Builders Haven | World Financial Group</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-muted-foreground text-center">
-                  A new email will be sent with fresh tracking.
+                  {isEditMode ? "Switch to Preview Mode to see how your email will look." : "A new email will be sent with fresh tracking."}
                 </p>
               </div>
             )}
@@ -1102,7 +1217,7 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
               </Button>
               <Button onClick={handleConfirmResend} className="bg-purple-600 hover:bg-purple-700">
                 <Send className="h-4 w-4 mr-2" />
-                Confirm Resend
+                {isEditMode ? "Send Edited Email" : "Confirm Resend"}
               </Button>
             </div>
           </DialogContent>
