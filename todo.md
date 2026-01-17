@@ -924,3 +924,13 @@
 - [x] Show scheduled emails in Email Tracking Widget
 - [x] Allow canceling scheduled emails
 - [x] Process scheduled emails during twice-daily sync (3:30 PM & 6:30 PM EST)
+
+
+## Remove Income Tracking Feature - Completed (Jan 16, 2026)
+- [x] Remove Projected Income widget from Dashboard
+- [x] Remove Income Discrepancy Analysis components (IncomeTrackingChart, IncomeDiscrepancyChart)
+- [x] Remove income tracking backend endpoints from routers.ts (getIncomeHistory, saveIncomeSnapshot, updateActualIncome, getIncomeAccuracyStats)
+- [x] Remove saveIncomeSnapshot call from sync-service.ts
+- [x] Remove income-history.test.ts
+- [x] Clean up unused imports
+- Note: Database functions in db.ts and incomeSnapshots table kept for potential future use (no harm in keeping)
