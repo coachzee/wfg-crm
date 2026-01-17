@@ -14,7 +14,7 @@ import {
   Users, Target, CheckCircle, Clock, TrendingUp, 
   ArrowUpRight, ArrowDownRight, Activity, Zap,
   UserPlus, Award, Calendar, RefreshCw, DollarSign, Heart, Shield,
-  AlertTriangle, AlertCircle, FileWarning, CreditCard, Bell, Send
+  AlertTriangle, AlertCircle, FileWarning, CreditCard, Bell, Send, Mail
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useMemo, useCallback, memo, useState } from "react";
@@ -721,6 +721,9 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     recipientEmail: string;
     daysSinceSent: number;
     resendCount: number;
+    subject: string | null;
+    relatedEntityId: string | null;
+    metadata: Record<string, unknown> | null;
   } | null>(null);
   const utils = trpc.useUtils();
   
@@ -753,6 +756,9 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     recipientEmail: string;
     daysSinceSent: number;
     resendCount: number;
+    subject: string | null;
+    relatedEntityId: string | null;
+    metadata: Record<string, unknown> | null;
   }) => {
     setConfirmEmail(email);
   };
@@ -894,7 +900,10 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleResendClick(email)}
+                      onClick={() => handleResendClick({
+                        ...email,
+                        metadata: (email as { metadata?: Record<string, unknown> | null }).metadata ?? null,
+                      })}
                       disabled={resendingId === email.trackingId || email.resendCount >= 2}
                       className="text-xs h-7"
                     >
@@ -967,52 +976,127 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
 
         {/* Resend Confirmation Dialog */}
         <Dialog open={!!confirmEmail} onOpenChange={(open) => !open && handleCancelResend()}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Send className="h-5 w-5 text-purple-600" />
                 Confirm Email Resend
               </DialogTitle>
               <DialogDescription>
-                Are you sure you want to resend this anniversary greeting email?
+                Review the email content below before resending.
               </DialogDescription>
             </DialogHeader>
             {confirmEmail && (
-              <div className="space-y-4 py-4">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="space-y-4 py-2">
+                {/* Recipient Info */}
+                <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Recipient:</span>
-                    <span className="text-sm font-medium">
-                      {confirmEmail.recipientName || "Client"}
+                    <span className="text-muted-foreground">To:</span>
+                    <span className="font-medium">
+                      {confirmEmail.recipientName || "Client"} &lt;{confirmEmail.recipientEmail}&gt;
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Email:</span>
-                    <span className="text-sm font-medium truncate max-w-[200px]">
-                      {confirmEmail.recipientEmail}
+                    <span className="text-muted-foreground">Subject:</span>
+                    <span className="font-medium truncate max-w-[280px]">
+                      {confirmEmail.subject || `🎉 Happy Policy Anniversary!`}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Original sent:</span>
-                    <span className="text-sm font-medium">
+                    <span className="text-muted-foreground">Original sent:</span>
+                    <span className="font-medium">
                       {confirmEmail.daysSinceSent} days ago
+                      {confirmEmail.resendCount > 0 && (
+                        <span className="text-amber-600 ml-2">(resent {confirmEmail.resendCount}x)</span>
+                      )}
                     </span>
                   </div>
-                  {confirmEmail.resendCount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Previous resends:</span>
-                      <span className="text-sm font-medium text-amber-600">
-                        {confirmEmail.resendCount} time{confirmEmail.resendCount > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  A new anniversary greeting email will be sent to this client with fresh tracking.
+
+                {/* Email Preview */}
+                <div className="border rounded-lg overflow-hidden shadow-sm">
+                  <div className="text-xs text-muted-foreground bg-gray-100 px-3 py-1.5 border-b flex items-center gap-1">
+                    <Mail className="h-3 w-3" /> Email Preview
+                  </div>
+                  <div className="bg-white">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-5 text-center">
+                      <h3 className="text-white font-semibold text-lg">🎉 Happy Policy Anniversary!</h3>
+                      <p className="text-purple-100 text-sm mt-1">
+                        Celebrating {confirmEmail.metadata?.policyAge ? String(confirmEmail.metadata.policyAge) : "your"} year{confirmEmail.metadata?.policyAge && Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""} of protection
+                      </p>
+                    </div>
+                    
+                    {/* Body */}
+                    <div className="p-4 space-y-3 text-sm">
+                      <p className="text-gray-700">
+                        Dear <strong>{confirmEmail.recipientName?.split(" ")[0] || "Valued Client"}</strong>,
+                      </p>
+                      <p className="text-gray-600 text-xs leading-relaxed">
+                        Congratulations on your policy anniversary! We want to thank you for trusting us with your family's financial protection.
+                      </p>
+                      
+                      {/* Policy Summary Card */}
+                      <div className="bg-gray-50 rounded-lg p-3 border">
+                        <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">Policy Summary</p>
+                        <div className="space-y-1 text-xs">
+                          {confirmEmail.relatedEntityId && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Policy Number:</span>
+                              <span className="font-mono font-medium">{confirmEmail.relatedEntityId}</span>
+                            </div>
+                          )}
+                          {confirmEmail.metadata?.productType ? (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Product Type:</span>
+                              <span className="font-medium">{String(confirmEmail.metadata.productType)}</span>
+                            </div>
+                          ) : null}
+                          {confirmEmail.metadata?.faceAmount ? (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Coverage Amount:</span>
+                              <span className="font-medium">
+                                ${typeof confirmEmail.metadata.faceAmount === "number" 
+                                  ? (confirmEmail.metadata.faceAmount as number).toLocaleString() 
+                                  : String(confirmEmail.metadata.faceAmount)}
+                              </span>
+                            </div>
+                          ) : null}
+                          {confirmEmail.metadata?.policyAge ? (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Years Protected:</span>
+                              <span className="font-medium">
+                                {String(confirmEmail.metadata.policyAge)} year{Number(confirmEmail.metadata.policyAge) !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      
+                      {/* CTA Button Preview */}
+                      <div className="text-center py-2">
+                        <span className="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs px-4 py-2 rounded-md">
+                          📅 Schedule Your Free Policy Review
+                        </span>
+                      </div>
+                      
+                      {/* Agent Signature */}
+                      <div className="border-t pt-3 mt-3">
+                        <p className="font-medium text-gray-700 text-xs">
+                          {confirmEmail.metadata?.agentName ? String(confirmEmail.metadata.agentName) : "Your Financial Professional"}
+                        </p>
+                        <p className="text-gray-500 text-xs">Wealth Builders Haven | World Financial Group</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  A new email will be sent with fresh tracking.
                 </p>
               </div>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={handleCancelResend}>
                 Cancel
               </Button>

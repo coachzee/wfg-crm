@@ -369,6 +369,7 @@ export async function getEmailsEligibleForResend(daysThreshold: number = 3): Pro
       sentAt: e.sentAt,
       resendCount: e.resendCount || 0,
       daysSinceSent,
+      metadata: e.metadata as Record<string, unknown> | null,
     };
   });
 }

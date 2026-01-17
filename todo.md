@@ -893,3 +893,12 @@
 - [x] Show previous resend count if applicable
 - [x] Add Cancel and Confirm Resend buttons
 - [x] Purple-themed styling consistent with Email Tracking Widget
+
+
+## Email Preview in Confirmation Modal - Completed (Jan 16, 2026)
+- [x] Add email preview section to resend confirmation modal
+- [x] Show preview of anniversary greeting email content
+- [x] Display email subject line and recipient info
+- [x] Show styled preview matching actual email appearance
+- [x] Display policy summary (policy number, product type, coverage amount, years protected)
+- [x] Show CTA button preview and agent signature
