@@ -725,6 +725,10 @@ export const emailTracking = mysqlTable("emailTracking", {
   lastUserAgent: varchar("lastUserAgent", { length: 500 }),
   lastIpAddress: varchar("lastIpAddress", { length: 50 }),
   
+  // Resend tracking
+  resendCount: int("resendCount").default(0),
+  lastResendAt: timestamp("lastResendAt"),
+  
   // Metadata
   metadata: json("metadata"), // Additional context (policy details, etc.)
   createdAt: timestamp("createdAt").defaultNow().notNull(),

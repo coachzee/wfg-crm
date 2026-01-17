@@ -19,6 +19,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { useMemo, useCallback, memo, useState } from "react";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 // Stage configuration with colors and labels
 const WORKFLOW_STAGES = {
@@ -710,12 +711,39 @@ const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSummary() {
   );
 });
 
-// Email Tracking Widget - Shows anniversary email open/click statistics
+// Email Tracking Widget - Shows anniversary email open/click statistics with resend capability
 const EmailTrackingWidget = memo(function EmailTrackingWidget() {
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [showResendSection, setShowResendSection] = useState(false);
+  const utils = trpc.useUtils();
+  
   const { data: stats, isLoading } = trpc.dashboard.getAnniversaryEmailStats.useQuery(undefined, {
     staleTime: 60000, // Cache for 1 minute
     refetchOnWindowFocus: false,
   });
+  
+  const { data: eligibleForResend } = trpc.dashboard.getEmailsEligibleForResend.useQuery(
+    { daysThreshold: 3 },
+    { enabled: showResendSection, staleTime: 60000 }
+  );
+  
+  const resendMutation = trpc.dashboard.resendAnniversaryEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Email resent successfully!");
+      utils.dashboard.getAnniversaryEmailStats.invalidate();
+      utils.dashboard.getEmailsEligibleForResend.invalidate();
+      setResendingId(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to resend: ${error.message}`);
+      setResendingId(null);
+    },
+  });
+  
+  const handleResend = (trackingId: string) => {
+    setResendingId(trackingId);
+    resendMutation.mutate({ trackingId });
+  };
 
   if (isLoading) {
     return (
@@ -742,7 +770,6 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
   
   // Calculate rates
   const weekOpenRate = thisWeek.sent > 0 ? Math.round((thisWeek.opened / thisWeek.sent) * 100) : 0;
-  const weekClickRate = thisWeek.sent > 0 ? Math.round((thisWeek.clicked / thisWeek.sent) * 100) : 0;
   const monthOpenRate = thisMonth.sent > 0 ? Math.round((thisMonth.opened / thisMonth.sent) * 100) : 0;
   const totalOpenRate = total.sent > 0 ? Math.round((total.opened / total.sent) * 100) : 0;
   const totalClickRate = total.sent > 0 ? Math.round((total.clicked / total.sent) * 100) : 0;
@@ -750,11 +777,24 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Send className="h-5 w-5 text-purple-600" />
-          Anniversary Email Tracking
-        </CardTitle>
-        <CardDescription>Track client engagement with anniversary greeting emails</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Send className="h-5 w-5 text-purple-600" />
+              Anniversary Email Tracking
+            </CardTitle>
+            <CardDescription>Track client engagement with anniversary greeting emails</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowResendSection(!showResendSection)}
+            className="text-xs"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            {showResendSection ? "Hide" : "Show"} Resend
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats Summary */}
@@ -805,6 +845,52 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
             </div>
           </div>
         </div>
+        
+        {/* Resend Section - Emails not opened after 3 days */}
+        {showResendSection && (
+          <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <p className="text-sm font-medium text-amber-800">Emails Not Opened (3+ days)</p>
+            </div>
+            {eligibleForResend && eligibleForResend.length > 0 ? (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {eligibleForResend.map((email) => (
+                  <div key={email.trackingId} className="flex items-center justify-between bg-white rounded-lg p-2 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-amber-400" />
+                      <div>
+                        <p className="text-sm font-medium truncate max-w-[120px]">
+                          {email.recipientName || email.recipientEmail}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {email.daysSinceSent} days ago • {email.resendCount > 0 ? `Resent ${email.resendCount}x` : "Not resent"}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleResend(email.trackingId)}
+                      disabled={resendingId === email.trackingId || email.resendCount >= 2}
+                      className="text-xs h-7"
+                    >
+                      {resendingId === email.trackingId ? (
+                        <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Sending...</>
+                      ) : email.resendCount >= 2 ? (
+                        "Max resends"
+                      ) : (
+                        <><Send className="h-3 w-3 mr-1" /> Resend</>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-amber-700">All recent emails have been opened!</p>
+            )}
+          </div>
+        )}
 
         {/* Recent Emails */}
         {recentEmails && recentEmails.length > 0 && (

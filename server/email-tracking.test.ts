@@ -8,8 +8,11 @@ import {
   getEmailTrackingStats,
   getRecentEmailTracking,
   getAnniversaryEmailStats,
+  getEmailsEligibleForResend,
+  getEmailByTrackingId,
+  markEmailResent,
 } from "./email-tracking";
-import { getDb } from "./_core/db";
+import { getDb } from "./db";
 import { emailTracking } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -85,7 +88,7 @@ describe("Email Tracking", () => {
         .limit(1);
 
       expect(record.sendStatus).toBe("FAILED");
-      expect(record.errorMessage).toBe("SMTP connection failed");
+      expect(record.sendError).toBe("SMTP connection failed");
     });
   });
 
@@ -158,7 +161,7 @@ describe("Email Tracking", () => {
 
       expect(record.clickedAt).toBeDefined();
       expect(record.clickCount).toBe(1);
-      expect(record.lastClickedUrl).toBe("https://example.com/schedule");
+      expect(record.clickedLinks).toContain("https://example.com/schedule");
     });
   });
 
@@ -205,6 +208,107 @@ describe("Email Tracking", () => {
 
       expect(typeof stats.thisMonth.sent).toBe("number");
       expect(typeof stats.total.sent).toBe("number");
+    });
+  });
+
+  describe("getEmailsEligibleForResend", () => {
+    it("should return emails not opened after threshold days", async () => {
+      const emails = await getEmailsEligibleForResend(3);
+
+      expect(Array.isArray(emails)).toBe(true);
+      // Each email should have required fields
+      if (emails.length > 0) {
+        expect(emails[0]).toHaveProperty("trackingId");
+        expect(emails[0]).toHaveProperty("recipientEmail");
+        expect(emails[0]).toHaveProperty("daysSinceSent");
+        expect(emails[0]).toHaveProperty("resendCount");
+        expect(emails[0].daysSinceSent).toBeGreaterThanOrEqual(3);
+      }
+    });
+
+    it("should accept custom threshold days", async () => {
+      const emails = await getEmailsEligibleForResend(7);
+      expect(Array.isArray(emails)).toBe(true);
+    });
+  });
+
+  describe("getEmailByTrackingId", () => {
+    it("should return email details by tracking ID", async () => {
+      // Create a test email first
+      const trackingId = await createEmailTracking({
+        emailType: "ANNIVERSARY_GREETING",
+        recipientEmail: "lookup@example.com",
+        recipientName: "Lookup Test",
+        subject: "Test Subject",
+        relatedEntityId: "POL789",
+        metadata: { faceAmount: "$100,000", policyAge: 2 },
+      });
+
+      const email = await getEmailByTrackingId(trackingId);
+
+      expect(email).not.toBeNull();
+      expect(email?.trackingId).toBe(trackingId);
+      expect(email?.recipientEmail).toBe("lookup@example.com");
+      expect(email?.recipientName).toBe("Lookup Test");
+      expect(email?.emailType).toBe("ANNIVERSARY_GREETING");
+      expect(email?.metadata).toHaveProperty("faceAmount");
+    });
+
+    it("should return null for non-existent tracking ID", async () => {
+      const email = await getEmailByTrackingId("non-existent-id");
+      expect(email).toBeNull();
+    });
+  });
+
+  describe("markEmailResent", () => {
+    it("should increment resend count", async () => {
+      // Create a test email
+      const trackingId = await createEmailTracking({
+        emailType: "ANNIVERSARY_GREETING",
+        recipientEmail: "resend@example.com",
+        recipientName: "Resend Test",
+      });
+
+      // Mark as resent
+      await markEmailResent(trackingId);
+
+      // Verify resend count increased
+      const db = await getDb();
+      if (db) {
+        const [updated] = await db
+          .select()
+          .from(emailTracking)
+          .where(eq(emailTracking.trackingId, trackingId))
+          .limit(1);
+        
+        expect(updated.resendCount).toBe(1);
+        expect(updated.lastResendAt).not.toBeNull();
+      }
+    });
+
+    it("should track multiple resends", async () => {
+      // Create a test email
+      const trackingId = await createEmailTracking({
+        emailType: "ANNIVERSARY_GREETING",
+        recipientEmail: "multiresend@example.com",
+        recipientName: "Multi Resend Test",
+      });
+
+      // Mark as resent twice
+      await markEmailResent(trackingId);
+      await markEmailResent(trackingId);
+
+      // Verify resend count is 2
+      const db = await getDb();
+      if (db) {
+        const [updated] = await db
+          .select()
+          .from(emailTracking)
+          .where(eq(emailTracking.trackingId, trackingId))
+          .limit(1);
+        
+        expect(updated.resendCount).toBe(2);
+      }
     });
   });
 });

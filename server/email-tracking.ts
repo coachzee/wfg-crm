@@ -318,3 +318,115 @@ export function getTrackingPixelUrl(trackingId: string, baseUrl: string): string
 export function getTrackedLinkUrl(trackingId: string, originalUrl: string, baseUrl: string): string {
   return `${baseUrl}/api/track/click/${trackingId}?url=${encodeURIComponent(originalUrl)}`;
 }
+
+
+// Get emails eligible for resend (not opened after X days)
+export async function getEmailsEligibleForResend(daysThreshold: number = 3): Promise<Array<{
+  id: number;
+  trackingId: string;
+  emailType: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  subject: string | null;
+  relatedEntityId: string | null;
+  sentAt: Date | null;
+  resendCount: number;
+  daysSinceSent: number;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
+  
+  // Get emails that were sent, not opened, and sent before the threshold
+  const emails = await db
+    .select()
+    .from(emailTracking)
+    .where(eq(emailTracking.sendStatus, "SENT"))
+    .orderBy(desc(emailTracking.sentAt));
+  
+  // Filter for unopened emails older than threshold
+  const eligibleEmails = emails.filter((e: typeof emails[0]) => {
+    if (!e.sentAt) return false;
+    if (e.openCount && e.openCount > 0) return false; // Already opened
+    if (e.sentAt > cutoffDate) return false; // Too recent
+    return true;
+  });
+  
+  return eligibleEmails.map((e: typeof eligibleEmails[0]) => {
+    const daysSinceSent = e.sentAt 
+      ? Math.floor((Date.now() - new Date(e.sentAt).getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    return {
+      id: e.id,
+      trackingId: e.trackingId,
+      emailType: e.emailType,
+      recipientEmail: e.recipientEmail,
+      recipientName: e.recipientName,
+      subject: e.subject,
+      relatedEntityId: e.relatedEntityId,
+      sentAt: e.sentAt,
+      resendCount: e.resendCount || 0,
+      daysSinceSent,
+    };
+  });
+}
+
+// Mark email as resent and update resend count
+export async function markEmailResent(trackingId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const [existing] = await db
+    .select()
+    .from(emailTracking)
+    .where(eq(emailTracking.trackingId, trackingId))
+    .limit(1);
+  
+  if (!existing) return;
+  
+  await db
+    .update(emailTracking)
+    .set({
+      resendCount: (existing.resendCount || 0) + 1,
+      lastResendAt: new Date(),
+    })
+    .where(eq(emailTracking.trackingId, trackingId));
+}
+
+// Get email details by tracking ID for resending
+export async function getEmailByTrackingId(trackingId: string): Promise<{
+  id: number;
+  trackingId: string;
+  emailType: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  subject: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  metadata: Record<string, unknown> | null;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const [email] = await db
+    .select()
+    .from(emailTracking)
+    .where(eq(emailTracking.trackingId, trackingId))
+    .limit(1);
+  
+  if (!email) return null;
+  
+  return {
+    id: email.id,
+    trackingId: email.trackingId,
+    emailType: email.emailType,
+    recipientEmail: email.recipientEmail,
+    recipientName: email.recipientName,
+    subject: email.subject,
+    relatedEntityType: email.relatedEntityType,
+    relatedEntityId: email.relatedEntityId,
+    metadata: email.metadata as Record<string, unknown> | null,
+  };
+}

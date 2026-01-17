@@ -66,7 +66,7 @@ import { productionRecords, inforcePolicies } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { encryptCredential, decryptCredential } from "./encryption";
 import { TRPCError } from "@trpc/server";
-import { getEmailTrackingStats, getRecentEmailTracking, getAnniversaryEmailStats } from "./email-tracking";
+import { getEmailTrackingStats, getRecentEmailTracking, getAnniversaryEmailStats, getEmailsEligibleForResend, getEmailByTrackingId, markEmailResent } from "./email-tracking";
 
 // Validation schemas
 const AgentSchema = z.object({
@@ -610,6 +610,69 @@ export const appRouter = router({
     getAnniversaryEmailStats: protectedProcedure
       .query(async () => {
         return getAnniversaryEmailStats();
+      }),
+
+    // Get emails eligible for resend (not opened after X days)
+    getEmailsEligibleForResend: protectedProcedure
+      .input(z.object({
+        daysThreshold: z.number().optional().default(3),
+      }))
+      .query(async ({ input }) => {
+        return getEmailsEligibleForResend(input.daysThreshold);
+      }),
+
+    // Resend an anniversary greeting email
+    resendAnniversaryEmail: protectedProcedure
+      .input(z.object({
+        trackingId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { sendClientAnniversaryGreeting } = await import("./email-alert");
+        
+        // Get the original email details
+        const emailRecord = await getEmailByTrackingId(input.trackingId);
+        if (!emailRecord) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Email record not found" });
+        }
+        
+        // Only allow resending anniversary greetings
+        if (emailRecord.emailType !== "ANNIVERSARY_GREETING") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only anniversary greeting emails can be resent" });
+        }
+        
+        // Get the policy details from metadata
+        const metadata = (emailRecord.metadata || {}) as Record<string, unknown>;
+        const policyNumber = emailRecord.relatedEntityId || "";
+        const clientName = emailRecord.recipientName || "Valued Client";
+        const clientEmail = emailRecord.recipientEmail;
+        
+        // Parse client name into first and last
+        const nameParts = clientName.split(" ");
+        const firstName = nameParts[0] || "Valued";
+        const lastName = nameParts.slice(1).join(" ") || "Client";
+        
+        // Resend the email
+        const result = await sendClientAnniversaryGreeting({
+          email: clientEmail,
+          firstName,
+          lastName,
+          policyNumber,
+          faceAmount: (metadata.faceAmount as string) || "N/A",
+          policyAge: (metadata.policyAge as number) || 1,
+          productType: (metadata.productType as string) || "Life Insurance",
+          agentName: (metadata.agentName as string) || "Your WFG Agent",
+          agentPhone: (metadata.agentPhone as string) || "",
+          agentEmail: (metadata.agentEmail as string) || "",
+        });
+        
+        // Mark the original email as resent
+        await markEmailResent(input.trackingId);
+        
+        return {
+          success: result.success,
+          message: result.success ? "Email resent successfully" : "Failed to resend email",
+          newTrackingId: result.trackingId,
+        };
       }),
   }),
 

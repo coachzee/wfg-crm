@@ -872,3 +872,15 @@
 - [x] Wrap CTA button link with click tracking endpoint
 - [x] Mark email as sent/failed in tracking after send attempt
 - [x] Test tracking integration (138 tests passing, 1 flaky Transamerica test)
+
+
+## Email Resend Button Feature - Completed (Jan 16, 2026)
+- [x] Create backend endpoint to resend anniversary greeting emails
+- [x] Add Resend button to Email Tracking Widget for emails not opened after 3 days
+- [x] Update tracking record when email is resent (increment resend count)
+- [x] Add getEmailsEligibleForResend function (returns emails not opened after X days)
+- [x] Add getEmailByTrackingId function (retrieves email details for resending)
+- [x] Add markEmailResent function (tracks resend count and timestamp)
+- [x] Add "Show Resend" toggle button to Email Tracking Widget header
+- [x] Display eligible emails with Resend button (max 2 resends per email)
+- [x] Test resend functionality (6 new tests added, 152 total tests passing)
