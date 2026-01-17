@@ -998,3 +998,10 @@
 - [x] Add zoom and pan controls for large hierarchies
 - [x] Add search/filter within hierarchy view
 - [ ] Add ability to highlight specific agent's upline/downline path (partial - search highlights matches)
+
+
+## MyWFG Scraper Filter Update (Completed)
+- [x] Update scraper to select "Life Licensed" under Type filter
+- [x] Change Team filter from "Super Base (Base - 1st)" to "SMD Base"
+- [x] Keep multi-select of "TA,A,SA,MD" under Title Level
+- [x] Test scraper with new filter settings (TypeScript compilation verified)

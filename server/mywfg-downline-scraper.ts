@@ -561,7 +561,7 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   
   // Set up the correct filters:
   // 1. Type: "Life Licensed" (to show only licensed agents)
-  // 2. Team: "Super Base (Base - 1st)" (to show super team)
+  // 2. Team: "SMD Base" (to show SMD base team)
   // 3. Title Level: Multi-select TA, A, SA, MD
   
   console.log('[Downline Scraper] Setting up report filters...');
@@ -593,15 +593,15 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   
   await new Promise(r => setTimeout(r, 500));
   
-  // Set Team to "Super Base (Base - 1st)"
+  // Set Team to "SMD Base"
   const teamSet = await page.evaluate(() => {
     const selects = Array.from(document.querySelectorAll('select'));
     for (const select of selects) {
       const options = Array.from(select.options);
       // Look for Team dropdown (has options like SMD Base, Super Base, etc.)
-      const hasSuperBase = options.some(o => o.text.toLowerCase().includes('super base') || o.text.toLowerCase().includes('base - 1st'));
-      if (hasSuperBase) {
-        const targetOption = options.find(o => o.text.toLowerCase().includes('super base') || o.text.toLowerCase().includes('base - 1st'));
+      const hasSMDBase = options.some(o => o.text.toLowerCase().includes('smd base'));
+      if (hasSMDBase) {
+        const targetOption = options.find(o => o.text.toLowerCase().includes('smd base'));
         if (targetOption) {
           select.value = targetOption.value;
           select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -615,7 +615,7 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   if (teamSet.success) {
     console.log(`[Downline Scraper] Set Team to: ${teamSet.value}`);
   } else {
-    console.log('[Downline Scraper] Could not find Team dropdown with Super Base option');
+    console.log('[Downline Scraper] Could not find Team dropdown with SMD Base option');
   }
   
   await new Promise(r => setTimeout(r, 500));
