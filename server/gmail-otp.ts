@@ -72,9 +72,9 @@ export async function fetchRecentOTP(
         
         // Build search criteria
         // For MyWFG OTP, search for WebHelp@Transamerica.com with "Security Validation Code" subject
+        // Don't require UNSEEN - we'll get the most recent by date
         const searchCriteria: any[] = [
-          ['SINCE', sinceDateStr],
-          'UNSEEN'
+          ['SINCE', sinceDateStr]
         ];
         
         // Add FROM criteria - for 'transamerica', specifically look for WebHelp
@@ -187,7 +187,8 @@ export async function waitForOTP(
   console.log(`[Gmail] Waiting for OTP from ${senderPattern}...`);
   
   while (Date.now() - startTime < maxWaitMs) {
-    const result = await fetchRecentOTP(credentials, senderPattern, undefined, 2);
+    // Look for emails from the last 5 minutes to catch recent OTPs
+    const result = await fetchRecentOTP(credentials, senderPattern, undefined, 5);
     
     if (result.success && result.otp) {
       console.log(`[Gmail] OTP received: ${result.otp}`);

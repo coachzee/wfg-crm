@@ -943,3 +943,18 @@
 - [x] Make "Final Notice" clickable to navigate to relevant dashboard section (scrolls to final-notice-section)
 - [x] Triggered manual sync to update agent licensing status from MyWFG
 - Note: Agent licensing status will be updated after sync completes (fetches from MyWFG Downline Status report)
+
+
+## Fix Agent Licensing Status Sync - Completed (Jan 16, 2026)
+- [x] Investigated why agents show "Exam Prep" when they're licensed on MyWFG
+  - Root cause: Report page uses embedded iframe for data, scraper was looking at empty main page table
+  - Also: Needed correct filters (Type: Life Licensed, Team: Super Base, Title Levels: TA/A/SA/MD)
+- [x] Fixed the sync logic to properly extract licensing status
+  - Added iframe detection and extraction (extractAgentsFromFrame function)
+  - Fixed OTP handling with prefix matching
+  - Added proper filter selection for Life Licensed report
+- [x] Updated the specific agents: Adeyinka Adedire, Adejare Adetona, Fredrick Chukwuedo
+  - All 3 now show isLifeLicensed=true, stage=LICENSED
+- [x] Tested the sync process end-to-end
+  - Successfully extracted 31 licensed agents from MyWFG
+  - Updated 9 agents in database to LICENSED status

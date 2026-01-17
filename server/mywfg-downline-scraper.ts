@@ -135,34 +135,127 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
   if (otpRequired) {
     console.log('[Downline Scraper] OTP required, waiting for email...');
     
-    const gmailCreds = getGmailCredentials();
-    const otpResult = await waitForOTP(gmailCreds, 'transamerica', 60, 3);
+    // First, get the prefix shown on the page
+    const pagePrefix = await page.evaluate(() => {
+      // Look for the prefix text (e.g., "3106 -")
+      const bodyText = document.body.innerText;
+      const prefixMatch = bodyText.match(/(\d{4})\s*-/);
+      return prefixMatch ? prefixMatch[1] : null;
+    });
+    console.log(`[Downline Scraper] Page shows OTP prefix: ${pagePrefix}`);
     
-    if (!otpResult.success || !otpResult.otp) {
-      throw new Error(`Failed to get OTP: ${otpResult.error}`);
+    // Wait a moment for the email to arrive
+    await new Promise(r => setTimeout(r, 5000));
+    
+    const gmailCreds = getGmailCredentials();
+    
+    // Try multiple times to get a matching OTP
+    let otpResult: any = null;
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      console.log(`[Downline Scraper] Fetching OTP (attempt ${attempts}/${maxAttempts})...`);
+      
+      otpResult = await waitForOTP(gmailCreds, 'transamerica', 120, 3);
+      
+      if (otpResult.success && otpResult.otp) {
+        console.log(`[Downline Scraper] ✓ OTP received: ${otpResult.otp}`);
+        break;
+      }
+      
+      // Wait before retrying
+      await new Promise(r => setTimeout(r, 3000));
     }
     
-    console.log(`[Downline Scraper] ✓ OTP received: ${otpResult.otp}`);
+    if (!otpResult?.success || !otpResult?.otp) {
+      throw new Error(`Failed to get OTP after ${maxAttempts} attempts: ${otpResult?.error}`);
+    }
     
-    // Enter OTP
-    const otpInput = await page.$('input[id="mywfgOtppswd"]') || 
-                     await page.$('input[name="otp"]') ||
-                     await page.$('input[type="password"]:not([id="myWfgPasswordDisplay"])');
+    // The OTP from email is already just the 6 digits we need to enter
+    const fullOtp = otpResult.otp;
+    const otpToEnter = fullOtp.length > 6 ? fullOtp.slice(-6) : fullOtp;
+    console.log(`[Downline Scraper] Entering OTP digits: ${otpToEnter}`);
+    
+    // Find OTP input - try multiple selectors
+    // The input is a text field next to the prefix display
+    let otpInput = await page.$('input[id="mywfgOtppswd"]');
+    if (!otpInput) otpInput = await page.$('input[name="otp"]');
+    if (!otpInput) otpInput = await page.$('input[name="otpCode"]');
+    if (!otpInput) otpInput = await page.$('input[placeholder*="code" i]');
+    
+    // Try to find any text input that's not the username/password fields
+    if (!otpInput) {
+      const inputs = await page.$$('input');
+      for (const input of inputs) {
+        const type = await input.evaluate(el => el.getAttribute('type'));
+        const id = await input.evaluate(el => el.id);
+        const isVisible = await input.isVisible();
+        
+        // Skip hidden inputs and username/password fields
+        if (!isVisible) continue;
+        if (id?.toLowerCase().includes('username')) continue;
+        if (id?.toLowerCase().includes('password')) continue;
+        if (type === 'hidden' || type === 'password') continue;
+        
+        // This should be the OTP input
+        if (type === 'text' || type === 'tel' || type === null) {
+          otpInput = input;
+          console.log(`[Downline Scraper] Found OTP input: type=${type}, id=${id}`);
+          break;
+        }
+      }
+    }
     
     if (otpInput) {
+      // Clear any existing value and enter the OTP
       await otpInput.click({ clickCount: 3 });
-      await otpInput.type(otpResult.otp);
+      await page.keyboard.press('Backspace');
+      await otpInput.type(otpToEnter, { delay: 50 });
+      console.log('[Downline Scraper] OTP entered');
       
-      // Submit OTP
-      const submitBtn = await page.$('button[id="mywfgTheylive"]') || await page.$('button[type="submit"]');
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Take screenshot before submit
+      await page.screenshot({ path: '/tmp/mywfg-otp-entered.png', fullPage: true });
+      
+      // Submit OTP - find the Submit button
+      let submitBtn: any = await page.$('button[id="mywfgTheylive"]');
+      if (!submitBtn) submitBtn = await page.$('button[id="mywfgTheyLive"]');
+      if (!submitBtn) {
+        // Find button by text content
+        const buttons = await page.$$('button');
+        for (const btn of buttons) {
+          const text = await btn.evaluate(el => el.textContent?.trim().toLowerCase());
+          if (text === 'submit') {
+            submitBtn = btn;
+            break;
+          }
+        }
+      }
+      if (!submitBtn) submitBtn = await page.$('button[type="submit"]');
+      if (!submitBtn) submitBtn = await page.$('input[type="submit"]');
+      
       if (submitBtn) {
-        await Promise.all([
-          submitBtn.click(),
-          page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }).catch(() => {}),
-        ]);
+        console.log('[Downline Scraper] Clicking submit button...');
+        await submitBtn.click();
+        
+        // Wait for navigation
+        try {
+          await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+        } catch (e) {
+          console.log('[Downline Scraper] Navigation wait completed or timed out');
+        }
+      } else {
+        console.log('[Downline Scraper] Warning: Submit button not found');
       }
       
       await new Promise(r => setTimeout(r, 3000));
+      await page.screenshot({ path: '/tmp/mywfg-after-otp-submit.png', fullPage: true });
+    } else {
+      console.log('[Downline Scraper] Warning: OTP input not found');
+      await page.screenshot({ path: '/tmp/mywfg-otp-input-not-found.png', fullPage: true });
     }
   }
   
@@ -177,10 +270,10 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
 }
 
 /**
- * Helper function to extract agents from the current page
+ * Helper function to extract agents from a frame
  */
-async function extractAgentsFromPage(page: Page): Promise<any[]> {
-  const reportData = await page.evaluate(() => {
+async function extractAgentsFromFrame(frame: any): Promise<any[]> {
+  const reportData = await frame.evaluate(() => {
     const agents: any[] = [];
     
     // Find the data table - look for table with agent data
@@ -189,15 +282,20 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
       const rows = table.querySelectorAll('tr');
       for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].querySelectorAll('td');
-        if (cells.length >= 8) {
+        if (cells.length >= 6) {
           const firstName = cells[0]?.textContent?.trim() || '';
           const lastName = cells[1]?.textContent?.trim() || '';
           const bulletinName = cells[2]?.textContent?.trim() || '';
           const agentCode = cells[3]?.textContent?.trim() || '';
           const titleLevel = cells[4]?.textContent?.trim() || '';
           const commLevel = cells[5]?.textContent?.trim() || '';
-          const llFlag = cells[6]?.textContent?.trim() || '';
-          const llEndDate = cells[7]?.textContent?.trim() || '';
+          const col6 = cells[6]?.textContent?.trim() || '';
+          const col7 = cells[7]?.textContent?.trim() || '';
+          
+          // Determine if col6/col7 are LL Flag or Downline %/MD Approval
+          const isLLFlag = col6.toLowerCase() === 'yes' || col6.toLowerCase() === 'no';
+          const llFlag = isLLFlag ? col6 : '';
+          const llEndDate = isLLFlag ? col7 : '';
           
           // Skip header rows
           if (firstName === 'First_Name' || firstName === 'First Name' || !firstName || !agentCode) {
@@ -209,6 +307,18 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
             continue;
           }
           
+          // Validate agent code format
+          if (!agentCode.match(/^[A-Z0-9]{5}$/i)) {
+            continue;
+          }
+          
+          let isLicensed = false;
+          if (llFlag) {
+            isLicensed = llFlag.toLowerCase() === 'yes';
+          } else if (commLevel && parseInt(commLevel) > 0) {
+            isLicensed = true;
+          }
+          
           agents.push({
             firstName,
             lastName,
@@ -216,14 +326,173 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
             agentCode,
             titleLevel,
             commLevel,
-            llFlag: llFlag.toLowerCase() === 'yes',
+            llFlag: isLicensed,
             llEndDate: llEndDate || null,
-            securities: cells[8]?.textContent?.trim() || null,
-            downlinePercent: cells[9]?.textContent?.trim() || null,
-            residentState: cells[10]?.textContent?.trim() || null,
-            mdApprovalDate: cells[11]?.textContent?.trim() || null,
-            terminateDate: cells[12]?.textContent?.trim() || null,
-            country: cells[13]?.textContent?.trim() || 'US',
+            securities: null,
+            downlinePercent: null,
+            residentState: null,
+            mdApprovalDate: null,
+            terminateDate: null,
+            country: 'US',
+          });
+        }
+      }
+    }
+    
+    return agents;
+  });
+  
+  return reportData;
+}
+
+/**
+ * Helper function to extract agents from the current page
+ */
+async function extractAgentsFromPage(page: Page): Promise<any[]> {
+  // First, debug the page structure
+  const debugInfo = await page.evaluate(() => {
+    const tables = Array.from(document.querySelectorAll('table'));
+    const iframes = Array.from(document.querySelectorAll('iframe'));
+    const allTds = document.querySelectorAll('td');
+    const allTrs = document.querySelectorAll('tr');
+    
+    // Check for any table-like structures
+    const divTables = Array.from(document.querySelectorAll('[class*="table"], [class*="grid"], [role="table"]'));
+    
+    // Get sample of first table's HTML
+    let firstTableHtml = '';
+    if (tables.length > 0) {
+      firstTableHtml = tables[0].outerHTML.substring(0, 1000);
+    }
+    
+    // Get iframe sources
+    const iframeSrcs = iframes.map(f => f.src || f.getAttribute('src') || 'no-src');
+    
+    return {
+      tableCount: tables.length,
+      iframeCount: iframes.length,
+      totalTds: allTds.length,
+      totalTrs: allTrs.length,
+      divTableCount: divTables.length,
+      firstTableHtml,
+      iframeSrcs,
+      bodyTextSample: document.body.innerText.substring(0, 500)
+    };
+  });
+  
+  console.log('[Extraction Debug] Page structure:', JSON.stringify(debugInfo, null, 2));
+  
+  // If main page has no data, try to find data in iframes
+  if (debugInfo.totalTds === 0 && debugInfo.iframeCount > 0) {
+    console.log('[Extraction Debug] Main page has no table data, checking iframes...');
+    
+    // Get all frames
+    const frames = page.frames();
+    console.log(`[Extraction Debug] Found ${frames.length} frames`);
+    
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      try {
+        const frameData = await frame.evaluate(() => {
+          const tables = Array.from(document.querySelectorAll('table'));
+          const allTds = document.querySelectorAll('td');
+          return {
+            tableCount: tables.length,
+            tdCount: allTds.length,
+            bodyText: document.body?.innerText?.substring(0, 200) || ''
+          };
+        });
+        console.log(`[Extraction Debug] Frame ${i}: ${JSON.stringify(frameData)}`);
+        
+        // If this frame has table data, extract from it
+        if (frameData.tdCount > 0) {
+          console.log(`[Extraction Debug] Found data in frame ${i}, extracting...`);
+          const agents = await extractAgentsFromFrame(frame);
+          if (agents.length > 0) {
+            return agents;
+          }
+        }
+      } catch (e) {
+        console.log(`[Extraction Debug] Frame ${i} error: ${e}`);
+      }
+    }
+  }
+  
+  const reportData = await page.evaluate(() => {
+    const agents: any[] = [];
+    
+    // Find the data table - look for table with agent data
+    const tables = Array.from(document.querySelectorAll('table'));
+    for (const table of tables) {
+      const rows = table.querySelectorAll('tr');
+      for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].querySelectorAll('td');
+        // The table may have different column structures depending on the report view
+        // Minimum columns: First Name, Last Name, Bulletin Name, Associate ID, Title Level, Comm Level, Downline %, MD Approval
+        if (cells.length >= 6) {
+          const firstName = cells[0]?.textContent?.trim() || '';
+          const lastName = cells[1]?.textContent?.trim() || '';
+          const bulletinName = cells[2]?.textContent?.trim() || '';
+          const agentCode = cells[3]?.textContent?.trim() || '';
+          const titleLevel = cells[4]?.textContent?.trim() || '';
+          const commLevel = cells[5]?.textContent?.trim() || '';
+          // Columns 6 and 7 may be Downline % and MD Approval (not LL Flag and LL End Date)
+          const col6 = cells[6]?.textContent?.trim() || '';
+          const col7 = cells[7]?.textContent?.trim() || '';
+          
+          // Determine if col6/col7 are LL Flag or Downline %/MD Approval
+          // LL Flag is typically "Yes" or "No", Downline % is a number like "100"
+          const isLLFlag = col6.toLowerCase() === 'yes' || col6.toLowerCase() === 'no';
+          const llFlag = isLLFlag ? col6 : '';
+          const llEndDate = isLLFlag ? col7 : '';
+          const downlinePercent = !isLLFlag ? col6 : (cells[8]?.textContent?.trim() || '');
+          const mdApprovalDate = !isLLFlag ? col7 : (cells[9]?.textContent?.trim() || '');
+          
+          // Skip header rows
+          if (firstName === 'First_Name' || firstName === 'First Name' || !firstName || !agentCode) {
+            continue;
+          }
+          
+          // Skip if it looks like a header
+          if (titleLevel === 'Title_Level' || titleLevel === 'Title Level') {
+            continue;
+          }
+          
+          // Validate agent code format (should be 5 alphanumeric characters)
+          if (!agentCode.match(/^[A-Z0-9]{5}$/i)) {
+            continue;
+          }
+          
+          // Determine if licensed:
+          // 1. If llFlag column exists and is "Yes", agent is licensed
+          // 2. If MD Approval date exists, agent is likely licensed
+          // 3. If comm level > 0, agent is likely licensed
+          let isLicensed = false;
+          if (llFlag) {
+            isLicensed = llFlag.toLowerCase() === 'yes';
+          } else if (mdApprovalDate && mdApprovalDate.match(/\d{2}\/\d{2}\/\d{2}/)) {
+            // Has an MD approval date, likely licensed
+            isLicensed = true;
+          } else if (commLevel && parseInt(commLevel) > 0) {
+            // Has a commission level > 0, likely licensed
+            isLicensed = true;
+          }
+          
+          agents.push({
+            firstName,
+            lastName,
+            bulletinName,
+            agentCode,
+            titleLevel,
+            commLevel,
+            llFlag: isLicensed,
+            llEndDate: llEndDate || null,
+            securities: null,
+            downlinePercent: downlinePercent || null,
+            residentState: null,
+            mdApprovalDate: mdApprovalDate || null,
+            terminateDate: null,
+            country: 'US',
           });
         }
       }
@@ -286,135 +555,262 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   
   await new Promise(r => setTimeout(r, 3000));
   
-  // Wait for report to load
-  await page.waitForSelector('#ReportViewer1_ctl09', { timeout: 30000 }).catch(() => {});
+  // Take initial screenshot
+  await page.screenshot({ path: '/tmp/mywfg-report-initial.png', fullPage: true });
+  console.log('[Downline Scraper] Initial screenshot saved');
   
-  // Set DOWNLINE TYPE filter (Base Shop or Super Team)
-  const downlineTypeSet = await page.evaluate((targetType) => {
+  // Set up the correct filters:
+  // 1. Type: "Life Licensed" (to show only licensed agents)
+  // 2. Team: "Super Base (Base - 1st)" (to show super team)
+  // 3. Title Level: Multi-select TA, A, SA, MD
+  
+  console.log('[Downline Scraper] Setting up report filters...');
+  
+  // Set Type to "Life Licensed"
+  const typeSet = await page.evaluate(() => {
     const selects = Array.from(document.querySelectorAll('select'));
-    
     for (const select of selects) {
       const options = Array.from(select.options);
-      const optionTexts = options.map(o => o.text.trim().toLowerCase());
-      
-      // Check if this looks like a downline type dropdown
-      const hasDownlineOptions = optionTexts.some(t => t.includes('base shop') || t.includes('super team'));
-      
-      if (hasDownlineOptions) {
-        // Find and select the target type
-        const targetText = targetType === 'SUPER_TEAM' ? 'super team' : 'base shop';
-        const targetOption = options.find(o => o.text.trim().toLowerCase().includes(targetText));
+      // Look for Type dropdown (has options like Active, Life Licensed, etc.)
+      const hasLifeLicensed = options.some(o => o.text.toLowerCase().includes('life licensed'));
+      if (hasLifeLicensed) {
+        const targetOption = options.find(o => o.text.toLowerCase().includes('life licensed'));
         if (targetOption) {
           select.value = targetOption.value;
           select.dispatchEvent(new Event('change', { bubbles: true }));
-          return { success: true, selectedType: targetType };
+          return { success: true, value: targetOption.text };
         }
       }
     }
     return { success: false };
-  }, teamType);
+  });
   
-  if (downlineTypeSet.success) {
-    console.log(`[Downline Scraper] Set downline type to ${teamType}`);
-    await new Promise(r => setTimeout(r, 1000));
+  if (typeSet.success) {
+    console.log(`[Downline Scraper] Set Type to: ${typeSet.value}`);
   } else {
-    console.log(`[Downline Scraper] Could not find downline type dropdown, using default`);
+    console.log('[Downline Scraper] Could not find Type dropdown');
   }
   
-  // Title levels to iterate through: TA, A, SA, MD, SMD
-  const titleLevels = ['TA', 'A', 'SA', 'MD', 'SMD'];
-  const allAgents: any[] = [];
-  const seenAgentCodes = new Set<string>();
-  let runDate = '';
-  let reportInfo = '';
+  await new Promise(r => setTimeout(r, 500));
   
-  for (const titleLevel of titleLevels) {
-    console.log(`[Downline Scraper] Fetching agents with title level: ${titleLevel}`);
-    
-    // Set the title level dropdown
-    const levelSet = await page.evaluate((targetLevel) => {
-      const selects = Array.from(document.querySelectorAll('select'));
-      
-      for (const select of selects) {
-        const options = Array.from(select.options);
-        const optionTexts = options.map(o => o.text.trim());
-        
-        // Check if this looks like a title level dropdown (has TA and MD options)
-        const hasTitleLevelOptions = optionTexts.includes('TA') && optionTexts.includes('MD');
-        
-        if (hasTitleLevelOptions) {
-          // Find and select the target level
-          const targetOption = options.find(o => o.text.trim() === targetLevel);
+  // Set Team to "Super Base (Base - 1st)"
+  const teamSet = await page.evaluate(() => {
+    const selects = Array.from(document.querySelectorAll('select'));
+    for (const select of selects) {
+      const options = Array.from(select.options);
+      // Look for Team dropdown (has options like SMD Base, Super Base, etc.)
+      const hasSuperBase = options.some(o => o.text.toLowerCase().includes('super base') || o.text.toLowerCase().includes('base - 1st'));
+      if (hasSuperBase) {
+        const targetOption = options.find(o => o.text.toLowerCase().includes('super base') || o.text.toLowerCase().includes('base - 1st'));
+        if (targetOption) {
+          select.value = targetOption.value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          return { success: true, value: targetOption.text };
+        }
+      }
+    }
+    return { success: false };
+  });
+  
+  if (teamSet.success) {
+    console.log(`[Downline Scraper] Set Team to: ${teamSet.value}`);
+  } else {
+    console.log('[Downline Scraper] Could not find Team dropdown with Super Base option');
+  }
+  
+  await new Promise(r => setTimeout(r, 500));
+  
+  // Set Title Level to multi-select TA, A, SA, MD
+  const titleLevelSet = await page.evaluate(() => {
+    const selects = Array.from(document.querySelectorAll('select'));
+    for (const select of selects) {
+      const options = Array.from(select.options);
+      // Look for Title Level dropdown (has options like TA, A, SA, MD, SMD)
+      const hasTitleLevels = options.some(o => ['TA', 'A', 'SA', 'MD', 'SMD'].includes(o.text.trim()));
+      if (hasTitleLevels) {
+        // Check if it's a multi-select
+        if (select.multiple) {
+          // Multi-select: select TA, A, SA, MD
+          const targetLevels = ['TA', 'A', 'SA', 'MD'];
+          const selected: string[] = [];
+          for (const option of options) {
+            if (targetLevels.includes(option.text.trim())) {
+              option.selected = true;
+              selected.push(option.text.trim());
+            }
+          }
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          return { success: true, multiple: true, values: selected };
+        } else {
+          // Single select - just select TA for now
+          const targetOption = options.find(o => o.text.trim() === 'TA');
           if (targetOption) {
             select.value = targetOption.value;
             select.dispatchEvent(new Event('change', { bubbles: true }));
-            return { success: true, selectedLevel: targetLevel };
+            return { success: true, multiple: false, values: ['TA'] };
           }
         }
       }
-      return { success: false };
-    }, titleLevel);
+    }
+    return { success: false };
+  });
+  
+  if (titleLevelSet.success) {
+    console.log(`[Downline Scraper] Set Title Level to: ${titleLevelSet.values?.join(', ')} (multi-select: ${titleLevelSet.multiple})`);
+  } else {
+    console.log('[Downline Scraper] Could not find Title Level dropdown');
+  }
+  
+  await new Promise(r => setTimeout(r, 500));
+  
+  // Take screenshot after setting filters
+  await page.screenshot({ path: '/tmp/mywfg-report-filters-set.png', fullPage: true });
+  console.log('[Downline Scraper] Filters set, screenshot saved');
+  
+  // Now click "Generate Report"
+  console.log('[Downline Scraper] Clicking Generate Report button...');
+  
+  const generateClicked = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll('input[type="button"], button'));
+    for (const btn of buttons) {
+      const text = (btn.textContent || (btn as HTMLInputElement).value || '').toLowerCase();
+      // Look for the red "Generate Report" button, not "Generate Full View"
+      if (text === 'generate report' || (text.includes('generate') && !text.includes('full'))) {
+        (btn as HTMLElement).click();
+        return { clicked: true, text };
+      }
+    }
+    return { clicked: false };
+  });
+  
+  if (generateClicked.clicked) {
+    console.log(`[Downline Scraper] Clicked: ${generateClicked.text}`);
+    // Wait for report to load - the table takes time to appear
+    await new Promise(r => setTimeout(r, 5000));
     
-    if (!levelSet.success) {
-      console.log(`[Downline Scraper] Could not set title level to ${titleLevel}, skipping...`);
-      continue;
+    // Wait for the table to actually have data rows
+    try {
+      await page.waitForFunction(() => {
+        const tables = Array.from(document.querySelectorAll('table'));
+        for (const table of tables) {
+          const rows = table.querySelectorAll('tr td');
+          if (rows.length > 0) return true;
+        }
+        return false;
+      }, { timeout: 15000 });
+      console.log('[Downline Scraper] Table data loaded');
+    } catch (e) {
+      console.log('[Downline Scraper] Timeout waiting for table data, proceeding anyway...');
     }
     
-    await new Promise(r => setTimeout(r, 1000));
+    // Additional wait for any dynamic content
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  
+  await page.screenshot({ path: '/tmp/mywfg-report-after-generate.png', fullPage: true });
+  
+  // Extract header info
+  const headerInfo = await page.evaluate(() => {
+    const headerText = document.body.innerText;
+    const runDateMatch = headerText.match(/Run Date and Time:\s*([^\n]+)/);
+    const infoMatch = headerText.match(/Shopeju,\s*Zaid[^\n]+/);
+    return {
+      runDate: runDateMatch ? runDateMatch[1].trim() : '',
+      reportInfo: infoMatch ? infoMatch[0].trim() : '',
+    };
+  });
+  const runDate = headerInfo.runDate;
+  const reportInfo = headerInfo.reportInfo;
+  
+  // Extract all agents from the generated report
+  // Since we set the filters to Life Licensed + Super Base + TA/A/SA/MD, 
+  // all licensed agents should be in the report
+  const seenAgentCodes = new Set<string>();
+  let allAgents: any[] = [];
+  
+  // Extract agents from the current page
+  const initialAgents = await extractAgentsFromPage(page);
+  console.log(`[Downline Scraper] Found ${initialAgents.length} agents in initial report`);
+  
+  // Add unique agents to the list
+  for (const agent of initialAgents) {
+    if (agent.agentCode && !seenAgentCodes.has(agent.agentCode)) {
+      seenAgentCodes.add(agent.agentCode);
+      allAgents.push(agent);
+    }
+  }
+  
+  // If the title level dropdown is NOT multi-select, we need to iterate through each level
+  if (!titleLevelSet.multiple && titleLevelSet.success) {
+    const titleLevels = ['A', 'SA', 'MD']; // We already got TA above
     
-    // Click "Generate Report" button
-    const generateClicked = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('input[type="button"], button'));
-      const generateBtn = buttons.find(el => 
-        el.textContent?.includes('Generate Report') || 
-        (el as HTMLInputElement).value?.includes('Generate Report')
-      );
-      if (generateBtn) {
-        (generateBtn as HTMLElement).click();
-        return true;
+    for (const titleLevel of titleLevels) {
+      console.log(`[Downline Scraper] Fetching agents with title level: ${titleLevel}`);
+      
+      // Set the title level
+      const levelSet = await page.evaluate((level) => {
+        const selects = Array.from(document.querySelectorAll('select'));
+        for (const select of selects) {
+          const options = Array.from(select.options);
+          const hasTitleLevels = options.some(o => ['TA', 'A', 'SA', 'MD', 'SMD'].includes(o.text.trim()));
+          if (hasTitleLevels) {
+            const targetOption = options.find(o => o.text.trim() === level);
+            if (targetOption) {
+              select.value = targetOption.value;
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              return { success: true };
+            }
+          }
+        }
+        return { success: false };
+      }, titleLevel);
+      
+      if (!levelSet.success) {
+        console.log(`[Downline Scraper] Could not set title level to ${titleLevel}, skipping...`);
+        continue;
       }
-      return false;
-    });
-    
-    if (generateClicked) {
+      
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Click Generate Report
+      await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('input[type="button"], button'));
+        for (const btn of buttons) {
+          const text = (btn.textContent || (btn as HTMLInputElement).value || '').toLowerCase();
+          if (text === 'generate report' || (text.includes('generate') && !text.includes('full'))) {
+            (btn as HTMLElement).click();
+            return true;
+          }
+        }
+        return false;
+      });
+      
       // Wait for report to load
       await new Promise(r => setTimeout(r, 5000));
-    }
-    
-    // Extract header info (only once)
-    if (!runDate) {
-      const headerInfo = await page.evaluate(() => {
-        const headerText = document.body.innerText;
-        const runDateMatch = headerText.match(/Run Date and Time:\s*([^\n]+)/);
-        const infoMatch = headerText.match(/Shopeju,\s*Zaid[^\n]+/);
-        return {
-          runDate: runDateMatch ? runDateMatch[1].trim() : '',
-          reportInfo: infoMatch ? infoMatch[0].trim() : '',
-        };
-      });
-      runDate = headerInfo.runDate;
-      reportInfo = headerInfo.reportInfo;
-    }
-    
-    // Extract agents from this title level
-    const agents = await extractAgentsFromPage(page);
-    console.log(`[Downline Scraper] Found ${agents.length} agents at title level ${titleLevel}`);
-    
-    // Add unique agents to the list
-    for (const agent of agents) {
-      if (!seenAgentCodes.has(agent.agentCode)) {
-        seenAgentCodes.add(agent.agentCode);
-        allAgents.push(agent);
+      
+      // Take screenshot for this title level
+      await page.screenshot({ path: `/tmp/mywfg-report-${titleLevel}.png`, fullPage: true });
+      
+      // Extract agents from this title level
+      const levelAgents = await extractAgentsFromPage(page);
+      console.log(`[Downline Scraper] Found ${levelAgents.length} agents at title level ${titleLevel}`);
+      
+      // Add unique agents to the list
+      for (const agent of levelAgents) {
+        if (agent.agentCode && !seenAgentCodes.has(agent.agentCode)) {
+          seenAgentCodes.add(agent.agentCode);
+          allAgents.push(agent);
+        }
       }
     }
   }
   
   console.log(`[Downline Scraper] Total unique agents extracted: ${allAgents.length}`);
   
-  // Save screenshot for debugging
+  // Save final screenshot
   try {
     await page.screenshot({ path: '/tmp/mywfg-report-final.png', fullPage: true });
-    console.log('[Downline Scraper] Screenshot saved: /tmp/mywfg-report-final.png');
+    console.log('[Downline Scraper] Final screenshot saved: /tmp/mywfg-report-final.png');
   } catch (e) {}
   
   // Map title levels to WFG ranks using the collected agents from all title levels
