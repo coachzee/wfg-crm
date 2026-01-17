@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { createEmailTracking, markEmailSent, markEmailFailed, getTrackingPixelUrl, getTrackedLinkUrl } from './email-tracking';
 
 interface EmailAlertOptions {
   subject: string;
@@ -247,7 +248,7 @@ export async function alertSinglePolicyAnniversary(policy: {
 }
 
 
-// Send anniversary greeting email directly to client
+// Send anniversary greeting email directly to client with tracking
 export async function sendClientAnniversaryGreeting(client: {
   email: string;
   firstName: string;
@@ -259,17 +260,47 @@ export async function sendClientAnniversaryGreeting(client: {
   agentName: string;
   agentPhone?: string;
   agentEmail?: string;
-}): Promise<boolean> {
+}, options?: {
+  baseUrl?: string;
+  enableTracking?: boolean;
+}): Promise<{ success: boolean; trackingId?: string }> {
   const credentials = getGmailCredentials();
+  const enableTracking = options?.enableTracking !== false; // Default to true
+  const baseUrl = options?.baseUrl || process.env.VITE_APP_URL || 'https://wfg-crm.manus.space';
+  
+  let trackingId: string | undefined;
   
   if (!credentials.email || !credentials.appPassword) {
     console.error('[Client Email] Gmail credentials not configured');
-    return false;
+    return { success: false };
   }
   
   if (!client.email) {
     console.error('[Client Email] Client email not provided');
-    return false;
+    return { success: false };
+  }
+  
+  // Create tracking record if tracking is enabled
+  if (enableTracking) {
+    try {
+      trackingId = await createEmailTracking({
+        emailType: 'ANNIVERSARY_GREETING',
+        recipientEmail: client.email,
+        recipientName: `${client.firstName} ${client.lastName}`,
+        subject: `Happy Policy Anniversary, ${client.firstName}!`,
+        relatedEntityType: 'POLICY',
+        relatedEntityId: client.policyNumber,
+        metadata: {
+          policyAge: client.policyAge,
+          faceAmount: client.faceAmount,
+          productType: client.productType,
+          agentName: client.agentName,
+        },
+      });
+    } catch (error) {
+      console.error('[Client Email] Failed to create tracking record:', error);
+      // Continue without tracking
+    }
   }
   
   const faceAmount = typeof client.faceAmount === 'number' 
@@ -281,6 +312,18 @@ export async function sendClientAnniversaryGreeting(client: {
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
+  
+  // Generate tracking URLs if tracking is enabled
+  const trackingPixelHtml = trackingId 
+    ? `<img src="${getTrackingPixelUrl(trackingId, baseUrl)}" width="1" height="1" style="display:none;" alt="" />` 
+    : '';
+  
+  // Helper to wrap links with tracking
+  const trackLink = (url: string) => trackingId 
+    ? getTrackedLinkUrl(trackingId, url, baseUrl) 
+    : url;
+  
+  const scheduleReviewUrl = `mailto:${client.agentEmail || credentials.email}?subject=Policy Review Request - ${client.policyNumber}`;
   
   try {
     const transporter = createTransporter();
@@ -346,7 +389,7 @@ export async function sendClientAnniversaryGreeting(client: {
             
             <!-- CTA Button -->
             <div style="text-align: center; margin: 30px 0;">
-              <a href="mailto:${client.agentEmail || credentials.email}?subject=Policy Review Request - ${client.policyNumber}" 
+              <a href="${trackLink(scheduleReviewUrl)}" 
                  style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         color: white; 
                         padding: 14px 32px; 
@@ -394,16 +437,40 @@ export async function sendClientAnniversaryGreeting(client: {
               <br>If you have questions about your policy, please contact your agent directly.
             </p>
           </div>
+          
+          <!-- Tracking pixel (invisible) -->
+          ${trackingPixelHtml}
         </div>
       `,
     };
     
     const result = await transporter.sendMail(mailOptions);
     console.log(`[Client Email] Sent anniversary greeting to ${client.email} - Message ID: ${result.messageId}`);
-    return true;
+    
+    // Mark email as sent in tracking
+    if (trackingId) {
+      try {
+        await markEmailSent(trackingId);
+      } catch (error) {
+        console.error('[Client Email] Failed to mark email as sent:', error);
+      }
+    }
+    
+    return { success: true, trackingId };
   } catch (error) {
-    console.error('[Client Email] Failed to send anniversary greeting:', error);
-    return false;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Client Email] Failed to send anniversary greeting:', errorMessage);
+    
+    // Mark email as failed in tracking
+    if (trackingId) {
+      try {
+        await markEmailFailed(trackingId, errorMessage);
+      } catch (trackError) {
+        console.error('[Client Email] Failed to mark email as failed:', trackError);
+      }
+    }
+    
+    return { success: false, trackingId };
   }
 }
 
@@ -431,8 +498,8 @@ export async function sendBulkClientAnniversaryGreetings(clients: {
       continue;
     }
     
-    const success = await sendClientAnniversaryGreeting(client);
-    if (success) {
+    const result = await sendClientAnniversaryGreeting(client);
+    if (result.success) {
       sent++;
     } else {
       failed++;

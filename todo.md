@@ -855,3 +855,20 @@
 - [x] Show recent emails with status indicators (Opened, Clicked, Sent badges)
 - [x] Add tRPC endpoints for email tracking stats
 - [x] Test email tracking functionality (15 new tests, 138 total passing)
+
+
+## Email Tracking Integration into Actual Emails - In Progress (Jan 16, 2026)
+- [ ] Update sendClientAnniversaryGreeting to create tracking record before sending
+- [ ] Embed tracking pixel (1x1 transparent image) in email HTML
+- [ ] Wrap all email links with click tracking endpoint
+- [ ] Mark email as sent after successful delivery
+- [ ] Handle email send failures with proper status update
+- [ ] Test tracking integration end-to-end
+
+
+## Email Tracking Integration into Actual Emails - Completed (Jan 16, 2026)
+- [x] Update sendClientAnniversaryGreeting to create tracking record before sending
+- [x] Embed tracking pixel (1x1 invisible image) in email footer
+- [x] Wrap CTA button link with click tracking endpoint
+- [x] Mark email as sent/failed in tracking after send attempt
+- [x] Test tracking integration (138 tests passing, 1 flaky Transamerica test)
