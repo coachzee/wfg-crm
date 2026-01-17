@@ -1005,3 +1005,10 @@
 - [x] Change Team filter from "Super Base (Base - 1st)" to "SMD Base"
 - [x] Keep multi-select of "TA,A,SA,MD" under Title Level
 - [x] Test scraper with new filter settings (TypeScript compilation verified)
+
+
+## MyWFG Scraper Report Summary (Completed)
+- [x] Add summary section at top of generated report showing total agent count
+- [x] Include breakdown by title level (TA, A, SA, MD, SMD)
+- [x] Log summary information during sync
+- [x] Added licensed/unlicensed count to summary

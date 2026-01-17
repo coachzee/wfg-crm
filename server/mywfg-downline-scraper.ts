@@ -71,11 +71,26 @@ export interface DownlineAgent {
   isLifeLicensed: boolean;
 }
 
+export interface ReportSummary {
+  totalAgents: number;
+  byTitleLevel: {
+    TA: number;
+    A: number;
+    SA: number;
+    MD: number;
+    SMD: number;
+    other: number;
+  };
+  licensedCount: number;
+  unlicensedCount: number;
+}
+
 export interface DownlineStatusResult {
   success: boolean;
   agents: DownlineAgent[];
   runDate: string;
   reportInfo: string;
+  summary?: ReportSummary;
   error?: string;
 }
 
@@ -821,6 +836,44 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
     isLifeLicensed: agent.llFlag === true || agent.llFlag === 'Yes' || agent.llFlag === 'yes',
   }));
   
+  // Generate summary section
+  const summary: ReportSummary = {
+    totalAgents: agents.length,
+    byTitleLevel: {
+      TA: agents.filter(a => a.titleLevel === '01' || a.titleLevel === '1').length,
+      A: agents.filter(a => a.titleLevel === '10').length,
+      SA: agents.filter(a => a.titleLevel === '15').length,
+      MD: agents.filter(a => a.titleLevel === '17').length,
+      SMD: agents.filter(a => a.titleLevel === '20').length,
+      other: agents.filter(a => !['01', '1', '10', '15', '17', '20'].includes(a.titleLevel)).length,
+    },
+    licensedCount: agents.filter(a => a.isLifeLicensed).length,
+    unlicensedCount: agents.filter(a => !a.isLifeLicensed).length,
+  };
+  
+  // Log summary report
+  console.log('\n========================================');
+  console.log('       DOWNLINE STATUS REPORT SUMMARY');
+  console.log('========================================');
+  console.log(`Run Date: ${runDate}`);
+  console.log(`Report Info: ${reportInfo}`);
+  console.log('----------------------------------------');
+  console.log(`Total Agents: ${summary.totalAgents}`);
+  console.log('----------------------------------------');
+  console.log('By Title Level:');
+  console.log(`  TA (Training Associate): ${summary.byTitleLevel.TA}`);
+  console.log(`  A  (Associate):          ${summary.byTitleLevel.A}`);
+  console.log(`  SA (Senior Associate):   ${summary.byTitleLevel.SA}`);
+  console.log(`  MD (Marketing Director): ${summary.byTitleLevel.MD}`);
+  console.log(`  SMD (Senior MD):         ${summary.byTitleLevel.SMD}`);
+  if (summary.byTitleLevel.other > 0) {
+    console.log(`  Other:                   ${summary.byTitleLevel.other}`);
+  }
+  console.log('----------------------------------------');
+  console.log(`Licensed:   ${summary.licensedCount}`);
+  console.log(`Unlicensed: ${summary.unlicensedCount}`);
+  console.log('========================================\n');
+  
   console.log(`[Downline Scraper] Extracted ${agents.length} agents from report`);
   
   return {
@@ -828,6 +881,7 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
     agents,
     runDate,
     reportInfo,
+    summary,
   };
 }
 
