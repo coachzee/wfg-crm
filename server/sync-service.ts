@@ -233,6 +233,90 @@ export async function runFullSync(): Promise<SyncResult[]> {
     console.error('[Sync] Failed to send anniversary reminders:', e);
   }
   
+  // Send client anniversary greeting emails (on the anniversary date)
+  try {
+    const { 
+      getPoliciesWithAnniversaryToday, 
+      getClientEmailByName, 
+      getAgentContactInfo,
+      hasAnniversaryGreetingBeenSent,
+      recordAnniversaryGreetingSent
+    } = await import('./db');
+    const { sendClientAnniversaryGreeting } = await import('./email-alert');
+    
+    const todayAnniversaries = await getPoliciesWithAnniversaryToday();
+    const currentYear = new Date().getFullYear();
+    
+    if (todayAnniversaries.length > 0) {
+      console.log(`[Sync] Found ${todayAnniversaries.length} policies with anniversaries TODAY`);
+      
+      let sentCount = 0;
+      let skippedCount = 0;
+      let noEmailCount = 0;
+      
+      for (const policy of todayAnniversaries) {
+        // Check if we already sent this greeting this year
+        const alreadySent = await hasAnniversaryGreetingBeenSent(policy.policyNumber, currentYear);
+        if (alreadySent) {
+          skippedCount++;
+          continue;
+        }
+        
+        // Parse owner name to get first and last name
+        const nameParts = policy.ownerName.split(' ');
+        const firstName = nameParts[0] || 'Valued';
+        const lastName = nameParts.slice(1).join(' ') || 'Client';
+        
+        // Look up client email
+        const clientEmail = await getClientEmailByName(firstName, lastName);
+        
+        if (!clientEmail) {
+          noEmailCount++;
+          console.log(`[Sync] No email found for client: ${policy.ownerName}`);
+          continue;
+        }
+        
+        // Get agent contact info
+        let agentInfo = { name: 'Your Financial Professional', email: null as string | null, phone: null as string | null };
+        if (policy.writingAgentCode) {
+          const agentData = await getAgentContactInfo(policy.writingAgentCode);
+          if (agentData) {
+            agentInfo = agentData;
+          }
+        }
+        
+        // Send the greeting email
+        const success = await sendClientAnniversaryGreeting({
+          email: clientEmail,
+          firstName,
+          lastName,
+          policyNumber: policy.policyNumber,
+          policyAge: policy.policyAge,
+          faceAmount: policy.faceAmount,
+          productType: policy.productType,
+          agentName: agentInfo.name,
+          agentPhone: agentInfo.phone || undefined,
+          agentEmail: agentInfo.email || undefined,
+        });
+        
+        if (success) {
+          sentCount++;
+          // Record that we sent this greeting
+          await recordAnniversaryGreetingSent(policy.policyNumber, currentYear, clientEmail);
+        }
+        
+        // Small delay between emails
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      console.log(`[Sync] Client anniversary greetings: ${sentCount} sent, ${skippedCount} already sent, ${noEmailCount} no email`);
+    } else {
+      console.log('[Sync] No policy anniversaries today');
+    }
+  } catch (e) {
+    console.error('[Sync] Failed to send client anniversary greetings:', e);
+  }
+  
   console.log('[Sync] Full sync completed');
   return results;
 }

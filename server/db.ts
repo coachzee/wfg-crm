@@ -1648,3 +1648,203 @@ export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
     return [];
   }
 }
+
+
+// Get policies with anniversaries TODAY for client greeting emails
+export async function getPoliciesWithAnniversaryToday() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    // Get all active inforce policies with issue dates
+    const policies = await db.select()
+      .from(inforcePolicies)
+      .where(eq(inforcePolicies.status, 'Active'));
+    
+    const today = new Date();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
+    const currentYear = today.getFullYear();
+    
+    // Filter policies where anniversary is TODAY
+    const todayAnniversaries = policies
+      .filter(policy => policy.issueDate)
+      .filter(policy => {
+        // Parse issue date
+        let issueDate: Date;
+        const issueDateStr = policy.issueDate as string;
+        
+        if (issueDateStr.includes('/')) {
+          const parts = issueDateStr.split('/');
+          if (parts.length === 3) {
+            const month = parseInt(parts[0], 10) - 1;
+            const day = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            issueDate = new Date(year, month, day);
+          } else {
+            return false;
+          }
+        } else {
+          issueDate = new Date(issueDateStr);
+        }
+        
+        if (isNaN(issueDate.getTime())) return false;
+        
+        // Check if the anniversary month/day matches today
+        return issueDate.getMonth() === todayMonth && issueDate.getDate() === todayDay;
+      })
+      .map(policy => {
+        // Parse issue date again for calculations
+        let issueDate: Date;
+        const issueDateStr = policy.issueDate as string;
+        
+        if (issueDateStr.includes('/')) {
+          const parts = issueDateStr.split('/');
+          const month = parseInt(parts[0], 10) - 1;
+          const day = parseInt(parts[1], 10);
+          const year = parseInt(parts[2], 10);
+          issueDate = new Date(year, month, day);
+        } else {
+          issueDate = new Date(issueDateStr);
+        }
+        
+        const issueYear = issueDate.getFullYear();
+        const policyAge = currentYear - issueYear;
+        
+        return {
+          id: policy.id,
+          policyNumber: policy.policyNumber,
+          ownerName: policy.ownerName || 'Unknown',
+          policyAge,
+          faceAmount: policy.faceAmount || 0,
+          premium: policy.premium || 0,
+          productType: policy.productType,
+          writingAgentName: policy.writingAgentName,
+          writingAgentCode: policy.writingAgentCode,
+        };
+      })
+      // Filter out policies that are brand new (age 0 - issued today, not anniversary)
+      .filter(policy => policy.policyAge > 0);
+    
+    return todayAnniversaries;
+  } catch (error) {
+    console.error('[getPoliciesWithAnniversaryToday] Error:', error);
+    return [];
+  }
+}
+
+// Look up client email by name from the clients table
+export async function getClientEmailByName(firstName: string, lastName: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    // Try exact match first
+    const exactMatch = await db.select()
+      .from(clients)
+      .where(
+        and(
+          eq(clients.firstName, firstName),
+          eq(clients.lastName, lastName)
+        )
+      )
+      .limit(1);
+    
+    if (exactMatch.length > 0 && exactMatch[0].email) {
+      return exactMatch[0].email;
+    }
+    
+    // Try case-insensitive match
+    const caseInsensitiveMatch = await db.select()
+      .from(clients)
+      .where(
+        sql`LOWER(${clients.firstName}) = LOWER(${firstName}) AND LOWER(${clients.lastName}) = LOWER(${lastName})`
+      )
+      .limit(1);
+    
+    if (caseInsensitiveMatch.length > 0 && caseInsensitiveMatch[0].email) {
+      return caseInsensitiveMatch[0].email;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[getClientEmailByName] Error:', error);
+    return null;
+  }
+}
+
+// Get agent contact info by agent code
+export async function getAgentContactInfo(agentCode: string): Promise<{
+  name: string;
+  email: string | null;
+  phone: string | null;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    const agent = await db.select()
+      .from(agents)
+      .where(eq(agents.agentCode, agentCode))
+      .limit(1);
+    
+    if (agent.length > 0) {
+      const fullName = `${agent[0].firstName} ${agent[0].lastName}`.trim();
+      return {
+        name: fullName || 'Your Financial Professional',
+        email: agent[0].email,
+        phone: agent[0].phone,
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[getAgentContactInfo] Error:', error);
+    return null;
+  }
+}
+
+// Track sent anniversary greetings to avoid duplicates
+export async function hasAnniversaryGreetingBeenSent(policyNumber: string, year: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    // Check if we have a record of sending this greeting
+    // We'll use the workflowTasks table with a specific type and description
+    const existingTask = await db.select()
+      .from(workflowTasks)
+      .where(
+        and(
+          eq(workflowTasks.taskType, 'POLICY_REVIEW'),
+          sql`${workflowTasks.description} LIKE ${`%ANNIVERSARY_GREETING_SENT:${policyNumber}:${year}%`}`
+        )
+      )
+      .limit(1);
+    
+    return existingTask.length > 0;
+  } catch (error) {
+    console.error('[hasAnniversaryGreetingBeenSent] Error:', error);
+    return false;
+  }
+}
+
+// Record that an anniversary greeting was sent
+export async function recordAnniversaryGreetingSent(policyNumber: string, year: number, clientEmail: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    const today = new Date();
+    
+    await db.insert(workflowTasks).values({
+      taskType: 'POLICY_REVIEW',
+      dueDate: today,
+      description: `ANNIVERSARY_GREETING_SENT:${policyNumber}:${year} - Automated anniversary greeting email sent to ${clientEmail}`,
+      priority: 'LOW',
+      completedAt: today,
+    });
+  } catch (error) {
+    console.error('[recordAnniversaryGreetingSent] Error:', error);
+  }
+}

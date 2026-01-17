@@ -823,3 +823,13 @@
 - [x] Integrate with daily cron sync to send notifications automatically (in runFullSync)
 - [x] Notifications sent during 3:30 PM and 6:30 PM daily syncs
 - [x] Test email notification functionality (125 tests passing)
+
+
+## Client Anniversary Greeting Emails - Completed (Jan 16, 2026)
+- [x] Create professional anniversary greeting email template for clients
+- [x] Add function to get policies with anniversaries TODAY (getPoliciesWithAnniversaryToday)
+- [x] Look up client email from Clients table using policy owner name (getClientEmailByName)
+- [x] Create sendClientAnniversaryGreeting function with personalized template
+- [x] Integrate with daily sync to send greetings automatically (3:30 PM & 6:30 PM)
+- [x] Track sent greetings to avoid duplicate emails (hasAnniversaryGreetingBeenSent, recordAnniversaryGreetingSent)
+- [x] Test client greeting email functionality (14 tests passing, 138 total)

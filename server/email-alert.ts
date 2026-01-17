@@ -245,3 +245,202 @@ export async function alertSinglePolicyAnniversary(policy: {
 }): Promise<boolean> {
   return alertPolicyAnniversary([policy]);
 }
+
+
+// Send anniversary greeting email directly to client
+export async function sendClientAnniversaryGreeting(client: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  policyNumber: string;
+  policyAge: number;
+  faceAmount: number | string;
+  productType?: string | null;
+  agentName: string;
+  agentPhone?: string;
+  agentEmail?: string;
+}): Promise<boolean> {
+  const credentials = getGmailCredentials();
+  
+  if (!credentials.email || !credentials.appPassword) {
+    console.error('[Client Email] Gmail credentials not configured');
+    return false;
+  }
+  
+  if (!client.email) {
+    console.error('[Client Email] Client email not provided');
+    return false;
+  }
+  
+  const faceAmount = typeof client.faceAmount === 'number' 
+    ? client.faceAmount 
+    : parseFloat(String(client.faceAmount)) || 0;
+  
+  const ordinalSuffix = (n: number) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+  
+  try {
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: `Wealth Builders Haven <${credentials.email}>`,
+      to: client.email,
+      subject: `🎉 Happy ${ordinalSuffix(client.policyAge)} Policy Anniversary, ${client.firstName}!`,
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <!-- Header with celebration theme -->
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">
+              🎉 Happy Policy Anniversary!
+            </h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+              Celebrating ${client.policyAge} year${client.policyAge !== 1 ? 's' : ''} of protection
+            </p>
+          </div>
+          
+          <!-- Main content -->
+          <div style="padding: 30px; background: #f8f9fa; border: 1px solid #e9ecef; border-top: none;">
+            <p style="color: #333; font-size: 18px; margin: 0 0 20px 0;">
+              Dear <strong>${client.firstName}</strong>,
+            </p>
+            
+            <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 0 0 20px 0;">
+              Congratulations on your <strong>${ordinalSuffix(client.policyAge)} policy anniversary</strong>! 
+              We want to take a moment to thank you for trusting us with your family's financial protection.
+            </p>
+            
+            <!-- Policy summary card -->
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e0e0e0;">
+              <h3 style="color: #667eea; margin: 0 0 15px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">
+                Your Policy Summary
+              </h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">Policy Number:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; font-weight: 600; text-align: right; font-family: monospace;">${client.policyNumber}</td>
+                </tr>
+                ${client.productType ? `
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">Product Type:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; font-weight: 600; text-align: right;">${client.productType}</td>
+                </tr>
+                ` : ''}
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">Coverage Amount:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; font-weight: 600; text-align: right;">$${faceAmount.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666; font-size: 14px;">Years Protected:</td>
+                  <td style="padding: 8px 0; color: #333; font-size: 14px; font-weight: 600; text-align: right;">${client.policyAge} year${client.policyAge !== 1 ? 's' : ''}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 20px 0;">
+              Your policy anniversary is a great time to review your coverage and ensure it still meets your family's needs. 
+              Life changes—marriages, new children, home purchases, career advancements—may mean your protection needs have changed too.
+            </p>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="mailto:${client.agentEmail || credentials.email}?subject=Policy Review Request - ${client.policyNumber}" 
+                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; 
+                        padding: 14px 32px; 
+                        text-decoration: none; 
+                        border-radius: 6px; 
+                        display: inline-block;
+                        font-weight: 600;
+                        font-size: 15px;">
+                📅 Schedule Your Free Policy Review
+              </a>
+            </div>
+            
+            <p style="color: #555; line-height: 1.8; font-size: 15px; margin: 20px 0 0 0;">
+              Thank you for being part of our family. We're honored to help protect what matters most to you.
+            </p>
+          </div>
+          
+          <!-- Agent signature -->
+          <div style="padding: 25px 30px; background: white; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 8px 8px;">
+            <p style="color: #333; margin: 0 0 5px 0; font-weight: 600; font-size: 15px;">
+              ${client.agentName}
+            </p>
+            <p style="color: #666; margin: 0 0 3px 0; font-size: 13px;">
+              Your Financial Professional
+            </p>
+            <p style="color: #666; margin: 0 0 3px 0; font-size: 13px;">
+              Wealth Builders Haven | World Financial Group
+            </p>
+            ${client.agentPhone ? `
+            <p style="color: #667eea; margin: 10px 0 0 0; font-size: 13px;">
+              📞 ${client.agentPhone}
+            </p>
+            ` : ''}
+            ${client.agentEmail ? `
+            <p style="color: #667eea; margin: 3px 0 0 0; font-size: 13px;">
+              ✉️ ${client.agentEmail}
+            </p>
+            ` : ''}
+          </div>
+          
+          <!-- Footer -->
+          <div style="padding: 20px 30px; text-align: center;">
+            <p style="color: #999; font-size: 11px; margin: 0; line-height: 1.6;">
+              This email was sent by Wealth Builders Haven as a courtesy reminder of your policy anniversary.
+              <br>If you have questions about your policy, please contact your agent directly.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+    
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`[Client Email] Sent anniversary greeting to ${client.email} - Message ID: ${result.messageId}`);
+    return true;
+  } catch (error) {
+    console.error('[Client Email] Failed to send anniversary greeting:', error);
+    return false;
+  }
+}
+
+// Send anniversary greetings to multiple clients
+export async function sendBulkClientAnniversaryGreetings(clients: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  policyNumber: string;
+  policyAge: number;
+  faceAmount: number | string;
+  productType?: string | null;
+  agentName: string;
+  agentPhone?: string;
+  agentEmail?: string;
+}[]): Promise<{ sent: number; failed: number; skipped: number }> {
+  let sent = 0;
+  let failed = 0;
+  let skipped = 0;
+  
+  for (const client of clients) {
+    if (!client.email) {
+      skipped++;
+      console.log(`[Client Email] Skipped ${client.firstName} ${client.lastName} - no email address`);
+      continue;
+    }
+    
+    const success = await sendClientAnniversaryGreeting(client);
+    if (success) {
+      sent++;
+    } else {
+      failed++;
+    }
+    
+    // Small delay between emails to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  return { sent, failed, skipped };
+}
