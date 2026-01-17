@@ -710,6 +710,156 @@ const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSummary() {
   );
 });
 
+// Email Tracking Widget - Shows anniversary email open/click statistics
+const EmailTrackingWidget = memo(function EmailTrackingWidget() {
+  const { data: stats, isLoading } = trpc.dashboard.getAnniversaryEmailStats.useQuery(undefined, {
+    staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false,
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Send className="h-5 w-5 text-purple-600" />
+            Anniversary Email Tracking
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!stats) return null;
+
+  const { thisWeek, thisMonth, total, recentEmails } = stats;
+  
+  // Calculate rates
+  const weekOpenRate = thisWeek.sent > 0 ? Math.round((thisWeek.opened / thisWeek.sent) * 100) : 0;
+  const weekClickRate = thisWeek.sent > 0 ? Math.round((thisWeek.clicked / thisWeek.sent) * 100) : 0;
+  const monthOpenRate = thisMonth.sent > 0 ? Math.round((thisMonth.opened / thisMonth.sent) * 100) : 0;
+  const totalOpenRate = total.sent > 0 ? Math.round((total.opened / total.sent) * 100) : 0;
+  const totalClickRate = total.sent > 0 ? Math.round((total.clicked / total.sent) * 100) : 0;
+
+  return (
+    <Card className="bg-gradient-to-br from-purple-50 to-indigo-50">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Send className="h-5 w-5 text-purple-600" />
+          Anniversary Email Tracking
+        </CardTitle>
+        <CardDescription>Track client engagement with anniversary greeting emails</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Stats Summary */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-lg p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground">This Week</p>
+            <p className="text-xl font-bold text-purple-600">{thisWeek.sent}</p>
+            <p className="text-xs text-muted-foreground">sent</p>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-xs text-green-600">{weekOpenRate}% opened</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground">This Month</p>
+            <p className="text-xl font-bold text-indigo-600">{thisMonth.sent}</p>
+            <p className="text-xs text-muted-foreground">sent</p>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-xs text-green-600">{monthOpenRate}% opened</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground">All Time</p>
+            <p className="text-xl font-bold text-gray-700">{total.sent}</p>
+            <p className="text-xs text-muted-foreground">sent</p>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-xs text-green-600">{totalOpenRate}% opened</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Engagement Metrics */}
+        <div className="bg-white rounded-lg p-3 shadow-sm">
+          <p className="text-sm font-medium mb-2">Overall Engagement</p>
+          <div className="space-y-2">
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Open Rate</span>
+                <span className="font-medium">{totalOpenRate}%</span>
+              </div>
+              <Progress value={totalOpenRate} className="h-2" />
+            </div>
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Click Rate</span>
+                <span className="font-medium">{totalClickRate}%</span>
+              </div>
+              <Progress value={totalClickRate} className="h-2" />
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Emails */}
+        {recentEmails && recentEmails.length > 0 && (
+          <div>
+            <p className="text-sm font-medium mb-2">Recent Emails</p>
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {recentEmails.slice(0, 5).map((email: { recipientName: string | null; recipientEmail: string; policyNumber: string | null; sentAt: Date | null; opened: boolean; clicked: boolean }, index: number) => (
+                <div key={index} className="flex items-center justify-between bg-white rounded-lg p-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-2 w-2 rounded-full ${email.opened ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div>
+                      <p className="text-sm font-medium truncate max-w-[150px]">
+                        {email.recipientName || email.recipientEmail}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {email.sentAt ? format(new Date(email.sentAt), 'MMM d, h:mm a') : 'Pending'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    {email.opened && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        Opened
+                      </Badge>
+                    )}
+                    {email.clicked && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        Clicked
+                      </Badge>
+                    )}
+                    {!email.opened && !email.clicked && (
+                      <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500">
+                        Sent
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {total.sent === 0 && (
+          <div className="text-center py-4 text-muted-foreground">
+            <Send className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No anniversary emails sent yet</p>
+            <p className="text-xs">Emails are automatically sent on policy anniversaries</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -1048,6 +1198,9 @@ export default function Dashboard() {
 
       {/* Policy Anniversaries Summary */}
       <PolicyAnniversariesSummary />
+
+      {/* Email Tracking Widget */}
+      <EmailTrackingWidget />
 
       {/* Compliance & Platform Fee Tracking */}
       <Card className="card-hover border-amber-500/20">

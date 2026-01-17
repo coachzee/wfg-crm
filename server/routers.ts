@@ -66,6 +66,7 @@ import { productionRecords, inforcePolicies } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { encryptCredential, decryptCredential } from "./encryption";
 import { TRPCError } from "@trpc/server";
+import { getEmailTrackingStats, getRecentEmailTracking, getAnniversaryEmailStats } from "./email-tracking";
 
 // Validation schemas
 const AgentSchema = z.object({
@@ -585,6 +586,30 @@ export const appRouter = router({
         });
         
         return { success: true };
+      }),
+
+    // Email tracking statistics
+    getEmailTrackingStats: protectedProcedure
+      .input(z.object({
+        days: z.number().optional().default(30),
+      }))
+      .query(async ({ input }) => {
+        return getEmailTrackingStats(input.days);
+      }),
+
+    // Recent email tracking records
+    getRecentEmailTracking: protectedProcedure
+      .input(z.object({
+        limit: z.number().optional().default(50),
+      }))
+      .query(async ({ input }) => {
+        return getRecentEmailTracking(input.limit);
+      }),
+
+    // Anniversary email specific stats
+    getAnniversaryEmailStats: protectedProcedure
+      .query(async () => {
+        return getAnniversaryEmailStats();
       }),
   }),
 

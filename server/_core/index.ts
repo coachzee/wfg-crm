@@ -130,6 +130,62 @@ async function startServer() {
     }
   });
 
+  // Email tracking endpoints for open/click tracking
+  // Tracking pixel endpoint - records email opens
+  app.get("/api/track/open/:trackingId", async (req, res) => {
+    try {
+      const { trackingId } = req.params;
+      const userAgent = req.headers['user-agent'] || '';
+      const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '';
+      
+      // Import and record the open event
+      const { recordEmailOpen } = await import('../email-tracking');
+      await recordEmailOpen(trackingId, userAgent, ipAddress);
+      
+      // Return a 1x1 transparent GIF
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.set('Content-Type', 'image/gif');
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.send(pixel);
+    } catch (error) {
+      // Still return the pixel even if tracking fails
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.set('Content-Type', 'image/gif');
+      res.send(pixel);
+    }
+  });
+
+  // Click tracking endpoint - records link clicks and redirects
+  app.get("/api/track/click/:trackingId", async (req, res) => {
+    try {
+      const { trackingId } = req.params;
+      const { url } = req.query;
+      const userAgent = req.headers['user-agent'] || '';
+      const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '';
+      
+      // Import and record the click event
+      const { recordEmailClick } = await import('../email-tracking');
+      await recordEmailClick(trackingId, url as string, userAgent, ipAddress);
+      
+      // Redirect to the actual URL
+      if (url && typeof url === 'string') {
+        res.redirect(302, url);
+      } else {
+        res.status(400).send('Missing redirect URL');
+      }
+    } catch (error) {
+      // Still redirect even if tracking fails
+      const { url } = req.query;
+      if (url && typeof url === 'string') {
+        res.redirect(302, url);
+      } else {
+        res.status(400).send('Missing redirect URL');
+      }
+    }
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

@@ -833,3 +833,25 @@
 - [x] Integrate with daily sync to send greetings automatically (3:30 PM & 6:30 PM)
 - [x] Track sent greetings to avoid duplicate emails (hasAnniversaryGreetingBeenSent, recordAnniversaryGreetingSent)
 - [x] Test client greeting email functionality (14 tests passing, 138 total)
+
+
+## Anniversary Email Tracking Widget - In Progress (Jan 16, 2026)
+- [ ] Create emailTracking database table to store sent emails and tracking events
+- [ ] Create tracking pixel endpoint (/api/track/open/:trackingId)
+- [ ] Create tracked link redirect endpoint (/api/track/click/:trackingId)
+- [ ] Update sendClientAnniversaryGreeting to include tracking pixel and tracked links
+- [ ] Create dashboard widget showing email statistics (sent, opened, clicked)
+- [ ] Add detailed view showing individual email status
+- [ ] Test email tracking functionality
+
+
+## Anniversary Email Tracking Widget - Completed (Jan 16, 2026)
+- [x] Create emailTracking database table with open/click tracking fields
+- [x] Add tracking pixel endpoint (/api/track/open/:trackingId)
+- [x] Add click tracking endpoint (/api/track/click/:trackingId)
+- [x] Create email tracking service (server/email-tracking.ts)
+- [x] Create dashboard widget showing email stats (sent, opened, clicked)
+- [x] Add engagement metrics (open rate, click rate) with progress bars
+- [x] Show recent emails with status indicators (Opened, Clicked, Sent badges)
+- [x] Add tRPC endpoints for email tracking stats
+- [x] Test email tracking functionality (15 new tests, 138 total passing)

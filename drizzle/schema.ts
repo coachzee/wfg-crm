@@ -683,3 +683,53 @@ export const incomeHistory = mysqlTable("incomeHistory", {
 
 export type IncomeHistory = typeof incomeHistory.$inferSelect;
 export type InsertIncomeHistory = typeof incomeHistory.$inferInsert;
+
+
+// Email Tracking - Track sent emails and engagement (opens, clicks)
+export const emailTracking = mysqlTable("emailTracking", {
+  id: int("id").autoincrement().primaryKey(),
+  trackingId: varchar("trackingId", { length: 64 }).notNull().unique(), // UUID for tracking
+  
+  // Email details
+  emailType: mysqlEnum("emailType", [
+    "ANNIVERSARY_GREETING",
+    "ANNIVERSARY_REMINDER",
+    "POLICY_REVIEW_REMINDER",
+    "CHARGEBACK_ALERT",
+    "GENERAL_NOTIFICATION",
+  ]).notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 255 }).notNull(),
+  recipientName: varchar("recipientName", { length: 255 }),
+  subject: varchar("subject", { length: 500 }),
+  
+  // Related entity (e.g., policy number for anniversary emails)
+  relatedEntityType: varchar("relatedEntityType", { length: 50 }), // "policy", "agent", "client"
+  relatedEntityId: varchar("relatedEntityId", { length: 100 }), // policy number, agent code, etc.
+  
+  // Sending status
+  sentAt: timestamp("sentAt"),
+  sendStatus: mysqlEnum("sendStatus", ["PENDING", "SENT", "FAILED", "BOUNCED"]).default("PENDING"),
+  sendError: text("sendError"),
+  
+  // Engagement tracking
+  openedAt: timestamp("openedAt"),
+  openCount: int("openCount").default(0),
+  lastOpenedAt: timestamp("lastOpenedAt"),
+  
+  clickedAt: timestamp("clickedAt"),
+  clickCount: int("clickCount").default(0),
+  lastClickedAt: timestamp("lastClickedAt"),
+  clickedLinks: json("clickedLinks"), // Array of clicked link URLs
+  
+  // User agent info (for analytics)
+  lastUserAgent: varchar("lastUserAgent", { length: 500 }),
+  lastIpAddress: varchar("lastIpAddress", { length: 50 }),
+  
+  // Metadata
+  metadata: json("metadata"), // Additional context (policy details, etc.)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailTracking = typeof emailTracking.$inferSelect;
+export type InsertEmailTracking = typeof emailTracking.$inferInsert;
