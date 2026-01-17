@@ -1308,29 +1308,41 @@ export default function Dashboard() {
             </div>
             
             {/* First Notice */}
-            <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+            <div 
+              className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 cursor-pointer hover:bg-amber-500/10 transition-colors"
+              onClick={() => {
+                const element = document.getElementById('first-notice-section');
+                if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <span className="text-sm font-medium text-amber-600">First Notice</span>
               </div>
               <p className="text-2xl font-bold text-amber-600">{metrics?.complianceFirstNotice || 3}</p>
-              <p className="text-xs text-muted-foreground">Platform fee warning</p>
+              <p className="text-xs text-muted-foreground">Click to view agents</p>
             </div>
             
             {/* Final Notice - Commissions On Hold */}
-            <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+            <div 
+              className="p-4 rounded-lg bg-red-500/5 border border-red-500/20 cursor-pointer hover:bg-red-500/10 transition-colors"
+              onClick={() => {
+                const element = document.getElementById('final-notice-section');
+                if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="h-4 w-4 text-red-500" />
                 <span className="text-sm font-medium text-red-600">Final Notice</span>
               </div>
               <p className="text-2xl font-bold text-red-600">{metrics?.complianceFinalNotice || 3}</p>
-              <p className="text-xs text-muted-foreground">Commissions on hold</p>
+              <p className="text-xs text-muted-foreground">Click to view agents</p>
             </div>
           </div>
           
           {/* Agents with Commissions On Hold - Detailed List */}
           {metrics?.commissionsOnHold && metrics.commissionsOnHold.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-red-500/20">
+            <div id="final-notice-section" className="mt-6 pt-4 border-t border-red-500/20">
               <h4 className="text-sm font-semibold text-red-600 mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 Agents with Commissions On Hold
@@ -1359,7 +1371,7 @@ export default function Dashboard() {
           
           {/* Agents with First Notice Warning */}
           {metrics?.firstNoticeAgents && metrics.firstNoticeAgents.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-amber-500/20">
+            <div id="first-notice-section" className="mt-4 pt-4 border-t border-amber-500/20">
               <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 Agents with First Notice Warning
@@ -1958,7 +1970,7 @@ export default function Dashboard() {
 
       {/* Missing Licenses Modal */}
       <Dialog open={showMissingLicensesModal} onOpenChange={setShowMissingLicensesModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileWarning className="h-5 w-5 text-blue-600" />
@@ -1974,7 +1986,7 @@ export default function Dashboard() {
 
       {/* No Recurring Modal */}
       <Dialog open={showNoRecurringModal} onOpenChange={setShowNoRecurringModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-purple-600" />

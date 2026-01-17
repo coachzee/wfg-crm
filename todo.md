@@ -934,3 +934,12 @@
 - [x] Remove income-history.test.ts
 - [x] Clean up unused imports
 - Note: Database functions in db.ts and incomeSnapshots table kept for potential future use (no harm in keeping)
+
+
+## Dashboard Bug Fixes - Completed (Jan 16, 2026)
+- [x] Fix "Missing Licenses" modal to be larger and show all info at once (max-w-6xl w-[95vw])
+- [x] Fix "No Recurring" modal to be larger and show all info at once (max-w-6xl w-[95vw])
+- [x] Make "First Notice" clickable to navigate to relevant dashboard section (scrolls to first-notice-section)
+- [x] Make "Final Notice" clickable to navigate to relevant dashboard section (scrolls to final-notice-section)
+- [x] Triggered manual sync to update agent licensing status from MyWFG
+- Note: Agent licensing status will be updated after sync completes (fetches from MyWFG Downline Status report)
