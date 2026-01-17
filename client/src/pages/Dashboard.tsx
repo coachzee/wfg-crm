@@ -715,6 +715,13 @@ const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSummary() {
 const EmailTrackingWidget = memo(function EmailTrackingWidget() {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [showResendSection, setShowResendSection] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState<{
+    trackingId: string;
+    recipientName: string | null;
+    recipientEmail: string;
+    daysSinceSent: number;
+    resendCount: number;
+  } | null>(null);
   const utils = trpc.useUtils();
   
   const { data: stats, isLoading } = trpc.dashboard.getAnniversaryEmailStats.useQuery(undefined, {
@@ -740,9 +747,25 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
     },
   });
   
-  const handleResend = (trackingId: string) => {
-    setResendingId(trackingId);
-    resendMutation.mutate({ trackingId });
+  const handleResendClick = (email: {
+    trackingId: string;
+    recipientName: string | null;
+    recipientEmail: string;
+    daysSinceSent: number;
+    resendCount: number;
+  }) => {
+    setConfirmEmail(email);
+  };
+
+  const handleConfirmResend = () => {
+    if (!confirmEmail) return;
+    setResendingId(confirmEmail.trackingId);
+    resendMutation.mutate({ trackingId: confirmEmail.trackingId });
+    setConfirmEmail(null);
+  };
+
+  const handleCancelResend = () => {
+    setConfirmEmail(null);
   };
 
   if (isLoading) {
@@ -871,7 +894,7 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleResend(email.trackingId)}
+                      onClick={() => handleResendClick(email)}
                       disabled={resendingId === email.trackingId || email.resendCount >= 2}
                       className="text-xs h-7"
                     >
@@ -941,6 +964,65 @@ const EmailTrackingWidget = memo(function EmailTrackingWidget() {
             <p className="text-xs">Emails are automatically sent on policy anniversaries</p>
           </div>
         )}
+
+        {/* Resend Confirmation Dialog */}
+        <Dialog open={!!confirmEmail} onOpenChange={(open) => !open && handleCancelResend()}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5 text-purple-600" />
+                Confirm Email Resend
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to resend this anniversary greeting email?
+              </DialogDescription>
+            </DialogHeader>
+            {confirmEmail && (
+              <div className="space-y-4 py-4">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Recipient:</span>
+                    <span className="text-sm font-medium">
+                      {confirmEmail.recipientName || "Client"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Email:</span>
+                    <span className="text-sm font-medium truncate max-w-[200px]">
+                      {confirmEmail.recipientEmail}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Original sent:</span>
+                    <span className="text-sm font-medium">
+                      {confirmEmail.daysSinceSent} days ago
+                    </span>
+                  </div>
+                  {confirmEmail.resendCount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Previous resends:</span>
+                      <span className="text-sm font-medium text-amber-600">
+                        {confirmEmail.resendCount} time{confirmEmail.resendCount > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  A new anniversary greeting email will be sent to this client with fresh tracking.
+                </p>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleCancelResend}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmResend} className="bg-purple-600 hover:bg-purple-700">
+                <Send className="h-4 w-4 mr-2" />
+                Confirm Resend
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
