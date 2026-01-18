@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Lock, AlertCircle, CheckCircle2, RefreshCw, Clock, CalendarClock, Activity } from "lucide-react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -294,18 +295,35 @@ export default function Settings() {
                 <p className="text-muted-foreground">No sync history yet.</p>
               )}
 
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleTestSync}
-                  variant="outline"
-                  disabled={testSyncMutation.isPending || !credentials}
-                >
-                  {testSyncMutation.isPending ? "Testing..." : "Test Connection"}
-                </Button>
-                <Button onClick={handleManualSync} disabled={manualSyncMutation.isPending || !credentials}>
-                  {manualSyncMutation.isPending ? "Syncing..." : "Sync Now"}
-                </Button>
+              {/* Automatic Sync Schedule */}
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarClock className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-700">Automatic Sync Schedule</span>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>3:30 PM EST</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>6:30 PM EST</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Data syncs automatically twice daily. Check Sync History for detailed logs.
+                </p>
               </div>
+
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/sync-history'}
+                className="gap-2"
+              >
+                <Activity className="h-4 w-4" />
+                View Sync History
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

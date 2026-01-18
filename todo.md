@@ -1012,3 +1012,13 @@
 - [x] Include breakdown by title level (TA, A, SA, MD, SMD)
 - [x] Log summary information during sync
 - [x] Added licensed/unlicensed count to summary
+
+
+## Playwright Production Fix (Completed)
+- [x] Identified: Playwright browsers cannot run in production environment
+- [x] Solution: Replace manual sync buttons with scheduled sync status display
+- [x] Hide manual sync buttons in production (replaced with schedule display)
+- [x] Show automatic sync schedule (3:30 PM & 6:30 PM EST)
+- [x] Display "Syncs Run Automatically" status with pulsing indicator
+- [x] Keep sync history visible with "View Sync History" button
+- [x] Updated Dashboard, Settings, and Pending Policies pages

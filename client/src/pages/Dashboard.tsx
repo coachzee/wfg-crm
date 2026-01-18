@@ -1565,32 +1565,37 @@ export default function Dashboard() {
               </div>
             </div>
             
-            {/* Sync Actions */}
+            {/* Scheduled Sync Status */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold flex items-center gap-2">
-                <Zap className="h-4 w-4 text-blue-500" />
-                Sync Actions
+                <CalendarClock className="h-4 w-4 text-blue-500" />
+                Automatic Sync Schedule
               </h4>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Trigger a manual sync to pull the latest data from MyWFG and Transamerica. You'll receive email alerts during the process.
-                </p>
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-sm font-medium text-emerald-700">Syncs Run Automatically</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span>3:30 PM EST</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span>6:30 PM EST</span>
+                    </div>
+                  </div>
+                </div>
                 <Button
-                  variant={syncStatus === 'success' ? 'outline' : 'default'}
+                  variant="outline"
                   size="sm"
-                  onClick={() => triggerSync.mutate()}
-                  disabled={syncStatus === 'syncing'}
+                  onClick={() => setLocation('/sync-history')}
                   className="gap-2 w-full"
                 >
-                  {syncStatus === 'syncing' ? (
-                    <><RefreshCw className="h-4 w-4 animate-spin" /> Syncing Data...</>
-                  ) : syncStatus === 'success' ? (
-                    <><CheckCircle className="h-4 w-4 text-green-600" /> Sync Complete!</>
-                  ) : syncStatus === 'error' ? (
-                    <><AlertTriangle className="h-4 w-4" /> Sync Failed - Try Again</>
-                  ) : (
-                    <><RefreshCw className="h-4 w-4" /> Trigger Manual Sync</>
-                  )}
+                  <Activity className="h-4 w-4" />
+                  View Sync History
                 </Button>
               </div>
             </div>
@@ -1600,7 +1605,7 @@ export default function Dashboard() {
           <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <p className="text-sm text-blue-700 flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              <span><strong>Note:</strong> Automated sync uses your Gmail to read OTP codes. You'll receive email alerts for each login attempt and OTP fetch.</span>
+              <span><strong>Note:</strong> Data syncs automatically twice daily. You'll receive email alerts for each sync attempt. Check Sync History for detailed logs.</span>
             </p>
           </div>
         </CardContent>

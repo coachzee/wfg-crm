@@ -38,6 +38,8 @@ import {
   DollarSign,
   FileWarning,
   Loader2,
+  CalendarClock,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -348,14 +350,16 @@ export default function PendingPolicies() {
             Track pending policy requirements from Transamerica Life Access
           </p>
         </div>
-        <Button onClick={handleSync} disabled={syncing}>
-          {syncing ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          {syncing ? "Syncing..." : "Sync Now"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarClock className="h-4 w-4 text-emerald-600" />
+            <span>Auto-sync: 3:30 PM & 6:30 PM EST</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => window.location.href = '/sync-history'}>
+            <Activity className="h-4 w-4 mr-2" />
+            Sync History
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics */}
