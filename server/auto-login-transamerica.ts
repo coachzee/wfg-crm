@@ -75,7 +75,8 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     
     // Click login button
     console.log('[Transamerica] Clicking login button...');
-    await page.click('button[type="submit"], input[type="submit"], .login-btn, #loginButton');
+    await page.waitForSelector('#formLogin', { timeout: 5000 });
+    await page.click('#formLogin');
     
     // Wait for page to load after login
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 }).catch(() => {});

@@ -15,6 +15,10 @@ interface OTPResult {
   receivedAt?: Date;
 }
 
+// Track last OTP fetch time to avoid reusing old OTPs
+let lastOTPFetchTime: Date | null = null;
+let lastOTPCode: string | null = null;
+
 // Create IMAP connection configuration
 function createImapConfig(credentials: GmailCredentials): Imap.Config {
   return {
@@ -175,41 +179,60 @@ function extractOTPFromText(text: string): string | null {
 }
 
 // Wait for OTP email to arrive (with polling)
+// Only returns OTPs that arrived AFTER this function was called
 export async function waitForOTP(
   credentials: GmailCredentials,
   senderPattern: string,
   maxWaitSeconds: number = 60,
   pollIntervalSeconds: number = 5
 ): Promise<OTPResult> {
-  const startTime = Date.now();
+  const startTime = new Date();
   const maxWaitMs = maxWaitSeconds * 1000;
   
-  console.log(`[Gmail] Waiting for OTP from ${senderPattern}...`);
+  console.log(`[Gmail] Waiting for NEW OTP from ${senderPattern} (after ${startTime.toISOString()})...`);
   
-  while (Date.now() - startTime < maxWaitMs) {
-    // Look for emails from the last 5 minutes to catch recent OTPs
-    const result = await fetchRecentOTP(credentials, senderPattern, undefined, 5);
+  while (Date.now() - startTime.getTime() < maxWaitMs) {
+    // Look for emails from the last 3 minutes to catch recent OTPs
+    const result = await fetchRecentOTP(credentials, senderPattern, undefined, 3);
     
-    if (result.success && result.otp) {
-      console.log(`[Gmail] OTP received: ${result.otp}`);
+    if (result.success && result.otp && result.receivedAt) {
+      // Only accept OTPs that arrived AFTER we started waiting
+      // Add 30 second buffer to account for email delivery delays
+      const otpTime = new Date(result.receivedAt);
+      const waitStartWithBuffer = new Date(startTime.getTime() - 30000); // 30 sec before start
       
-      // Send email alert about OTP fetch
-      try {
-        const { alertOTPFetched } = await import('./email-alert');
-        const platform = senderPattern.toLowerCase().includes('wfg') ? 'MyWFG' : 'Transamerica';
-        await alertOTPFetched(platform, result.otp);
-      } catch (e) {
-        console.error('[Gmail] Failed to send OTP alert email:', e);
+      if (otpTime > waitStartWithBuffer) {
+        // Also check if this is a different OTP than the last one we fetched
+        if (result.otp !== lastOTPCode || !lastOTPFetchTime || otpTime > lastOTPFetchTime) {
+          console.log(`[Gmail] NEW OTP received: ${result.otp} (received at ${otpTime.toISOString()})`);
+          
+          // Update tracking
+          lastOTPFetchTime = otpTime;
+          lastOTPCode = result.otp;
+          
+          // Send email alert about OTP fetch
+          try {
+            const { alertOTPFetched } = await import('./email-alert');
+            const platform = senderPattern.toLowerCase().includes('wfg') ? 'MyWFG' : 'Transamerica';
+            await alertOTPFetched(platform, result.otp);
+          } catch (e) {
+            console.error('[Gmail] Failed to send OTP alert email:', e);
+          }
+          
+          return result;
+        } else {
+          console.log(`[Gmail] Skipping old OTP: ${result.otp} (same as last fetch)`);
+        }
+      } else {
+        console.log(`[Gmail] Skipping old OTP: ${result.otp} (received at ${otpTime.toISOString()}, before wait started)`);
       }
-      
-      return result;
     }
     
     // Wait before next poll
     await new Promise(resolve => setTimeout(resolve, pollIntervalSeconds * 1000));
   }
   
-  return { success: false, error: `Timeout waiting for OTP after ${maxWaitSeconds} seconds` };
+  return { success: false, error: `Timeout waiting for NEW OTP after ${maxWaitSeconds} seconds` };
 }
 
 // Get credentials from environment variables

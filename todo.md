@@ -1022,3 +1022,22 @@
 - [x] Display "Syncs Run Automatically" status with pulsing indicator
 - [x] Keep sync history visible with "View Sync History" button
 - [x] Updated Dashboard, Settings, and Pending Policies pages
+
+
+## OTP Automation & Sync UI Fixes (Completed - Jan 18, 2026)
+- [x] Fixed OTP reuse issue - now only accepts NEW OTPs that arrived after request
+- [x] Added timestamp tracking to prevent using stale OTP codes
+- [x] Fixed MyWFG OTP sender pattern (changed from 'wfg' to 'transamerica')
+- [x] Both MyWFG and Transamerica OTPs come from WebHelp@Transamerica.com
+- [x] Verified sync works with fresh OTP codes
+- [x] Replaced manual sync buttons with scheduled sync status display in production
+- [x] Added "Syncs Run Automatically" indicator with schedule times (3:30 PM & 6:30 PM EST)
+- [x] Updated Dashboard, Settings, and Pending Policies pages with new sync UI
+- [x] Manual sync works from Manus sandbox, scheduled syncs update shared database
+
+## Custom Domain Setup (Completed - Jan 18, 2026)
+- [x] Published CRM to Manus hosting
+- [x] Connected custom domain: crm.wealthbuildershaven.com
+- [x] Added CNAME record in Hostinger DNS (crm -> cname.manus.space)
+- [x] Verified domain connection successful
+- [x] Site accessible at https://crm.wealthbuildershaven.com with Manus OAuth

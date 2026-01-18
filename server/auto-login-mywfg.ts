@@ -102,8 +102,8 @@ export async function loginToMyWFG(): Promise<LoginResult> {
       // Get Gmail credentials for OTP
       const gmailCreds = getMyWFGCredentials();
       
-      // Wait for OTP email
-      const otpResult = await waitForOTP(gmailCreds, 'wfg', 90, 5);
+      // Wait for OTP email (MyWFG OTPs come from WebHelp@Transamerica.com)
+      const otpResult = await waitForOTP(gmailCreds, 'transamerica', 90, 5);
       
       if (!otpResult.success || !otpResult.otp) {
         return { success: false, error: `Failed to get OTP: ${otpResult.error}` };
