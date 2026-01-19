@@ -267,10 +267,18 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
       }
       
       await new Promise(r => setTimeout(r, 3000));
-      await page.screenshot({ path: '/tmp/mywfg-after-otp-submit.png', fullPage: true });
+      try {
+        await page.screenshot({ path: '/tmp/mywfg-after-otp-submit.png', fullPage: true });
+      } catch (e) {
+        console.log('[Downline Scraper] Screenshot skipped (window may be minimized)');
+      }
     } else {
       console.log('[Downline Scraper] Warning: OTP input not found');
-      await page.screenshot({ path: '/tmp/mywfg-otp-input-not-found.png', fullPage: true });
+      try {
+        await page.screenshot({ path: '/tmp/mywfg-otp-input-not-found.png', fullPage: true });
+      } catch (e) {
+        console.log('[Downline Scraper] Screenshot skipped');
+      }
     }
   }
   
@@ -1175,6 +1183,349 @@ export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR'
       agents: [],
       runDate: '',
       reportInfo: '',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+
+/**
+ * Fetch upline information for a single agent from MyWFG Hierarchy Tool Associate Details
+ */
+export async function fetchAgentUpline(page: Page, agentCode: string): Promise<{ uplineCode: string | null; uplineName: string | null }> {
+  try {
+    console.log(`[Hierarchy Tool] Fetching upline for agent ${agentCode}...`);
+    
+    // Navigate to Hierarchy Tool for this agent
+    const url = `https://www.mywfg.com/Wfg.HierarchyTool/HierarchyDetails/LoadHierarchyToolMain?agentcodenumber=${agentCode}`;
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    
+    // Wait for the page to load
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Click on Associate Details tab
+    const detailsClicked = await page.evaluate(() => {
+      const link = document.querySelector('#AgentDetailsLink') as HTMLElement;
+      if (link) {
+        link.click();
+        return true;
+      }
+      // Fallback to text search
+      const links = Array.from(document.querySelectorAll('a'));
+      for (const l of links) {
+        const text = l.textContent?.trim().toUpperCase() || '';
+        if (text === 'ASSOCIATE DETAILS' || text.includes('ASSOCIATE DETAILS')) {
+          (l as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    });
+    
+    if (detailsClicked) {
+      // Wait longer for the tab content to load (AJAX content)
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    
+    // Scroll down to ensure Recruiter field is loaded
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // Extract the Recruiter name from the page
+    const uplineData = await page.evaluate(() => {
+      // Method 1: Look for the specific page structure with label:value pairs
+      const pageText = document.body.innerText;
+      
+      // Use regex to find "Recruiter:" followed by a name
+      const recruiterMatch = pageText.match(/Recruiter:\s*([A-Z][A-Za-z\s]+)/i);
+      if (recruiterMatch && recruiterMatch[1]) {
+        const name = recruiterMatch[1].trim();
+        // Make sure it's not another label
+        if (name.length > 2 && !name.includes(':') && !name.match(/^(Upline|SMD|CEO|Spouse)/i)) {
+          return { name, code: null };
+        }
+      }
+      
+      // Method 2: Look for Recruiter in the lines
+      const lines = pageText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line === 'Recruiter:') {
+          // The recruiter name is on the next line
+          const nextLine = lines[i + 1];
+          if (nextLine && nextLine.length > 2 && !nextLine.includes(':') && !nextLine.match(/^(Upline|SMD|CEO|Spouse)/i)) {
+            return { name: nextLine, code: null };
+          }
+        }
+      }
+      
+      // Method 3: Look for table rows with Recruiter label
+      const rows = Array.from(document.querySelectorAll('tr, div.row, div'));
+      for (const row of rows) {
+        const text = row.textContent || '';
+        if (text.includes('Recruiter:')) {
+          // Extract the value after Recruiter:
+          const match = text.match(/Recruiter:\s*([A-Z][A-Za-z\s]+?)(?=Upline|Spouse|$)/i);
+          if (match && match[1]) {
+            const name = match[1].trim();
+            if (name.length > 2) {
+              return { name, code: null };
+            }
+          }
+        }
+      }
+      
+      return { name: null, code: null };
+    });
+    
+    if (uplineData && uplineData.name) {
+      console.log(`[Hierarchy Tool] Found recruiter for ${agentCode}: ${uplineData.name}`);
+      return { uplineCode: null, uplineName: uplineData.name };
+    }
+    
+    console.log(`[Hierarchy Tool] No recruiter found for ${agentCode} (root agent)`);
+    return { uplineCode: null, uplineName: null };
+    
+  } catch (error) {
+    console.error(`[Hierarchy Tool] Error fetching upline for ${agentCode}:`, error);
+    return { uplineCode: null, uplineName: null };
+  }
+}
+
+/**
+ * Fetch upline information for multiple agents
+ */
+export async function fetchAgentUplines(
+  page: Page,
+  agentCodes: string[],
+  onProgress?: (current: number, total: number, agentCode: string) => void
+): Promise<Map<string, { uplineCode: string; uplineName: string | null }>> {
+  const uplines = new Map<string, { uplineCode: string; uplineName: string | null }>();
+  
+  console.log(`[Upline Leaders] Fetching uplines for ${agentCodes.length} agents...`);
+  
+  for (let i = 0; i < agentCodes.length; i++) {
+    const agentCode = agentCodes[i];
+    
+    if (onProgress) {
+      onProgress(i + 1, agentCodes.length, agentCode);
+    }
+    
+    const upline = await fetchAgentUpline(page, agentCode);
+    if (upline.uplineCode) {
+      uplines.set(agentCode, { uplineCode: upline.uplineCode, uplineName: upline.uplineName });
+    }
+    
+    // Rate limiting: wait 1 second between requests
+    if (i < agentCodes.length - 1) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  
+  console.log(`[Upline Leaders] Successfully fetched ${uplines.size} uplines out of ${agentCodes.length} agents`);
+  
+  return uplines;
+}
+
+/**
+ * Fetch downline status with hierarchy (upline relationships)
+ */
+export async function fetchDownlineStatusWithHierarchy(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult & { uplines: Map<string, { uplineCode: string; uplineName: string | null }> }> {
+  let browser: Browser | null = null;
+  
+  try {
+    console.log('[Downline Scraper] Starting downline status extraction with hierarchy...');
+    
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Login to MyWFG
+    const loggedIn = await loginToMyWFG(page);
+    if (!loggedIn) {
+      throw new Error('Failed to login to MyWFG');
+    }
+    
+    // Extract downline status
+    const result = await extractDownlineStatus(page, agentId, teamType);
+    
+    let uplines = new Map<string, { uplineCode: string; uplineName: string | null }>();
+    
+    if (result.success && result.agents.length > 0) {
+      // Fetch uplines for all agents
+      console.log('[Downline Scraper] Fetching hierarchy from Upline Leaders report...');
+      const agentCodes = result.agents.map(a => a.agentCode);
+      uplines = await fetchAgentUplines(page, agentCodes);
+      
+      console.log(`[Downline Scraper] Found uplines for ${uplines.size} agents`);
+    }
+    
+    await browser.close();
+    browser = null;
+    
+    return { ...result, uplines };
+    
+  } catch (error) {
+    console.error('[Downline Scraper] Error:', error);
+    
+    if (browser) {
+      await browser.close();
+    }
+    
+    return {
+      success: false,
+      agents: [],
+      runDate: '',
+      reportInfo: '',
+      uplines: new Map(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Sync hierarchy (upline relationships) from MyWFG to database
+ */
+export async function syncHierarchyFromMyWFG(db: any, schema: any): Promise<{
+  success: boolean;
+  updated: number;
+  error?: string;
+}> {
+  let browser: Browser | null = null;
+  
+  try {
+    console.log('[Hierarchy Sync] Starting hierarchy sync from MyWFG...');
+    
+    // Get all agents from database
+    const { eq, isNotNull } = await import('drizzle-orm');
+    const allAgents = await db
+      .select({
+        id: schema.agents.id,
+        agentCode: schema.agents.agentCode,
+        firstName: schema.agents.firstName,
+        lastName: schema.agents.lastName,
+      })
+      .from(schema.agents)
+      .where(isNotNull(schema.agents.agentCode));
+    
+    if (allAgents.length === 0) {
+      console.log('[Hierarchy Sync] No agents found in database');
+      return { success: true, updated: 0 };
+    }
+    
+    console.log(`[Hierarchy Sync] Found ${allAgents.length} agents in database`);
+    
+    // Create agent code to ID map and name to ID map
+    const agentCodeToId = new Map<string, number>();
+    const agentNameToId = new Map<string, number>();
+    const agentNameToCode = new Map<string, string>();
+    for (const agent of allAgents) {
+      if (agent.agentCode) {
+        agentCodeToId.set(agent.agentCode, agent.id);
+      }
+      // Create name-based lookup (normalize: uppercase, remove extra spaces)
+      const fullName = `${agent.firstName || ''} ${agent.lastName || ''}`.trim().toUpperCase();
+      const reverseName = `${agent.lastName || ''} ${agent.firstName || ''}`.trim().toUpperCase();
+      const lastFirst = `${agent.lastName || ''}, ${agent.firstName || ''}`.trim().toUpperCase();
+      if (fullName.length > 2) {
+        agentNameToId.set(fullName, agent.id);
+        agentNameToId.set(reverseName, agent.id);
+        agentNameToId.set(lastFirst, agent.id);
+        if (agent.agentCode) {
+          agentNameToCode.set(fullName, agent.agentCode);
+          agentNameToCode.set(reverseName, agent.agentCode);
+          agentNameToCode.set(lastFirst, agent.agentCode);
+        }
+      }
+    }
+    
+    // Launch browser
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    
+    // Login to MyWFG
+    const loggedIn = await loginToMyWFG(page);
+    if (!loggedIn) {
+      throw new Error('Failed to login to MyWFG');
+    }
+    
+    // Fetch uplines for all agents
+    const agentCodes = allAgents.map((a: any) => a.agentCode).filter(Boolean);
+    const uplines = await fetchAgentUplines(page, agentCodes, (current, total, code) => {
+      console.log(`[Hierarchy Sync] Processing ${current}/${total}: ${code}`);
+    });
+    
+    await browser.close();
+    browser = null;
+    
+    // Update database with upline relationships
+    let updated = 0;
+    for (const [agentCode, uplineData] of Array.from(uplines.entries())) {
+      const agentId = agentCodeToId.get(agentCode);
+      
+      // Try to find upline by code first, then by name
+      let uplineAgentId: number | undefined;
+      let uplineIdentifier = '';
+      
+      if (uplineData.uplineCode) {
+        uplineAgentId = agentCodeToId.get(uplineData.uplineCode);
+        uplineIdentifier = uplineData.uplineCode;
+      }
+      
+      if (!uplineAgentId && uplineData.uplineName) {
+        // Try to match by name (normalize: uppercase)
+        const normalizedName = uplineData.uplineName.trim().toUpperCase();
+        uplineAgentId = agentNameToId.get(normalizedName);
+        uplineIdentifier = uplineData.uplineName;
+        
+        // Also try with "LASTNAME FIRSTNAME" format if not found
+        if (!uplineAgentId) {
+          // Try splitting and reversing
+          const parts = normalizedName.split(/[\s,]+/).filter(p => p.length > 0);
+          if (parts.length >= 2) {
+            const reversed = parts.slice(1).join(' ') + ' ' + parts[0];
+            uplineAgentId = agentNameToId.get(reversed);
+          }
+        }
+      }
+      
+      if (agentId && uplineAgentId) {
+        await db
+          .update(schema.agents)
+          .set({ uplineAgentId: uplineAgentId })
+          .where(eq(schema.agents.id, agentId));
+        updated++;
+        console.log(`[Hierarchy Sync] Updated ${agentCode} -> upline: ${uplineIdentifier}`);
+      } else if (agentId && uplineIdentifier) {
+        console.log(`[Hierarchy Sync] Upline "${uplineIdentifier}" not found in database for ${agentCode}`);
+      }
+    }
+    
+    console.log(`[Hierarchy Sync] Sync complete: ${updated} agents updated with upline relationships`);
+    
+    return { success: true, updated };
+    
+  } catch (error) {
+    console.error('[Hierarchy Sync] Error:', error);
+    
+    if (browser) {
+      await browser.close();
+    }
+    
+    return {
+      success: false,
+      updated: 0,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }

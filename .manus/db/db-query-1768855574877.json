@@ -1,0 +1,250 @@
+{
+  "query": "SELECT id, agentCode, firstName, lastName, currentRank, uplineAgentId FROM agents ORDER BY currentRank DESC, firstName LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, agentCode, firstName, lastName, currentRank, uplineAgentId FROM agents ORDER BY currentRank DESC, firstName LIMIT 30;",
+  "rows": [
+    {
+      "id": "60001",
+      "agentCode": "D0T7M",
+      "firstName": "Augustina",
+      "lastName": "Armstrong-ogbonna",
+      "currentRank": "SENIOR_MARKETING_DIRECTOR",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60002",
+      "agentCode": "D3Y2G",
+      "firstName": "Ayodele",
+      "lastName": "Okulaja",
+      "currentRank": "MARKETING_DIRECTOR",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60045",
+      "agentCode": "C3D01",
+      "firstName": "Oluwaseyi",
+      "lastName": "Adepitan",
+      "currentRank": "MARKETING_DIRECTOR",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60043",
+      "agentCode": "C9F3Z",
+      "firstName": "Mercy",
+      "lastName": "Okonofua",
+      "currentRank": "SENIOR_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60040",
+      "agentCode": "D6W3S",
+      "firstName": "Nonso",
+      "lastName": "Humphrey",
+      "currentRank": "SENIOR_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60041",
+      "agentCode": "D3Y16",
+      "firstName": "Odion",
+      "lastName": "Imasuen",
+      "currentRank": "SENIOR_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60042",
+      "agentCode": "49AEA",
+      "firstName": "Oluseyi",
+      "lastName": "Ogunlolu",
+      "currentRank": "SENIOR_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60038",
+      "agentCode": "C9U9S",
+      "firstName": "Oluwatosin",
+      "lastName": "Adetona",
+      "currentRank": "SENIOR_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60039",
+      "agentCode": "42EBU",
+      "firstName": "Clive",
+      "lastName": "Henry",
+      "currentRank": "ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60044",
+      "agentCode": "16CKG",
+      "firstName": "Folashade",
+      "lastName": "Olaiya",
+      "currentRank": "ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60034",
+      "agentCode": "E6I1E",
+      "firstName": "Abiodun",
+      "lastName": "Ligali",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60004",
+      "agentCode": "D5L56",
+      "firstName": "Adejare",
+      "lastName": "Adetona",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60003",
+      "agentCode": "E7X0L",
+      "firstName": "Adeyinka",
+      "lastName": "Adedire",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60023",
+      "agentCode": "F0H2P",
+      "firstName": "Benjamin",
+      "lastName": "Eyenla",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60008",
+      "agentCode": "D9I3O",
+      "firstName": "Bukola",
+      "lastName": "Aleshe",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "810011",
+      "agentCode": "D5L4B",
+      "firstName": "Bukola",
+      "lastName": "Kolawole",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60030",
+      "agentCode": "E1U8L",
+      "firstName": "Bukola jumoke",
+      "lastName": "Kolawole",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "810006",
+      "agentCode": "D3T7V",
+      "firstName": "Chidinma",
+      "lastName": "Chukwuedo",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60032",
+      "agentCode": "E2K6Q",
+      "firstName": "Damilola",
+      "lastName": "Kole",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "810009",
+      "agentCode": "D3Y0K",
+      "firstName": "Ese",
+      "lastName": "Moses",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "810005",
+      "agentCode": "D3Y0L",
+      "firstName": "Esther",
+      "lastName": "Aikens",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60011",
+      "agentCode": "D3T9L",
+      "firstName": "Fredrick",
+      "lastName": "Chukwuedo",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60018",
+      "agentCode": "F0J1Q",
+      "firstName": "Funmilayo",
+      "lastName": "Eboda",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60028",
+      "agentCode": "E9I9A",
+      "firstName": "Gloria",
+      "lastName": "Izu",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60033",
+      "agentCode": "D8V8Q",
+      "firstName": "Helen",
+      "lastName": "Latimore",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60009",
+      "agentCode": "E7T7L",
+      "firstName": "Ireoluwa",
+      "lastName": "Aloko",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60026",
+      "agentCode": "E2O7K",
+      "firstName": "Jasmine",
+      "lastName": "Heckstall",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60010",
+      "agentCode": "E6U2T",
+      "firstName": "Jeftha",
+      "lastName": "Amoah",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "810008",
+      "agentCode": "D5L4D",
+      "firstName": "Joy",
+      "lastName": "Ejime",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    },
+    {
+      "id": "60021",
+      "agentCode": "D3C69",
+      "firstName": "Joy",
+      "lastName": "Ejime",
+      "currentRank": "TRAINING_ASSOCIATE",
+      "uplineAgentId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentCode\tfirstName\tlastName\tcurrentRank\tuplineAgentId\n60001\tD0T7M\tAugustina\tArmstrong-ogbonna\tSENIOR_MARKETING_DIRECTOR\tNULL\n60002\tD3Y2G\tAyodele\tOkulaja\tMARKETING_DIRECTOR\tNULL\n60045\tC3D01\tOluwaseyi\tAdepitan\tMARKETING_DIRECTOR\tNULL\n60043\tC9F3Z\tMercy\tOkonofua\tSENIOR_ASSOCIATE\tNULL\n60040\tD6W3S\tNonso\tHumphrey\tSENIOR_ASSOCIATE\tNULL\n60041\tD3Y16\tOdion\tImasuen\tSENIOR_ASSOCIATE\tNULL\n60042\t49AEA\tOluseyi\tOgunlolu\tSENIOR_ASSOCIATE\tNULL\n60038\tC9U9S\tOluwatosin\tAdetona\tSENIOR_ASSOCIATE\tNULL\n60039\t42EBU\tClive\tHenry\tASSOCIATE\tNULL\n60044\t16CKG\tFolashade\tOlaiya\tASSOCIATE\tNULL\n60034\tE6I1E\tAbiodun\tLigali\tTRAINING_ASSOCIATE\tNULL\n60004\tD5L56\tAdejare\tAdetona\tTRAINING_ASSOCIATE\tNULL\n60003\tE7X0L\tAdeyinka\tAdedire\tTRAINING_ASSOCIATE\tNULL\n60023\tF0H2P\tBenjamin\tEyenla\tTRAINING_ASSOCIATE\tNULL\n60008\tD9I3O\tBukola\tAleshe\tTRAINING_ASSOCIATE\tNULL\n810011\tD5L4B\tBukola\tKolawole\tTRAINING_ASSOCIATE\tNULL\n60030\tE1U8L\tBukola jumoke\tKolawole\tTRAINING_ASSOCIATE\tNULL\n810006\tD3T7V\tChidinma\tChukwuedo\tTRAINING_ASSOCIATE\tNULL\n60032\tE2K6Q\tDamilola\tKole\tTRAINING_ASSOCIATE\tNULL\n810009\tD3Y0K\tEse\tMoses\tTRAINING_ASSOCIATE\tNULL\n810005\tD3Y0L\tEsther\tAikens\tTRAINING_ASSOCIATE\tNULL\n60011\tD3T9L\tFredrick\tChukwuedo\tTRAINING_ASSOCIATE\tNULL\n60018\tF0J1Q\tFunmilayo\tEboda\tTRAINING_ASSOCIATE\tNULL\n60028\tE9I9A\tGloria\tIzu\tTRAINING_ASSOCIATE\tNULL\n60033\tD8V8Q\tHelen\tLatimore\tTRAINING_ASSOCIATE\tNULL\n60009\tE7T7L\tIreoluwa\tAloko\tTRAINING_ASSOCIATE\tNULL\n60026\tE2O7K\tJasmine\tHeckstall\tTRAINING_ASSOCIATE\tNULL\n60010\tE6U2T\tJeftha\tAmoah\tTRAINING_ASSOCIATE\tNULL\n810008\tD5L4D\tJoy\tEjime\tTRAINING_ASSOCIATE\tNULL\n60021\tD3C69\tJoy\tEjime\tTRAINING_ASSOCIATE\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 114
+}

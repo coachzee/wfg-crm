@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, agentCode, CONCAT(firstName, ' ', lastName) as fullName FROM agents WHERE firstName LIKE '%Zaid%' OR firstName LIKE '%Augustina%' OR firstName LIKE '%Oluwatosin%' OR firstName LIKE '%Shedrack%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, agentCode, CONCAT(firstName, ' ', lastName) as fullName FROM agents WHERE firstName LIKE '%Zaid%' OR firstName LIKE '%Augustina%' OR firstName LIKE '%Oluwatosin%' OR firstName LIKE '%Shedrack%';",
+  "rows": [
+    {
+      "id": "60001",
+      "agentCode": "D0T7M",
+      "fullName": "Augustina Armstrong-ogbonna"
+    },
+    {
+      "id": "60013",
+      "agentCode": "E5C8X",
+      "fullName": "Shedrack Davies"
+    },
+    {
+      "id": "60031",
+      "agentCode": "E2Y8M",
+      "fullName": "Oluwatosin Kolawole"
+    },
+    {
+      "id": "60038",
+      "agentCode": "C9U9S",
+      "fullName": "Oluwatosin Adetona"
+    },
+    {
+      "id": "810013",
+      "agentCode": "73DXR",
+      "fullName": "Zaid Shopeju"
+    },
+    {
+      "id": "810014",
+      "agentCode": "D3T8P",
+      "fullName": "Oluwatosin Ogunleye"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentCode\tfullName\n60001\tD0T7M\tAugustina Armstrong-ogbonna\n60013\tE5C8X\tShedrack Davies\n60031\tE2Y8M\tOluwatosin Kolawole\n60038\tC9U9S\tOluwatosin Adetona\n810013\t73DXR\tZaid Shopeju\n810014\tD3T8P\tOluwatosin Ogunleye\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

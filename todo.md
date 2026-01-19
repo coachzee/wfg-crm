@@ -1041,3 +1041,19 @@
 - [x] Added CNAME record in Hostinger DNS (crm -> cname.manus.space)
 - [x] Verified domain connection successful
 - [x] Site accessible at https://crm.wealthbuildershaven.com with Manus OAuth
+
+
+## Agent Hierarchy Extraction from Hierarchy Tool (In Progress - Jan 19, 2026)
+- [x] Navigate to MyWFG Hierarchy Tool (Associate Details tab)
+- [x] Identified Recruiter field shows direct upline for each agent
+- [x] Created fetchAgentUpline function with multiple extraction methods
+- [x] Built syncHierarchyFromMyWFG function to process all agents
+- [x] Successfully extracted some recruiter relationships:
+  - D0T7M → ZAID SHOPEJU
+  - E7X0L → ZAID SHOPEJU
+  - D3Y2G → AUGUSTINA ARMSTRONG-OGBONNA
+  - D5L56 → Oluwatosin Adetona
+  - E8X8M → SHEDRACK DAVIES
+- [ ] Fix browser automation stability for full extraction (session timeouts)
+- [ ] Update agents table with uplineAgentId for all agents
+- [ ] Verify org chart displays proper parent-child connections

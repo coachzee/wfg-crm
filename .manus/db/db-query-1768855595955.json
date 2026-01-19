@@ -1,0 +1,370 @@
+{
+  "query": "SELECT id, agentCode, CONCAT(firstName, ' ', lastName) as fullName FROM agents ORDER BY firstName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, agentCode, CONCAT(firstName, ' ', lastName) as fullName FROM agents ORDER BY firstName;",
+  "rows": [
+    {
+      "id": "60034",
+      "agentCode": "E6I1E",
+      "fullName": "Abiodun Ligali"
+    },
+    {
+      "id": "60004",
+      "agentCode": "D5L56",
+      "fullName": "Adejare Adetona"
+    },
+    {
+      "id": "60003",
+      "agentCode": "E7X0L",
+      "fullName": "Adeyinka Adedire"
+    },
+    {
+      "id": "60001",
+      "agentCode": "D0T7M",
+      "fullName": "Augustina Armstrong-ogbonna"
+    },
+    {
+      "id": "60002",
+      "agentCode": "D3Y2G",
+      "fullName": "Ayodele Okulaja"
+    },
+    {
+      "id": "60023",
+      "agentCode": "F0H2P",
+      "fullName": "Benjamin Eyenla"
+    },
+    {
+      "id": "810011",
+      "agentCode": "D5L4B",
+      "fullName": "Bukola Kolawole"
+    },
+    {
+      "id": "60008",
+      "agentCode": "D9I3O",
+      "fullName": "Bukola Aleshe"
+    },
+    {
+      "id": "60030",
+      "agentCode": "E1U8L",
+      "fullName": "Bukola jumoke Kolawole"
+    },
+    {
+      "id": "810006",
+      "agentCode": "D3T7V",
+      "fullName": "Chidinma Chukwuedo"
+    },
+    {
+      "id": "60039",
+      "agentCode": "42EBU",
+      "fullName": "Clive Henry"
+    },
+    {
+      "id": "60032",
+      "agentCode": "E2K6Q",
+      "fullName": "Damilola Kole"
+    },
+    {
+      "id": "810009",
+      "agentCode": "D3Y0K",
+      "fullName": "Ese Moses"
+    },
+    {
+      "id": "810005",
+      "agentCode": "D3Y0L",
+      "fullName": "Esther Aikens"
+    },
+    {
+      "id": "60044",
+      "agentCode": "16CKG",
+      "fullName": "Folashade Olaiya"
+    },
+    {
+      "id": "60011",
+      "agentCode": "D3T9L",
+      "fullName": "Fredrick Chukwuedo"
+    },
+    {
+      "id": "60018",
+      "agentCode": "F0J1Q",
+      "fullName": "Funmilayo Eboda"
+    },
+    {
+      "id": "60028",
+      "agentCode": "E9I9A",
+      "fullName": "Gloria Izu"
+    },
+    {
+      "id": "60033",
+      "agentCode": "D8V8Q",
+      "fullName": "Helen Latimore"
+    },
+    {
+      "id": "60009",
+      "agentCode": "E7T7L",
+      "fullName": "Ireoluwa Aloko"
+    },
+    {
+      "id": "60026",
+      "agentCode": "E2O7K",
+      "fullName": "Jasmine Heckstall"
+    },
+    {
+      "id": "60010",
+      "agentCode": "E6U2T",
+      "fullName": "Jeftha Amoah"
+    },
+    {
+      "id": "60021",
+      "agentCode": "D3C69",
+      "fullName": "Joy Ejime"
+    },
+    {
+      "id": "810008",
+      "agentCode": "D5L4D",
+      "fullName": "Joy Ejime"
+    },
+    {
+      "id": "60027",
+      "agentCode": "D8Z51",
+      "fullName": "Karis Iboro"
+    },
+    {
+      "id": "60017",
+      "agentCode": "E2W8Y",
+      "fullName": "Leyii Diginee"
+    },
+    {
+      "id": "60022",
+      "agentCode": "E3J1B",
+      "fullName": "Margaret Ereba"
+    },
+    {
+      "id": "60043",
+      "agentCode": "C9F3Z",
+      "fullName": "Mercy Okonofua"
+    },
+    {
+      "id": "60036",
+      "agentCode": "F0H13",
+      "fullName": "Millicent Maiko"
+    },
+    {
+      "id": "60012",
+      "agentCode": "E5R1E",
+      "fullName": "Modupeola Dada"
+    },
+    {
+      "id": "60016",
+      "agentCode": "E9U6Q",
+      "fullName": "Moussa Diallo"
+    },
+    {
+      "id": "60040",
+      "agentCode": "D6W3S",
+      "fullName": "Nonso Humphrey"
+    },
+    {
+      "id": "60041",
+      "agentCode": "D3Y16",
+      "fullName": "Odion Imasuen"
+    },
+    {
+      "id": "60042",
+      "agentCode": "49AEA",
+      "fullName": "Oluseyi Ogunlolu"
+    },
+    {
+      "id": "810019",
+      "agentCode": "E3W7A",
+      "fullName": "Oluwabunmi Akinwale"
+    },
+    {
+      "id": "810031",
+      "agentCode": "E7X0Q",
+      "fullName": "Oluwadabira Adekunle"
+    },
+    {
+      "id": "810025",
+      "agentCode": "D5L4H",
+      "fullName": "Oluwadamilare Fagbemi"
+    },
+    {
+      "id": "810018",
+      "agentCode": "E3W79",
+      "fullName": "Oluwadamilola Akinwale"
+    },
+    {
+      "id": "810017",
+      "agentCode": "D5L4F",
+      "fullName": "Oluwafemi Adeyemi"
+    },
+    {
+      "id": "810029",
+      "agentCode": "D3T8S",
+      "fullName": "Oluwafunmilayo Okonkwo"
+    },
+    {
+      "id": "810023",
+      "agentCode": "D3Y0N",
+      "fullName": "Oluwakayode Oladipo"
+    },
+    {
+      "id": "810015",
+      "agentCode": "D3T8Q",
+      "fullName": "Oluwakemi Ogunleye"
+    },
+    {
+      "id": "810021",
+      "agentCode": "E7X0N",
+      "fullName": "Oluwasegun Bakare"
+    },
+    {
+      "id": "810016",
+      "agentCode": "D5L4E",
+      "fullName": "Oluwaseun Adeyemi"
+    },
+    {
+      "id": "60029",
+      "agentCode": "94ISM",
+      "fullName": "Oluwaseun Kadiri"
+    },
+    {
+      "id": "810027",
+      "agentCode": "E3W7C",
+      "fullName": "Oluwaseunfunmi Adebayo"
+    },
+    {
+      "id": "810012",
+      "agentCode": "C9Z87",
+      "fullName": "Oluwaseyi Adepitan"
+    },
+    {
+      "id": "60045",
+      "agentCode": "C3D01",
+      "fullName": "Oluwaseyi Adepitan"
+    },
+    {
+      "id": "810024",
+      "agentCode": "D5L4G",
+      "fullName": "Oluwatimilehin Fagbemi"
+    },
+    {
+      "id": "810022",
+      "agentCode": "D3Y0M",
+      "fullName": "Oluwatobiloba Oladipo"
+    },
+    {
+      "id": "810026",
+      "agentCode": "E3W7B",
+      "fullName": "Oluwatomiwa Adebayo"
+    },
+    {
+      "id": "810014",
+      "agentCode": "D3T8P",
+      "fullName": "Oluwatosin Ogunleye"
+    },
+    {
+      "id": "60031",
+      "agentCode": "E2Y8M",
+      "fullName": "Oluwatosin Kolawole"
+    },
+    {
+      "id": "60038",
+      "agentCode": "C9U9S",
+      "fullName": "Oluwatosin Adetona"
+    },
+    {
+      "id": "810028",
+      "agentCode": "D3T8R",
+      "fullName": "Oluwatoyosi Okonkwo"
+    },
+    {
+      "id": "810030",
+      "agentCode": "E7X0P",
+      "fullName": "Oluwatunmise Adekunle"
+    },
+    {
+      "id": "810020",
+      "agentCode": "E7X0M",
+      "fullName": "Oluwayemisi Bakare"
+    },
+    {
+      "id": "60025",
+      "agentCode": "D9D09",
+      "fullName": "Omolola Giwa"
+    },
+    {
+      "id": "60024",
+      "agentCode": "E6V0Z",
+      "fullName": "Omowunmi Fasakin"
+    },
+    {
+      "id": "60006",
+      "agentCode": "E6C17",
+      "fullName": "Rosette Aka"
+    },
+    {
+      "id": "60005",
+      "agentCode": "E3W78",
+      "fullName": "Sarah Agbettor"
+    },
+    {
+      "id": "60013",
+      "agentCode": "E5C8X",
+      "fullName": "Shedrack Davies"
+    },
+    {
+      "id": "60014",
+      "agentCode": "E8X8M",
+      "fullName": "Somo Davies"
+    },
+    {
+      "id": "810007",
+      "agentCode": "D5L4C",
+      "fullName": "Stanley Ejime"
+    },
+    {
+      "id": "60020",
+      "agentCode": "D3C5U",
+      "fullName": "Stanley Ejime"
+    },
+    {
+      "id": "60037",
+      "agentCode": "C8U78",
+      "fullName": "Stephen Monye"
+    },
+    {
+      "id": "810010",
+      "agentCode": "D3Y0J",
+      "fullName": "Stephen Monye"
+    },
+    {
+      "id": "60015",
+      "agentCode": "E1J3Y",
+      "fullName": "Tamacia Derricotte"
+    },
+    {
+      "id": "60035",
+      "agentCode": "E9P5K",
+      "fullName": "Ujunwa Madububa mbachu"
+    },
+    {
+      "id": "60019",
+      "agentCode": "E9G1B",
+      "fullName": "Villard Egbe"
+    },
+    {
+      "id": "60007",
+      "agentCode": "E8D5H",
+      "fullName": "Yvonne Akwue"
+    },
+    {
+      "id": "810013",
+      "agentCode": "73DXR",
+      "fullName": "Zaid Shopeju"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentCode\tfullName\n60034\tE6I1E\tAbiodun Ligali\n60004\tD5L56\tAdejare Adetona\n60003\tE7X0L\tAdeyinka Adedire\n60001\tD0T7M\tAugustina Armstrong-ogbonna\n60002\tD3Y2G\tAyodele Okulaja\n60023\tF0H2P\tBenjamin Eyenla\n810011\tD5L4B\tBukola Kolawole\n60008\tD9I3O\tBukola Aleshe\n60030\tE1U8L\tBukola jumoke Kolawole\n810006\tD3T7V\tChidinma Chukwuedo\n60039\t42EBU\tClive Henry\n60032\tE2K6Q\tDamilola Kole\n810009\tD3Y0K\tEse Moses\n810005\tD3Y0L\tEsther Aikens\n60044\t16CKG\tFolashade Olaiya\n60011\tD3T9L\tFredrick Chukwuedo\n60018\tF0J1Q\tFunmilayo Eboda\n60028\tE9I9A\tGloria Izu\n60033\tD8V8Q\tHelen Latimore\n60009\tE7T7L\tIreoluwa Aloko\n60026\tE2O7K\tJasmine Heckstall\n60010\tE6U2T\tJeftha Amoah\n60021\tD3C69\tJoy Ejime\n810008\tD5L4D\tJoy Ejime\n60027\tD8Z51\tKaris Iboro\n60017\tE2W8Y\tLeyii Diginee\n60022\tE3J1B\tMargaret Ereba\n60043\tC9F3Z\tMercy Okonofua\n60036\tF0H13\tMillicent Maiko\n60012\tE5R1E\tModupeola Dada\n60016\tE9U6Q\tMoussa Diallo\n60040\tD6W3S\tNonso Humphrey\n60041\tD3Y16\tOdion Imasuen\n60042\t49AEA\tOluseyi Ogunlolu\n810019\tE3W7A\tOluwabunmi Akinwale\n810031\tE7X0Q\tOluwadabira Adekunle\n810025\tD5L4H\tOluwadamilare Fagbemi\n810018\tE3W79\tOluwadamilola Akinwale\n810017\tD5L4F\tOluwafemi Adeyemi\n810029\tD3T8S\tOluwafunmilayo Okonkwo\n810023\tD3Y0N\tOluwakayode Oladipo\n810015\tD3T8Q\tOluwakemi Ogunleye\n810021\tE7X0N\tOluwasegun Bakare\n810016\tD5L4E\tOluwaseun Adeyemi\n60029\t94ISM\tOluwaseun Kadiri\n810027\tE3W7C\tOluwaseunfunmi Adebayo\n810012\tC9Z87\tOluwaseyi Adepitan\n60045\tC3D01\tOluwaseyi Adepitan\n810024\tD5L4G\tOluwatimilehin Fagbemi\n810022\tD3Y0M\tOluwatobiloba Oladipo\n810026\tE3W7B\tOluwatomiwa Adebayo\n810014\tD3T8P\tOluwatosin Ogunleye\n60031\tE2Y8M\tOluwatosin Kolawole\n60038\tC9U9S\tOluwatosin Adetona\n810028\tD3T8R\tOluwatoyosi Okonkwo\n810030\tE7X0P\tOluwatunmise Adekunle\n810020\tE7X0M\tOluwayemisi Bakare\n60025\tD9D09\tOmolola Giwa\n60024\tE6V0Z\tOmowunmi Fasakin\n60006\tE6C17\tRosette Aka\n60005\tE3W78\tSarah Agbettor\n60013\tE5C8X\tShedrack Davies\n60014\tE8X8M\tSomo Davies\n810007\tD5L4C\tStanley Ejime\n60020\tD3C5U\tStanley Ejime\n60037\tC8U78\tStephen Monye\n810010\tD3Y0J\tStephen Monye\n60015\tE1J3Y\tTamacia Derricotte\n60035\tE9P5K\tUjunwa Madububa mbachu\n60019\tE9G1B\tVillard Egbe\n60007\tE8D5H\tYvonne Akwue\n810013\t73DXR\tZaid Shopeju\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}
