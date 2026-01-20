@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, agent_code, first_name, last_name FROM agents WHERE first_name LIKE '%ZAID%' OR last_name LIKE '%Shopeju%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, agent_code, first_name, last_name FROM agents WHERE first_name LIKE '%ZAID%' OR last_name LIKE '%Shopeju%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'first_name' in 'where clause'"
+  ]
+}

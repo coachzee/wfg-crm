@@ -1057,3 +1057,22 @@
 - [ ] Fix browser automation stability for full extraction (session timeouts)
 - [ ] Update agents table with uplineAgentId for all agents
 - [ ] Verify org chart displays proper parent-child connections
+
+
+## Hierarchy Sync Batch Processing (New - Jan 19, 2026)
+- [ ] Modify syncHierarchyFromMyWFG to process agents in batches of 15
+- [ ] Add session refresh between batches (close and reopen browser)
+- [ ] Add progress logging for each batch
+- [ ] Test batched sync to completion
+- [ ] Verify upline relationships are populated in database
+
+
+## Hierarchy Sync & Visualization (Completed)
+- [x] Extract upline/recruiter relationships from MyWFG Hierarchy Tool
+- [x] Update database with uplineAgentId for 41 agents
+- [x] Fix hierarchy visualization to show proper tree structure
+- [x] Prioritize main hierarchy root (agents with most downline) at top
+- [x] Separate orphan agents (no upline in system) from main tree
+- [x] Display Zaid Shopeju's 31 direct recruits in org chart
+- [x] Show multi-level hierarchy (e.g., Zaid → Stanley Ejime → Joy Ejime)
+- [x] Add expand/collapse functionality for hierarchy nodes

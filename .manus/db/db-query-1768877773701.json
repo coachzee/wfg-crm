@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, agentCode, firstName, lastName FROM agents WHERE firstName LIKE '%Zaid%' OR lastName LIKE '%Shopeju%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, agentCode, firstName, lastName FROM agents WHERE firstName LIKE '%Zaid%' OR lastName LIKE '%Shopeju%';",
+  "rows": [
+    {
+      "id": "810013",
+      "agentCode": "73DXR",
+      "firstName": "Zaid",
+      "lastName": "Shopeju"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentCode\tfirstName\tlastName\n810013\t73DXR\tZaid\tShopeju\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

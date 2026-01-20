@@ -1,0 +1,145 @@
+{
+  "query": "SELECT a.id, a.agentCode, a.firstName, a.lastName, a.uplineAgentId, b.firstName as uplineFirstName, b.lastName as uplineLastName FROM agents a LEFT JOIN agents b ON a.uplineAgentId = b.id WHERE a.uplineAgentId IS NOT NULL LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT a.id, a.agentCode, a.firstName, a.lastName, a.uplineAgentId, b.firstName as uplineFirstName, b.lastName as uplineLastName FROM agents a LEFT JOIN agents b ON a.uplineAgentId = b.id WHERE a.uplineAgentId IS NOT NULL LIMIT 15;",
+  "rows": [
+    {
+      "id": "60014",
+      "agentCode": "E8X8M",
+      "firstName": "Somo",
+      "lastName": "Davies",
+      "uplineAgentId": "60013",
+      "uplineFirstName": "Shedrack",
+      "uplineLastName": "Davies"
+    },
+    {
+      "id": "60015",
+      "agentCode": "E1J3Y",
+      "firstName": "Tamacia",
+      "lastName": "Derricotte",
+      "uplineAgentId": "60038",
+      "uplineFirstName": "Oluwatosin",
+      "uplineLastName": "Adetona"
+    },
+    {
+      "id": "60004",
+      "agentCode": "D5L56",
+      "firstName": "Adejare",
+      "lastName": "Adetona",
+      "uplineAgentId": "60038",
+      "uplineFirstName": "Oluwatosin",
+      "uplineLastName": "Adetona"
+    },
+    {
+      "id": "60007",
+      "agentCode": "E8D5H",
+      "firstName": "Yvonne",
+      "lastName": "Akwue",
+      "uplineAgentId": "60041",
+      "uplineFirstName": "Odion",
+      "uplineLastName": "Imasuen"
+    },
+    {
+      "id": "60016",
+      "agentCode": "E9U6Q",
+      "firstName": "Moussa",
+      "lastName": "Diallo",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60013",
+      "agentCode": "E5C8X",
+      "firstName": "Shedrack",
+      "lastName": "Davies",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60012",
+      "agentCode": "E5R1E",
+      "firstName": "Modupeola",
+      "lastName": "Dada",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60011",
+      "agentCode": "D3T9L",
+      "firstName": "Fredrick",
+      "lastName": "Chukwuedo",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60010",
+      "agentCode": "E6U2T",
+      "firstName": "Jeftha",
+      "lastName": "Amoah",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60009",
+      "agentCode": "E7T7L",
+      "firstName": "Ireoluwa",
+      "lastName": "Aloko",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60008",
+      "agentCode": "D9I3O",
+      "firstName": "Bukola",
+      "lastName": "Aleshe",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60006",
+      "agentCode": "E6C17",
+      "firstName": "Rosette",
+      "lastName": "Aka",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60005",
+      "agentCode": "E3W78",
+      "firstName": "Sarah",
+      "lastName": "Agbettor",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60003",
+      "agentCode": "E7X0L",
+      "firstName": "Adeyinka",
+      "lastName": "Adedire",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    },
+    {
+      "id": "60001",
+      "agentCode": "D0T7M",
+      "firstName": "Augustina",
+      "lastName": "Armstrong-ogbonna",
+      "uplineAgentId": "810013",
+      "uplineFirstName": "Zaid",
+      "uplineLastName": "Shopeju"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tagentCode\tfirstName\tlastName\tuplineAgentId\tuplineFirstName\tuplineLastName\n60014\tE8X8M\tSomo\tDavies\t60013\tShedrack\tDavies\n60015\tE1J3Y\tTamacia\tDerricotte\t60038\tOluwatosin\tAdetona\n60004\tD5L56\tAdejare\tAdetona\t60038\tOluwatosin\tAdetona\n60007\tE8D5H\tYvonne\tAkwue\t60041\tOdion\tImasuen\n60016\tE9U6Q\tMoussa\tDiallo\t810013\tZaid\tShopeju\n60013\tE5C8X\tShedrack\tDavies\t810013\tZaid\tShopeju\n60012\tE5R1E\tModupeola\tDada\t810013\tZaid\tShopeju\n60011\tD3T9L\tFredrick\tChukwuedo\t810013\tZaid\tShopeju\n60010\tE6U2T\tJeftha\tAmoah\t810013\tZaid\tShopeju\n60009\tE7T7L\tIreoluwa\tAloko\t810013\tZaid\tShopeju\n60008\tD9I3O\tBukola\tAleshe\t810013\tZaid\tShopeju\n60006\tE6C17\tRosette\tAka\t810013\tZaid\tShopeju\n60005\tE3W78\tSarah\tAgbettor\t810013\tZaid\tShopeju\n60003\tE7X0L\tAdeyinka\tAdedire\t810013\tZaid\tShopeju\n60001\tD0T7M\tAugustina\tArmstrong-ogbonna\t810013\tZaid\tShopeju\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

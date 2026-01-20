@@ -61,7 +61,7 @@ interface TeamHierarchyProps {
   onAgentClick?: (agentId: number) => void;
 }
 
-function buildTree(agents: Agent[]): TreeNode[] {
+function buildTree(agents: Agent[]): { mainTree: TreeNode[], orphans: TreeNode[] } {
   const agentMap = new Map<number, TreeNode>();
   const roots: TreeNode[] = [];
 
@@ -101,7 +101,28 @@ function buildTree(agents: Agent[]): TreeNode[] {
   }
   roots.forEach(root => setDepth(root, 0));
 
-  return roots;
+  // Separate main tree (roots with children) from orphans (roots without children)
+  // Sort by total descendants to find the main hierarchy
+  function countDescendants(node: TreeNode): number {
+    return node.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
+  }
+  
+  const rootsWithDescendants = roots.map(root => ({
+    root,
+    descendants: countDescendants(root)
+  })).sort((a, b) => b.descendants - a.descendants);
+  
+  // Main tree: roots with children (sorted by descendant count)
+  const mainTree = rootsWithDescendants
+    .filter(r => r.descendants > 0)
+    .map(r => r.root);
+  
+  // Orphans: roots without children
+  const orphans = rootsWithDescendants
+    .filter(r => r.descendants === 0)
+    .map(r => r.root);
+
+  return { mainTree, orphans };
 }
 
 // Org Chart Node Component (Horizontal Layout)
@@ -458,7 +479,10 @@ export default function TeamHierarchy({ agents, currentUserId, onAgentClick }: T
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const tree = useMemo(() => buildTree(agents), [agents]);
+  const { mainTree, orphans } = useMemo(() => buildTree(agents), [agents]);
+  
+  // Combine mainTree and orphans for display, with mainTree first
+  const allNodes = useMemo(() => [...mainTree, ...orphans], [mainTree, orphans]);
 
   // Search functionality
   const searchMatches = useMemo(() => {
@@ -732,7 +756,7 @@ export default function TeamHierarchy({ agents, currentUserId, onAgentClick }: T
           >
             {viewMode === "org" ? (
               <OrgChartView 
-                nodes={tree} 
+                nodes={allNodes} 
                 expandedNodes={expandedNodes}
                 toggleNode={toggleNode}
                 onAgentClick={onAgentClick}
@@ -742,7 +766,7 @@ export default function TeamHierarchy({ agents, currentUserId, onAgentClick }: T
               />
             ) : (
               <TreeView 
-                nodes={tree} 
+                nodes={allNodes} 
                 expandedNodes={expandedNodes}
                 toggleNode={toggleNode}
                 onAgentClick={onAgentClick}

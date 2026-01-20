@@ -1281,8 +1281,15 @@ export async function fetchAgentUpline(page: Page, agentCode: string): Promise<{
     });
     
     if (uplineData && uplineData.name) {
-      console.log(`[Hierarchy Tool] Found recruiter for ${agentCode}: ${uplineData.name}`);
-      return { uplineCode: null, uplineName: uplineData.name };
+      // Clean up the name - remove 'Upline SMD', 'Upline CEO', newlines, etc.
+      let cleanName = uplineData.name
+        .replace(/\n/g, ' ')  // Replace newlines with spaces
+        .replace(/Upline\s*(SMD|CEO|EVC|NSD|RVP)?/gi, '')  // Remove Upline labels
+        .replace(/\s+/g, ' ')  // Normalize whitespace
+        .trim();
+      
+      console.log(`[Hierarchy Tool] Found recruiter for ${agentCode}: ${cleanName}`);
+      return { uplineCode: null, uplineName: cleanName };
     }
     
     console.log(`[Hierarchy Tool] No recruiter found for ${agentCode} (root agent)`);
@@ -1314,8 +1321,9 @@ export async function fetchAgentUplines(
     }
     
     const upline = await fetchAgentUpline(page, agentCode);
-    if (upline.uplineCode) {
-      uplines.set(agentCode, { uplineCode: upline.uplineCode, uplineName: upline.uplineName });
+    // Store upline if we have either code or name
+    if (upline.uplineCode || upline.uplineName) {
+      uplines.set(agentCode, { uplineCode: upline.uplineCode || '', uplineName: upline.uplineName });
     }
     
     // Rate limiting: wait 1 second between requests
@@ -1391,16 +1399,17 @@ export async function fetchDownlineStatusWithHierarchy(agentId: string = '73DXR'
 
 /**
  * Sync hierarchy (upline relationships) from MyWFG to database
+ * Processes agents in batches with session refresh between batches
  */
-export async function syncHierarchyFromMyWFG(db: any, schema: any): Promise<{
+export async function syncHierarchyFromMyWFG(db: any, schema: any, batchSize: number = 15): Promise<{
   success: boolean;
   updated: number;
   error?: string;
 }> {
-  let browser: Browser | null = null;
   
   try {
     console.log('[Hierarchy Sync] Starting hierarchy sync from MyWFG...');
+    console.log(`[Hierarchy Sync] Using batch size: ${batchSize}`);
     
     // Get all agents from database
     const { eq, isNotNull } = await import('drizzle-orm');
@@ -1445,33 +1454,83 @@ export async function syncHierarchyFromMyWFG(db: any, schema: any): Promise<{
       }
     }
     
-    // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
-    
-    // Login to MyWFG
-    const loggedIn = await loginToMyWFG(page);
-    if (!loggedIn) {
-      throw new Error('Failed to login to MyWFG');
+    // Get all agent codes and split into batches
+    const agentCodes = allAgents.map((a: any) => a.agentCode).filter(Boolean);
+    const batches: string[][] = [];
+    for (let i = 0; i < agentCodes.length; i += batchSize) {
+      batches.push(agentCodes.slice(i, i + batchSize));
     }
     
-    // Fetch uplines for all agents
-    const agentCodes = allAgents.map((a: any) => a.agentCode).filter(Boolean);
-    const uplines = await fetchAgentUplines(page, agentCodes, (current, total, code) => {
-      console.log(`[Hierarchy Sync] Processing ${current}/${total}: ${code}`);
-    });
+    console.log(`[Hierarchy Sync] Processing ${agentCodes.length} agents in ${batches.length} batches of ${batchSize}`);
     
-    await browser.close();
-    browser = null;
+    // Process each batch with a fresh browser session
+    const allUplines = new Map<string, { uplineCode: string; uplineName: string | null }>();
+    
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`\n[Hierarchy Sync] ========== BATCH ${batchIndex + 1}/${batches.length} (${batch.length} agents) ==========`);
+      
+      let browser: Browser | null = null;
+      
+      try {
+        // Launch fresh browser for this batch
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        });
+        
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        
+        // Login to MyWFG
+        console.log(`[Hierarchy Sync] Batch ${batchIndex + 1}: Logging in to MyWFG...`);
+        const loggedIn = await loginToMyWFG(page);
+        if (!loggedIn) {
+          console.error(`[Hierarchy Sync] Batch ${batchIndex + 1}: Login failed, skipping batch`);
+          await browser.close();
+          continue;
+        }
+        
+        console.log(`[Hierarchy Sync] Batch ${batchIndex + 1}: Login successful, processing agents...`);
+        
+        // Fetch uplines for this batch
+        const batchUplines = await fetchAgentUplines(page, batch, (current, total, code) => {
+          const overallCurrent = batchIndex * batchSize + current;
+          console.log(`[Hierarchy Sync] Processing ${overallCurrent}/${agentCodes.length}: ${code}`);
+        });
+        
+        // Merge batch results into all uplines
+        for (const [code, upline] of Array.from(batchUplines.entries())) {
+          allUplines.set(code, upline);
+        }
+        
+        console.log(`[Hierarchy Sync] Batch ${batchIndex + 1}: Found ${batchUplines.size} uplines`);
+        
+        // Close browser after batch
+        await browser.close();
+        browser = null;
+        
+        // Wait between batches to avoid rate limiting
+        if (batchIndex < batches.length - 1) {
+          console.log(`[Hierarchy Sync] Waiting 5 seconds before next batch...`);
+          await new Promise(r => setTimeout(r, 5000));
+        }
+        
+      } catch (batchError) {
+        console.error(`[Hierarchy Sync] Batch ${batchIndex + 1} error:`, batchError);
+        if (browser) {
+          await browser.close();
+        }
+        // Continue with next batch even if this one fails
+        continue;
+      }
+    }
+    
+    console.log(`\n[Hierarchy Sync] All batches complete. Found ${allUplines.size} total uplines.`);
     
     // Update database with upline relationships
     let updated = 0;
-    for (const [agentCode, uplineData] of Array.from(uplines.entries())) {
+    for (const [agentCode, uplineData] of Array.from(allUplines.entries())) {
       const agentId = agentCodeToId.get(agentCode);
       
       // Try to find upline by code first, then by name
@@ -1518,10 +1577,6 @@ export async function syncHierarchyFromMyWFG(db: any, schema: any): Promise<{
     
   } catch (error) {
     console.error('[Hierarchy Sync] Error:', error);
-    
-    if (browser) {
-      await browser.close();
-    }
     
     return {
       success: false,
