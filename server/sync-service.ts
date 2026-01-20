@@ -2,7 +2,7 @@ import { loginToMyWFGWithCache } from './auto-login-mywfg';
 import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts } from './auto-login-transamerica';
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
-import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses } from './mywfg-downline-scraper';
+import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses, syncHierarchyFromMyWFG } from './mywfg-downline-scraper';
 import { getDb } from './db';
 import * as schema from '../drizzle/schema';
 
@@ -64,7 +64,23 @@ export async function syncMyWFGData(): Promise<SyncResult> {
       };
     }
     
-    console.log(`[Sync] MyWFG sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}`);
+    console.log(`[Sync] MyWFG agent sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}, Deactivated: ${syncResult.deactivated || 0}, Reactivated: ${syncResult.reactivated || 0}`);
+    
+    // Sync hierarchy (upline relationships) - process in batches of 15
+    console.log('[Sync] Starting hierarchy sync...');
+    let hierarchyUpdated = 0;
+    try {
+      const hierarchyResult = await syncHierarchyFromMyWFG(db, schema, 15);
+      if (hierarchyResult.success) {
+        hierarchyUpdated = hierarchyResult.updated;
+        console.log(`[Sync] Hierarchy sync completed - Updated: ${hierarchyUpdated} upline relationships`);
+      } else {
+        console.log(`[Sync] Hierarchy sync failed: ${hierarchyResult.error}`);
+      }
+    } catch (hierarchyError) {
+      console.error('[Sync] Hierarchy sync error:', hierarchyError);
+    }
+    
     return {
       success: true,
       platform: 'MyWFG',
@@ -73,6 +89,9 @@ export async function syncMyWFGData(): Promise<SyncResult> {
         message: 'Sync completed',
         agentsAdded: syncResult.added,
         agentsUpdated: syncResult.updated,
+        agentsDeactivated: syncResult.deactivated || 0,
+        agentsReactivated: syncResult.reactivated || 0,
+        hierarchyUpdated,
         totalAgents: downlineResult.agents.length
       }
     };

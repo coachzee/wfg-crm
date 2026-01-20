@@ -1132,3 +1132,10 @@
 - [x] Delete all 39 inactive agents from database (hardcoded test data from past)
 - [x] Keep sync script's inactive tracking feature for future use
 - [x] Verify dashboard shows 51 total agents after purge
+
+
+## Hierarchy Sync & Scheduled Sync Integration (Completed)
+- [x] Integrate hierarchy sync into scheduled sync service (processes in batches of 15 with session refresh)
+- [x] Integrate Downline Status sync into scheduled sync service (3:30 PM / 6:30 PM)
+- [x] Sync now includes: agent sync (add/update/deactivate/reactivate) + hierarchy sync (upline relationships)
+- [x] Test integrated sync and verify agent counts update automatically
