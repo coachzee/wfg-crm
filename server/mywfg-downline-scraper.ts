@@ -583,21 +583,21 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   console.log('[Downline Scraper] Initial screenshot saved');
   
   // Set up the correct filters:
-  // 1. Type: "Life Licensed" (to show only licensed agents)
+  // 1. Type: "Active" (to show all active agents)
   // 2. Team: "SMD Base" (to show SMD base team)
   // 3. Title Level: Multi-select TA, A, SA, MD
   
   console.log('[Downline Scraper] Setting up report filters...');
   
-  // Set Type to "Life Licensed"
+  // Set Type to "Active"
   const typeSet = await page.evaluate(() => {
     const selects = Array.from(document.querySelectorAll('select'));
     for (const select of selects) {
       const options = Array.from(select.options);
       // Look for Type dropdown (has options like Active, Life Licensed, etc.)
-      const hasLifeLicensed = options.some(o => o.text.toLowerCase().includes('life licensed'));
-      if (hasLifeLicensed) {
-        const targetOption = options.find(o => o.text.toLowerCase().includes('life licensed'));
+      const hasActive = options.some(o => o.text.toLowerCase() === 'active');
+      if (hasActive) {
+        const targetOption = options.find(o => o.text.toLowerCase() === 'active');
         if (targetOption) {
           select.value = targetOption.value;
           select.dispatchEvent(new Event('change', { bubbles: true }));

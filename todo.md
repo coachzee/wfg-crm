@@ -1076,3 +1076,19 @@
 - [x] Display Zaid Shopeju's 31 direct recruits in org chart
 - [x] Show multi-level hierarchy (e.g., Zaid → Stanley Ejime → Joy Ejime)
 - [x] Add expand/collapse functionality for hierarchy nodes
+
+
+## Agent Count Discrepancy Fix (In Progress)
+- [ ] Analyze uploaded Excel file to get correct 51 active agents
+- [ ] Compare with database to identify extra agents (91 - 51 = 40 extra)
+- [ ] Remove or deactivate test/duplicate agents from database
+- [ ] Verify dashboard shows correct Active Associates count (51)
+
+
+## MyWFG Downline Status Sync Update (Completed)
+- [x] Update sync script to fetch Downline Status with filters: TA/A/SA/MD, SMD Base, Active
+- [x] Add agent sync logic to update database with fresh data from report
+- [x] Update dashboard metrics to use dynamic agent count from database
+- [x] Remove hardcoded activeAssociates value (91) from getDashboardMetrics
+- [x] Test sync and verify dashboard shows correct Active Associates count
+- [x] Update sync-hierarchy.ts to process agents in batches of 15 with session refresh

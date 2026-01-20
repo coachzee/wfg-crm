@@ -364,15 +364,29 @@ export async function getDashboardMetrics() {
   
   // MyWFG extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
   // These are the actual values from the MyWFG account as of Jan 4, 2026
+  // NOTE: activeAssociates and licensedAgents are now fetched dynamically from database
   const mywfgData = {
     superTeamCashFlow: 290099.22, // Super Team Total Cash Flow (Jan-Dec 2025)
     personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
     familiesProtected: 77, // Unique policies from Commissions Summary
     totalPolicies: 77, // Total policies written in 2025
-    activeAssociates: 91, // Active Associates from Team Summary - Base (as of 12/30/25)
-    licensedAgents: 27, // Life Licensed Associates from Team Summary (as of 12/30/25)
     securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
   };
+  
+  // Dynamically count agents from database (synced from MyWFG Downline Status report)
+  // Filters: Type=Active, Team=SMD Base, Title Level=TA/A/SA/MD
+  let activeAssociates = 0;
+  let licensedAgents = 0;
+  
+  if (db) {
+    const agentCounts = await db.select({
+      total: sql<number>`COUNT(*)`,
+      licensed: sql<number>`SUM(CASE WHEN ${agents.isLifeLicensed} = true THEN 1 ELSE 0 END)`,
+    }).from(agents);
+    
+    activeAssociates = Number(agentCounts[0]?.total || 0);
+    licensedAgents = Number(agentCounts[0]?.licensed || 0);
+  }
   
   // Transamerica Life Access data - Zaid Shopeju's Writing Agent Book of Business
   // Extracted on Jan 4, 2026 from Transamerica Life Access portal
@@ -431,8 +445,8 @@ export async function getDashboardMetrics() {
     totalClients: 0,
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
-    activeAssociates: mywfgData.activeAssociates,
-    licensedAgents: mywfgData.licensedAgents,
+    activeAssociates: activeAssociates,
+    licensedAgents: licensedAgents,
     // Compliance metrics
     missingLicenses: complianceData.missingLicenses,
     notEnrolledRecurring: complianceData.notEnrolledRecurring,
@@ -474,8 +488,8 @@ export async function getDashboardMetrics() {
     totalClients: Number(familiesResult[0]?.totalClients || 0),
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
-    activeAssociates: mywfgData.activeAssociates,
-    licensedAgents: mywfgData.licensedAgents,
+    activeAssociates: activeAssociates,
+    licensedAgents: licensedAgents,
     // Compliance metrics
     missingLicenses: complianceData.missingLicenses,
     notEnrolledRecurring: complianceData.notEnrolledRecurring,

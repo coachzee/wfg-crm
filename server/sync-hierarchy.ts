@@ -1,18 +1,108 @@
 /**
  * Hierarchy Sync Service
  * Extracts upline relationships from MyWFG and updates the database
+ * 
+ * Processes agents in batches of 15 with session refresh between batches
+ * to prevent timeouts and maintain stable connections.
  */
 
-import { chromium, type Page, type Browser } from "playwright";
+import { chromium, type Page, type Browser, type BrowserContext } from "playwright";
 import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, isNotNull } from "drizzle-orm";
 import { waitForOTP, getMyWFGCredentials } from "./gmail-otp";
 
+// Configuration
+const BATCH_SIZE = 15; // Process 15 agents per batch
+const DELAY_BETWEEN_AGENTS = 500; // 500ms delay between agents
+const DELAY_BETWEEN_BATCHES = 5000; // 5 seconds delay between batches
+
 interface UplineData {
   agentCode: string;
   uplineCode: string | null;
   uplineName: string | null;
+}
+
+/**
+ * Login to MyWFG with OTP handling
+ */
+async function loginToMyWFG(page: Page): Promise<boolean> {
+  try {
+    const username = process.env.MYWFG_USERNAME || '';
+    const password = process.env.MYWFG_PASSWORD || '';
+    const gmailCreds = getMyWFGCredentials();
+    
+    // Navigate to MyWFG
+    await page.goto("https://www.mywfg.com", { waitUntil: "networkidle", timeout: 60000 });
+    
+    // Wait for login form
+    await page.waitForSelector('input[id="myWfgUsernameDisplay"], input[name="username"]', { timeout: 30000 });
+    
+    // Fill username
+    const usernameInput = await page.$('input[id="myWfgUsernameDisplay"]') || await page.$('input[name="username"]');
+    if (usernameInput) {
+      await usernameInput.click({ clickCount: 3 });
+      await usernameInput.type(username);
+    }
+    
+    // Fill password
+    const passwordInput = await page.$('input[id="myWfgPasswordDisplay"]') || await page.$('input[name="password"]');
+    if (passwordInput) {
+      await passwordInput.click({ clickCount: 3 });
+      await passwordInput.type(password);
+    }
+    
+    // Click login button
+    const loginButton = await page.$('button[id="mywfgTheyLive"]') || await page.$('button[type="submit"]');
+    if (loginButton) {
+      await loginButton.click();
+      await page.waitForTimeout(5000);
+    }
+    
+    // Check for OTP requirement
+    const pageContent = await page.content();
+    const otpRequired = pageContent.includes('mywfgOtppswd') || 
+                        pageContent.includes('One-Time Password') ||
+                        pageContent.includes('Security Code');
+    
+    if (otpRequired) {
+      console.log("📧 OTP required, waiting for email...");
+      await page.waitForTimeout(5000);
+      
+      // Get OTP from email
+      const otpResult = await waitForOTP(gmailCreds, "transamerica", 120000);
+      if (!otpResult || !otpResult.otp) {
+        throw new Error("Failed to get OTP");
+      }
+      
+      // Enter OTP
+      const otpInput = await page.$('input[id="mywfgOtppswd"]') || 
+                       await page.$('input[name="otp"]') ||
+                       await page.$('input[type="text"][maxlength="6"]');
+      if (otpInput) {
+        await otpInput.click({ clickCount: 3 });
+        await otpInput.type(otpResult.otp);
+      }
+      
+      // Submit OTP
+      const submitBtn = await page.$('button[id="mywfgOtpSubmit"]') || await page.$('button[type="submit"]');
+      if (submitBtn) {
+        await submitBtn.click();
+        await page.waitForTimeout(5000);
+      }
+    }
+    
+    // Verify login success
+    const currentUrl = page.url();
+    if (currentUrl.includes('login') || currentUrl.includes('error')) {
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Login error:", error);
+    return false;
+  }
 }
 
 /**
@@ -114,21 +204,101 @@ async function extractUplineFromReport(
 }
 
 /**
- * Main function to sync hierarchy data for all agents
+ * Process a batch of agents with a fresh browser session
  */
-export async function syncHierarchy(): Promise<{
+async function processBatch(
+  batchAgents: Array<{ id: number; agentCode: string | null; firstName: string | null; lastName: string | null }>,
+  batchIndex: number,
+  totalBatches: number,
+  totalAgents: number,
+  startIndex: number
+): Promise<{ results: UplineData[]; errors: string[] }> {
+  let browser: Browser | null = null;
+  const results: UplineData[] = [];
+  const errors: string[] = [];
+
+  try {
+    console.log(`\n========== BATCH ${batchIndex + 1}/${totalBatches} (${batchAgents.length} agents) ==========`);
+    
+    // Launch fresh browser for this batch
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    // Login to MyWFG
+    console.log(`🔐 Batch ${batchIndex + 1}: Logging in to MyWFG...`);
+    const loggedIn = await loginToMyWFG(page);
+    
+    if (!loggedIn) {
+      const errorMsg = `Batch ${batchIndex + 1}: Login failed, skipping batch`;
+      console.error(`❌ ${errorMsg}`);
+      errors.push(errorMsg);
+      return { results, errors };
+    }
+    
+    console.log(`✅ Batch ${batchIndex + 1}: Login successful, processing agents...`);
+
+    // Process each agent in this batch
+    for (let i = 0; i < batchAgents.length; i++) {
+      const agent = batchAgents[i];
+      if (!agent.agentCode) continue;
+
+      const overallIndex = startIndex + i + 1;
+      const agentName = `${agent.firstName || ''} ${agent.lastName || ''}`.trim();
+      console.log(`[${overallIndex}/${totalAgents}] Processing ${agentName} (${agent.agentCode})...`);
+
+      try {
+        const uplineData = await extractUplineFromReport(page, agent.agentCode);
+        results.push(uplineData);
+
+        if (uplineData.uplineCode) {
+          console.log(`  → Upline: ${uplineData.uplineCode} (${uplineData.uplineName || "unknown"})`);
+        } else {
+          console.log(`  → No upline (root agent)`);
+        }
+
+        // Small delay to avoid rate limiting
+        await page.waitForTimeout(DELAY_BETWEEN_AGENTS);
+      } catch (error) {
+        const errorMsg = `Failed to process ${agent.agentCode}: ${error}`;
+        errors.push(errorMsg);
+        console.error(`  ✗ ${errorMsg}`);
+      }
+    }
+
+    console.log(`✅ Batch ${batchIndex + 1}: Completed - Found ${results.filter(r => r.uplineCode).length} uplines`);
+
+  } catch (batchError) {
+    const errorMsg = `Batch ${batchIndex + 1} error: ${batchError}`;
+    console.error(`❌ ${errorMsg}`);
+    errors.push(errorMsg);
+  } finally {
+    if (browser) {
+      await browser.close();
+      browser = null;
+    }
+  }
+
+  return { results, errors };
+}
+
+/**
+ * Main function to sync hierarchy data for all agents
+ * Processes agents in batches of 15 with session refresh between batches
+ */
+export async function syncHierarchy(batchSize: number = BATCH_SIZE): Promise<{
   success: boolean;
   processed: number;
   updated: number;
   errors: string[];
 }> {
-  let browser: Browser | null = null;
-  const errors: string[] = [];
+  const allErrors: string[] = [];
   let processed = 0;
   let updated = 0;
 
   try {
-    console.log("\n🔗 Starting Hierarchy Sync...\n");
+    console.log("\n🔗 Starting Hierarchy Sync...");
+    console.log(`📊 Configuration: Batch size = ${batchSize}, Delay between batches = ${DELAY_BETWEEN_BATCHES / 1000}s\n`);
 
     // Get database connection
     const db = await getDb();
@@ -162,119 +332,44 @@ export async function syncHierarchy(): Promise<{
       }
     }
 
-    // Launch browser and login to MyWFG
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    console.log("🔐 Logging into MyWFG...");
-    
-    // Get login credentials
-    const username = process.env.MYWFG_USERNAME || '';
-    const password = process.env.MYWFG_PASSWORD || '';
-    const gmailCreds = getMyWFGCredentials();
-    
-    // Navigate to MyWFG
-    await page.goto("https://www.mywfg.com", { waitUntil: "networkidle", timeout: 60000 });
-    
-    // Wait for login form
-    await page.waitForSelector('input[id="myWfgUsernameDisplay"], input[name="username"]', { timeout: 30000 });
-    
-    // Fill username
-    const usernameInput = await page.$('input[id="myWfgUsernameDisplay"]') || await page.$('input[name="username"]');
-    if (usernameInput) {
-      await usernameInput.click({ clickCount: 3 });
-      await usernameInput.type(username);
+    // Split agents into batches
+    const batches: typeof allAgents[] = [];
+    for (let i = 0; i < allAgents.length; i += batchSize) {
+      batches.push(allAgents.slice(i, i + batchSize));
     }
-    
-    // Fill password
-    const passwordInput = await page.$('input[id="myWfgPasswordDisplay"]') || await page.$('input[name="password"]');
-    if (passwordInput) {
-      await passwordInput.click({ clickCount: 3 });
-      await passwordInput.type(password);
-    }
-    
-    // Click login button
-    const loginButton = await page.$('button[id="mywfgTheyLive"]') || await page.$('button[type="submit"]');
-    if (loginButton) {
-      await loginButton.click();
-      await page.waitForTimeout(5000);
-    }
-    
-    // Check for OTP requirement
-    const pageContent = await page.content();
-    const otpRequired = pageContent.includes('mywfgOtppswd') || 
-                        pageContent.includes('One-Time Password') ||
-                        pageContent.includes('Security Code');
-    
-    if (otpRequired) {
-      console.log("📧 OTP required, waiting for email...");
-      await page.waitForTimeout(5000);
-      
-      // Get OTP from email
-      const otpResult = await waitForOTP(gmailCreds, "transamerica", 120000);
-      if (!otpResult || !otpResult.otp) {
-        throw new Error("Failed to get OTP");
-      }
-      
-      // Enter OTP
-      const otpInput = await page.$('input[id="mywfgOtppswd"]') || 
-                       await page.$('input[name="otp"]') ||
-                       await page.$('input[type="text"][maxlength="6"]');
-      if (otpInput) {
-        await otpInput.click({ clickCount: 3 });
-        await otpInput.type(otpResult.otp);
-      }
-      
-      // Submit OTP
-      const submitBtn = await page.$('button[id="mywfgOtpSubmit"]') || await page.$('button[type="submit"]');
-      if (submitBtn) {
-        await submitBtn.click();
-        await page.waitForTimeout(5000);
-      }
-    }
-    
-    // Verify login success
-    const currentUrl = page.url();
-    if (currentUrl.includes('login') || currentUrl.includes('error')) {
-      throw new Error("Login failed - still on login page");
-    }
-    console.log("✅ Login successful\n");
 
-    // Process each agent to extract their upline
-    const uplineResults: UplineData[] = [];
+    console.log(`📦 Split into ${batches.length} batches of up to ${batchSize} agents each\n`);
 
-    for (let i = 0; i < allAgents.length; i++) {
-      const agent = allAgents[i];
-      if (!agent.agentCode) continue;
+    // Process each batch with a fresh browser session
+    const allUplineResults: UplineData[] = [];
 
-      processed++;
-      const agentName = `${agent.firstName} ${agent.lastName}`;
-      console.log(`[${i + 1}/${allAgents.length}] Processing ${agentName} (${agent.agentCode})...`);
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      const startIndex = batchIndex * batchSize;
 
-      try {
-        const uplineData = await extractUplineFromReport(page, agent.agentCode);
-        uplineResults.push(uplineData);
+      const { results, errors } = await processBatch(
+        batch,
+        batchIndex,
+        batches.length,
+        allAgents.length,
+        startIndex
+      );
 
-        if (uplineData.uplineCode) {
-          console.log(`  → Upline: ${uplineData.uplineCode} (${uplineData.uplineName || "unknown"})`);
-        } else {
-          console.log(`  → No upline (root agent)`);
-        }
+      allUplineResults.push(...results);
+      allErrors.push(...errors);
+      processed += batch.length;
 
-        // Small delay to avoid rate limiting
-        await page.waitForTimeout(500);
-      } catch (error) {
-        const errorMsg = `Failed to process ${agent.agentCode}: ${error}`;
-        errors.push(errorMsg);
-        console.error(`  ✗ ${errorMsg}`);
+      // Wait between batches to avoid rate limiting (except for last batch)
+      if (batchIndex < batches.length - 1) {
+        console.log(`\n⏳ Waiting ${DELAY_BETWEEN_BATCHES / 1000} seconds before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
       }
     }
 
     // Update the database with upline relationships
     console.log("\n📝 Updating database with upline relationships...\n");
 
-    for (const uplineData of uplineResults) {
+    for (const uplineData of allUplineResults) {
       if (!uplineData.uplineCode) continue;
 
       // Find the upline agent's ID
@@ -298,31 +393,30 @@ export async function syncHierarchy(): Promise<{
       console.log(`  ✓ Updated ${uplineData.agentCode} → upline: ${uplineData.uplineCode}`);
     }
 
-    console.log("\n📊 Hierarchy Sync Summary:");
+    console.log("\n========================================");
+    console.log("📊 Hierarchy Sync Summary:");
+    console.log(`   Batches processed: ${batches.length}`);
     console.log(`   Agents processed: ${processed}`);
     console.log(`   Uplines updated: ${updated}`);
-    console.log(`   Errors: ${errors.length}`);
+    console.log(`   Errors: ${allErrors.length}`);
+    console.log("========================================\n");
 
     return {
-      success: errors.length === 0,
+      success: allErrors.length === 0,
       processed,
       updated,
-      errors,
+      errors: allErrors,
     };
   } catch (error) {
     const errorMsg = `Hierarchy sync failed: ${error}`;
     console.error(errorMsg);
-    errors.push(errorMsg);
+    allErrors.push(errorMsg);
     return {
       success: false,
       processed,
       updated,
-      errors,
+      errors: allErrors,
     };
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
 
