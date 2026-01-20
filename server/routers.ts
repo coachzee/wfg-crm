@@ -753,6 +753,55 @@ export const appRouter = router({
       const { runMyWFGSync } = await import("./mywfg-sync-job");
       return runMyWFGSync(ctx.user.id, input.validationCode);
     }),
+
+    // Sync agents from MyWFG Downline Status report
+    // Filters: Type=Active, Team=SMD Base, Title Level=TA/A/SA/MD
+    syncDownlineStatus: protectedProcedure.mutation(async () => {
+      const { fetchDownlineStatus, syncAgentsFromDownlineStatus } = await import("./mywfg-downline-scraper");
+      const { getDb } = await import("./db");
+      const schema = await import("../drizzle/schema");
+      
+      console.log("[Manual Sync] Starting Downline Status sync...");
+      
+      // Fetch fresh data from MyWFG
+      const fetchResult = await fetchDownlineStatus();
+      
+      if (!fetchResult.success) {
+        return {
+          success: false,
+          error: fetchResult.error || "Failed to fetch downline status",
+          agentsFetched: 0,
+          agentsAdded: 0,
+          agentsUpdated: 0,
+        };
+      }
+      
+      console.log(`[Manual Sync] Fetched ${fetchResult.agents.length} agents from MyWFG`);
+      
+      // Sync to database
+      const db = await getDb();
+      if (!db) {
+        return {
+          success: false,
+          error: "Database not available",
+          agentsFetched: fetchResult.agents.length,
+          agentsAdded: 0,
+          agentsUpdated: 0,
+        };
+      }
+      
+      const syncResult = await syncAgentsFromDownlineStatus(db, schema);
+      
+      console.log(`[Manual Sync] Sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}`);
+      
+      return {
+        success: syncResult.success,
+        error: syncResult.error,
+        agentsFetched: fetchResult.agents.length,
+        agentsAdded: syncResult.added,
+        agentsUpdated: syncResult.updated,
+      };
+    }),
   }),
 
   // Cash Flow Management - For Net Licensed tracking

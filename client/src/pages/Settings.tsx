@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, AlertCircle, CheckCircle2, RefreshCw, Clock, CalendarClock, Activity } from "lucide-react";
+import { Lock, AlertCircle, CheckCircle2, RefreshCw, Clock, CalendarClock, Activity, Users, Download } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -25,6 +25,14 @@ export default function Settings() {
   const saveMutation = trpc.credentials.save.useMutation();
   const testSyncMutation = trpc.mywfg.testSync.useMutation();
   const manualSyncMutation = trpc.mywfg.manualSync.useMutation();
+  const downlineSyncMutation = trpc.mywfg.syncDownlineStatus.useMutation();
+  const [downlineSyncResult, setDownlineSyncResult] = useState<{
+    success: boolean;
+    agentsFetched: number;
+    agentsAdded: number;
+    agentsUpdated: number;
+    error?: string;
+  } | null>(null);
 
   const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +85,23 @@ export default function Settings() {
       refetchSync();
     } catch (error) {
       toast.error("Failed to run sync");
+    }
+  };
+
+  const handleDownlineSync = async () => {
+    setDownlineSyncResult(null);
+    try {
+      toast.info("Starting Downline Status sync... This may take a few minutes.");
+      const result = await downlineSyncMutation.mutateAsync();
+      setDownlineSyncResult(result);
+      if (result.success) {
+        toast.success(`Downline sync completed! Fetched ${result.agentsFetched} agents, Added ${result.agentsAdded}, Updated ${result.agentsUpdated}`);
+      } else {
+        toast.error(`Downline sync failed: ${result.error}`);
+      }
+      refetchSync();
+    } catch (error) {
+      toast.error("Failed to run Downline Status sync");
     }
   };
 
@@ -323,6 +348,78 @@ export default function Settings() {
               >
                 <Activity className="h-4 w-4" />
                 View Sync History
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Downline Status Sync Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Downline Status Sync
+              </CardTitle>
+              <CardDescription>
+                Fetch fresh agent data from MyWFG Downline Status report with filters: Type=Active, Team=SMD Base, Title Level=TA/A/SA/MD.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="bg-blue-50 border-blue-200">
+                <Download className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800 text-sm">
+                  This will fetch the latest active agents from MyWFG and update the database. The Active Associates count on the dashboard will reflect the current data.
+                </AlertDescription>
+              </Alert>
+
+              {downlineSyncResult && (
+                <div className={`p-3 rounded-lg ${downlineSyncResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {downlineSyncResult.success ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={`text-sm font-medium ${downlineSyncResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                      {downlineSyncResult.success ? 'Sync Completed' : 'Sync Failed'}
+                    </span>
+                  </div>
+                  {downlineSyncResult.success ? (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Agents Fetched</p>
+                        <p className="font-medium text-green-700">{downlineSyncResult.agentsFetched}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Added</p>
+                        <p className="font-medium text-green-700">{downlineSyncResult.agentsAdded}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Updated</p>
+                        <p className="font-medium text-green-700">{downlineSyncResult.agentsUpdated}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600">{downlineSyncResult.error}</p>
+                  )}
+                </div>
+              )}
+
+              <Button
+                onClick={handleDownlineSync}
+                disabled={downlineSyncMutation.isPending}
+                className="gap-2"
+              >
+                {downlineSyncMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Sync Downline Status
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>

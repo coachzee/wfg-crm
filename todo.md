@@ -1092,3 +1092,10 @@
 - [x] Remove hardcoded activeAssociates value (91) from getDashboardMetrics
 - [x] Test sync and verify dashboard shows correct Active Associates count
 - [x] Update sync-hierarchy.ts to process agents in batches of 15 with session refresh
+
+
+## Manual MyWFG Sync Trigger (Completed)
+- [x] Add backend tRPC procedure for manual MyWFG Downline Status sync
+- [x] Add UI button on Settings page to trigger sync
+- [x] Show sync progress and status in UI
+- [x] Test manual sync and verify agent count updates
