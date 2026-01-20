@@ -1139,3 +1139,16 @@
 - [x] Integrate Downline Status sync into scheduled sync service (3:30 PM / 6:30 PM)
 - [x] Sync now includes: agent sync (add/update/deactivate/reactivate) + hierarchy sync (upline relationships)
 - [x] Test integrated sync and verify agent counts update automatically
+
+
+## Missing Agent Phone Numbers (In Progress)
+- [ ] Query database to identify agents missing phone numbers
+- [ ] Fetch contact info from MyWFG Associate Details page for missing agents
+- [ ] Update sync to include contact info fetch for new agents
+- [ ] Verify phone numbers are populated for Sarah Agbettor, Bukola Aleshe, Yvonne Akwue
+
+
+## Manual Agent Contact Entry UI (Completed)
+- [x] Add tRPC procedure to update agent contact info (phone, email) - using existing agents.update procedure
+- [x] Add edit contact dialog component to Agents page with phone and email fields
+- [x] Test the edit functionality and verify changes persist

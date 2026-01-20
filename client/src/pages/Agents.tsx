@@ -252,6 +252,11 @@ export default function Agents() {
     agentCode: "",
     notes: "",
   });
+  
+  // Edit contact dialog state
+  const [isEditContactOpen, setIsEditContactOpen] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<{ id: number; firstName: string; lastName: string; phone: string; email: string } | null>(null);
+  const [editContactData, setEditContactData] = useState({ phone: "", email: "" });
 
   const { data: agents, isLoading, refetch } = trpc.agents.list.useQuery(undefined, {
     staleTime: 30000,
@@ -266,6 +271,19 @@ export default function Agents() {
     },
     onError: (error) => {
       toast.error(`Failed to create agent: ${error.message}`);
+    },
+  });
+  
+  const updateAgent = trpc.agents.update.useMutation({
+    onSuccess: () => {
+      toast.success("Contact info updated successfully!");
+      setIsEditContactOpen(false);
+      setEditingAgent(null);
+      setEditContactData({ phone: "", email: "" });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update contact info: ${error.message}`);
     },
   });
 
@@ -336,8 +354,33 @@ export default function Agents() {
   }, [setLocation]);
 
   const handleEditAgent = useCallback((id: number) => {
-    toast.info("Edit functionality coming soon");
-  }, []);
+    const agent = agents?.find((a: any) => a.id === id);
+    if (agent) {
+      setEditingAgent({
+        id: agent.id,
+        firstName: agent.firstName,
+        lastName: agent.lastName,
+        phone: agent.phone || "",
+        email: agent.email || "",
+      });
+      setEditContactData({
+        phone: agent.phone || "",
+        email: agent.email || "",
+      });
+      setIsEditContactOpen(true);
+    }
+  }, [agents]);
+  
+  const handleSaveContact = useCallback(() => {
+    if (!editingAgent) return;
+    updateAgent.mutate({
+      id: editingAgent.id,
+      data: {
+        phone: editContactData.phone || undefined,
+        email: editContactData.email || undefined,
+      },
+    });
+  }, [editingAgent, editContactData, updateAgent]);
 
   const handleDeleteAgent = useCallback((id: number) => {
     toast.info("Delete functionality coming soon");
@@ -630,6 +673,55 @@ export default function Agents() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Edit Contact Dialog */}
+      <Dialog open={isEditContactOpen} onOpenChange={setIsEditContactOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Contact Information</DialogTitle>
+            <DialogDescription>
+              Update phone number and email for {editingAgent?.firstName} {editingAgent?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editPhone">Phone Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="editPhone"
+                  value={editContactData.phone}
+                  onChange={(e) => setEditContactData({ ...editContactData, phone: e.target.value })}
+                  placeholder="(555) 123-4567"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editEmail">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editContactData.email}
+                  onChange={(e) => setEditContactData({ ...editContactData, email: e.target.value })}
+                  placeholder="agent@example.com"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditContactOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveContact} disabled={updateAgent.isPending}>
+              {updateAgent.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

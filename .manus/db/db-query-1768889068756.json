@@ -1,0 +1,250 @@
+{
+  "query": "SELECT id, firstName, lastName, agentCode, phone, email FROM agents WHERE phone IS NULL OR phone = '' ORDER BY firstName, lastName LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, firstName, lastName, agentCode, phone, email FROM agents WHERE phone IS NULL OR phone = '' ORDER BY firstName, lastName LIMIT 30;",
+  "rows": [
+    {
+      "id": "870022",
+      "firstName": "Adelanwa",
+      "lastName": "Ogunlolu",
+      "agentCode": "F0J5G",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870026",
+      "firstName": "Adeshile",
+      "lastName": "Oluremi",
+      "agentCode": "E9P9T",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870029",
+      "firstName": "Babatunde",
+      "lastName": "Owofade",
+      "agentCode": "F0V87",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870033",
+      "firstName": "Ben",
+      "lastName": "Walker",
+      "agentCode": "E1G23",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60008",
+      "firstName": "Bukola",
+      "lastName": "Aleshe",
+      "agentCode": "D9I3O",
+      "phone": "",
+      "email": "BUKOLALESH007@GMAIL.COM"
+    },
+    {
+      "id": "870028",
+      "firstName": "Chidera",
+      "lastName": "Onwuzurike",
+      "agentCode": "D3Q3F",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870023",
+      "firstName": "Chiugo",
+      "lastName": "Okoli",
+      "agentCode": "E3V6N",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60032",
+      "firstName": "Damilola",
+      "lastName": "Kole",
+      "agentCode": "E2K6Q",
+      "phone": "",
+      "email": "KOLEDAMILOLA@GMAIL.COM"
+    },
+    {
+      "id": "870018",
+      "firstName": "Ese",
+      "lastName": "Moses",
+      "agentCode": "D3U63",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870031",
+      "firstName": "Esther",
+      "lastName": "Rogo",
+      "agentCode": "E3O7N",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870019",
+      "firstName": "Fatima",
+      "lastName": "Nasir",
+      "agentCode": "E5X3F",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60018",
+      "firstName": "Funmilayo",
+      "lastName": "Eboda",
+      "agentCode": "F0J1Q",
+      "phone": "",
+      "email": "FUNMIEBODA@YAHOO.COM"
+    },
+    {
+      "id": "60028",
+      "firstName": "Gloria",
+      "lastName": "Izu",
+      "agentCode": "E9I9A",
+      "phone": "",
+      "email": "IZUGLORIA@GMAIL.COM"
+    },
+    {
+      "id": "60026",
+      "firstName": "Jasmine",
+      "lastName": "Heckstall",
+      "agentCode": "E2O7K",
+      "phone": "",
+      "email": "MGG162004@GMAIL.COM"
+    },
+    {
+      "id": "60010",
+      "firstName": "Jeftha",
+      "lastName": "Amoah",
+      "agentCode": "E6U2T",
+      "phone": "",
+      "email": "JEFTHAAMOAH80@GMAIL.COM"
+    },
+    {
+      "id": "870017",
+      "firstName": "Joanna",
+      "lastName": "Kole",
+      "agentCode": "F0R3V",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60017",
+      "firstName": "Leyii",
+      "lastName": "Diginee",
+      "agentCode": "E2W8Y",
+      "phone": "",
+      "email": "LEYIIDIGINEE@GMAIL.COM"
+    },
+    {
+      "id": "60022",
+      "firstName": "Margaret",
+      "lastName": "Ereba",
+      "agentCode": "E3J1B",
+      "phone": "",
+      "email": "MARGARETEREBA001@GMAIL.COM"
+    },
+    {
+      "id": "60012",
+      "firstName": "Modupeola",
+      "lastName": "Dada",
+      "agentCode": "E5R1E",
+      "phone": "",
+      "email": "DADADUPEOLA@GMAIL.COM"
+    },
+    {
+      "id": "60016",
+      "firstName": "Moussa",
+      "lastName": "Diallo",
+      "agentCode": "E9U6Q",
+      "phone": "",
+      "email": "MOUSSA9348@GMAIL.COM"
+    },
+    {
+      "id": "870027",
+      "firstName": "Oghenechuko",
+      "lastName": "Onakpoya",
+      "agentCode": "E2O6X",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870024",
+      "firstName": "Olalekan",
+      "lastName": "Oladunni",
+      "agentCode": "E7X6H",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870030",
+      "firstName": "Olatunde",
+      "lastName": "Oyewande",
+      "agentCode": "E2L9F",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870020",
+      "firstName": "Olufemi",
+      "lastName": "Oderinde",
+      "agentCode": "E3C76",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "870021",
+      "firstName": "Oluwatosin",
+      "lastName": "Ogunlolu",
+      "agentCode": "E8P9S",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60024",
+      "firstName": "Omowunmi",
+      "lastName": "Fasakin",
+      "agentCode": "E6V0Z",
+      "phone": "",
+      "email": "OMOWUNMIOLUTAIWO@GMAIL.COM"
+    },
+    {
+      "id": "870025",
+      "firstName": "Peter",
+      "lastName": "Ologbenla",
+      "agentCode": "F0T0B",
+      "phone": "NULL",
+      "email": "NULL"
+    },
+    {
+      "id": "60005",
+      "firstName": "Sarah",
+      "lastName": "Agbettor",
+      "agentCode": "E3W78",
+      "phone": "",
+      "email": "SARAAGBE256@GMAIL.COM"
+    },
+    {
+      "id": "60013",
+      "firstName": "Shedrack",
+      "lastName": "Davies",
+      "agentCode": "E5C8X",
+      "phone": "",
+      "email": "SHEDDAVIES@GMAIL.COM"
+    },
+    {
+      "id": "60014",
+      "firstName": "Somo",
+      "lastName": "Davies",
+      "agentCode": "E8X8M",
+      "phone": "",
+      "email": "SYBOYOU@GMAIL.COM"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tagentCode\tphone\temail\n870022\tAdelanwa\tOgunlolu\tF0J5G\tNULL\tNULL\n870026\tAdeshile\tOluremi\tE9P9T\tNULL\tNULL\n870029\tBabatunde\tOwofade\tF0V87\tNULL\tNULL\n870033\tBen\tWalker\tE1G23\tNULL\tNULL\n60008\tBukola\tAleshe\tD9I3O\t\tBUKOLALESH007@GMAIL.COM\n870028\tChidera\tOnwuzurike\tD3Q3F\tNULL\tNULL\n870023\tChiugo\tOkoli\tE3V6N\tNULL\tNULL\n60032\tDamilola\tKole\tE2K6Q\t\tKOLEDAMILOLA@GMAIL.COM\n870018\tEse\tMoses\tD3U63\tNULL\tNULL\n870031\tEsther\tRogo\tE3O7N\tNULL\tNULL\n870019\tFatima\tNasir\tE5X3F\tNULL\tNULL\n60018\tFunmilayo\tEboda\tF0J1Q\t\tFUNMIEBODA@YAHOO.COM\n60028\tGloria\tIzu\tE9I9A\t\tIZUGLORIA@GMAIL.COM\n60026\tJasmine\tHeckstall\tE2O7K\t\tMGG162004@GMAIL.COM\n60010\tJeftha\tAmoah\tE6U2T\t\tJEFTHAAMOAH80@GMAIL.COM\n870017\tJoanna\tKole\tF0R3V\tNULL\tNULL\n60017\tLeyii\tDiginee\tE2W8Y\t\tLEYIIDIGINEE@GMAIL.COM\n60022\tMargaret\tEreba\tE3J1B\t\tMARGARETEREBA001@GMAIL.COM\n60012\tModupeola\tDada\tE5R1E\t\tDADADUPEOLA@GMAIL.COM\n60016\tMoussa\tDiallo\tE9U6Q\t\tMOUSSA9348@GMAIL.COM\n870027\tOghenechuko\tOnakpoya\tE2O6X\tNULL\tNULL\n870024\tOlalekan\tOladunni\tE7X6H\tNULL\tNULL\n870030\tOlatunde\tOyewande\tE2L9F\tNULL\tNULL\n870020\tOlufemi\tOderinde\tE3C76\tNULL\tNULL\n870021\tOluwatosin\tOgunlolu\tE8P9S\tNULL\tNULL\n60024\tOmowunmi\tFasakin\tE6V0Z\t\tOMOWUNMIOLUTAIWO@GMAIL.COM\n870025\tPeter\tOlogbenla\tF0T0B\tNULL\tNULL\n60005\tSarah\tAgbettor\tE3W78\t\tSARAAGBE256@GMAIL.COM\n60013\tShedrack\tDavies\tE5C8X\t\tSHEDDAVIES@GMAIL.COM\n60014\tSomo\tDavies\tE8X8M\t\tSYBOYOU@GMAIL.COM\n",
+  "stderr": "",
+  "execution_time_ms": 152
+}

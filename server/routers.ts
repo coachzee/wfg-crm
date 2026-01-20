@@ -809,6 +809,34 @@ export const appRouter = router({
         agentsReactivated: syncResult.reactivated,
       };
     }),
+    
+    // Sync contact info (phone, email, address) for agents with missing data
+    syncContactInfo: protectedProcedure.mutation(async () => {
+      const { syncContactInfoFromMyWFG } = await import("./mywfg-downline-scraper");
+      const { getDb } = await import("./db");
+      const schema = await import("../drizzle/schema");
+      
+      console.log("[Manual Sync] Starting Contact Info sync...");
+      
+      const db = await getDb();
+      if (!db) {
+        return {
+          success: false,
+          error: "Database not available",
+          agentsUpdated: 0,
+        };
+      }
+      
+      const syncResult = await syncContactInfoFromMyWFG(db, schema, 15);
+      
+      console.log(`[Manual Sync] Contact sync completed - Updated: ${syncResult.updated}`);
+      
+      return {
+        success: syncResult.success,
+        error: syncResult.error,
+        agentsUpdated: syncResult.updated,
+      };
+    }),
   }),
 
   // Cash Flow Management - For Net Licensed tracking

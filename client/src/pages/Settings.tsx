@@ -35,6 +35,13 @@ export default function Settings() {
     agentsReactivated: number;
     error?: string;
   } | null>(null);
+  
+  const contactSyncMutation = trpc.mywfg.syncContactInfo.useMutation();
+  const [contactSyncResult, setContactSyncResult] = useState<{
+    success: boolean;
+    agentsUpdated: number;
+    error?: string;
+  } | null>(null);
 
   const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,6 +435,84 @@ export default function Settings() {
                   <>
                     <Download className="h-4 w-4" />
                     Sync Downline Status
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Contact Info Sync Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Contact Info Sync
+              </CardTitle>
+              <CardDescription>
+                Fetch phone numbers, emails, and addresses from MyWFG Associate Details for agents with missing contact info.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="bg-purple-50 border-purple-200">
+                <Download className="h-4 w-4 text-purple-600" />
+                <AlertDescription className="text-purple-800 text-sm">
+                  This will fetch contact information from the Hierarchy Tool Associate Details page for all agents with missing phone numbers. Processes in batches of 15 with session refresh.
+                </AlertDescription>
+              </Alert>
+
+              {contactSyncResult && (
+                <div className={`p-3 rounded-lg ${contactSyncResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {contactSyncResult.success ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={`text-sm font-medium ${contactSyncResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                      {contactSyncResult.success ? 'Sync Completed' : 'Sync Failed'}
+                    </span>
+                  </div>
+                  {contactSyncResult.success ? (
+                    <div className="text-sm">
+                      <p className="text-muted-foreground text-xs">Agents Updated</p>
+                      <p className="font-medium text-green-700">{contactSyncResult.agentsUpdated}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600">{contactSyncResult.error}</p>
+                  )}
+                </div>
+              )}
+
+              <Button
+                onClick={async () => {
+                  setContactSyncResult(null);
+                  toast.info("Starting contact info sync... This may take several minutes.");
+                  try {
+                    const result = await contactSyncMutation.mutateAsync();
+                    setContactSyncResult(result);
+                    if (result.success) {
+                      toast.success(`Contact sync complete! Updated ${result.agentsUpdated} agents.`);
+                    } else {
+                      toast.error(result.error || "Contact sync failed");
+                    }
+                  } catch (error) {
+                    toast.error("Contact sync failed");
+                    setContactSyncResult({ success: false, agentsUpdated: 0, error: String(error) });
+                  }
+                }}
+                disabled={contactSyncMutation.isPending}
+                className="gap-2"
+                variant="outline"
+              >
+                {contactSyncMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Syncing Contact Info...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Sync Contact Info
                   </>
                 )}
               </Button>

@@ -1055,6 +1055,212 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
 
 
 /**
+ * Contact info extracted from Associate Details page
+ */
+export interface AgentContactInfo {
+  phone: string | null;
+  email: string | null;
+  homeAddress: string | null;
+}
+
+/**
+ * Fetch contact info (phone, email, address) for a single agent from MyWFG Hierarchy Tool
+ */
+export async function fetchAgentContactInfo(page: Page, agentCode: string): Promise<AgentContactInfo> {
+  try {
+    console.log(`[Hierarchy Tool] Fetching contact info for agent ${agentCode}...`);
+    
+    const url = `https://www.mywfg.com/Wfg.HierarchyTool/HierarchyDetails/LoadHierarchyToolMain?agentcodenumber=${agentCode}`;
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    
+    // Wait for the page to load initially
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Click on ASSOCIATE DETAILS tab explicitly to trigger content load
+    try {
+      // Find and click the Associate Details tab
+      const clicked = await page.evaluate(() => {
+        // Look for the tab by text content
+        const allElements = Array.from(document.querySelectorAll('a, div, span, button, li'));
+        for (const el of allElements) {
+          const text = el.textContent?.trim().toUpperCase() || '';
+          if (text === 'ASSOCIATE DETAILS' || text.includes('ASSOCIATE DETAILS')) {
+            console.log('Found Associate Details tab:', el.tagName, el.className);
+            (el as HTMLElement).click();
+            return { found: true, tag: el.tagName, class: el.className };
+          }
+        }
+        return { found: false };
+      });
+      
+      console.log(`[Hierarchy Tool] Tab click result:`, clicked);
+      
+      // Wait for content to load (up to 20 seconds)
+      await new Promise(r => setTimeout(r, 3000));
+      
+      // Wait for phone/email content to appear OR timeout
+      let contentLoaded = false;
+      for (let i = 0; i < 10; i++) {
+        const hasContent = await page.evaluate(() => {
+          const text = document.body.innerText;
+          // Check if we have phone-like content or email-like content
+          const hasPhone = /\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/.test(text);
+          const hasEmail = /@/.test(text) && !text.includes('wfg.com');
+          const hasAddress = /\d+\s+\w+\s+(St|Street|Ave|Avenue|Blvd|Dr|Drive|Rd|Road|Ln|Lane)/i.test(text);
+          const hasLabels = /Mobile|Cell|Phone|Email|Address/i.test(text);
+          return hasPhone || hasEmail || hasAddress || hasLabels;
+        });
+        
+        if (hasContent) {
+          contentLoaded = true;
+          console.log(`[Hierarchy Tool] Content loaded after ${(i + 1) * 2} seconds`);
+          break;
+        }
+        
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      
+      if (!contentLoaded) {
+        console.log('[Hierarchy Tool] Content did not load after 20 seconds, proceeding anyway...');
+      }
+    } catch (e) {
+      console.log('[Hierarchy Tool] Error clicking tab:', e);
+    }
+    
+    // Extract all contact info with improved patterns
+    const contactInfo = await page.evaluate(() => {
+      const result: { phone: string | null; email: string | null; homeAddress: string | null } = {
+        phone: null,
+        email: null,
+        homeAddress: null
+      };
+      
+      const pageText = document.body.innerText;
+      const pageHtml = document.body.innerHTML;
+      
+      // Method 1: Look for labeled phone numbers
+      const phonePatterns = [
+        /(?:Mobile|Cell|Phone|Tel|Primary Phone|Home Phone|Work Phone)[:\s]*(\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4})/i,
+        /(?:Mobile|Cell)[:\s]*([\d\(\)\-\s\.]+)/i,
+      ];
+      
+      for (const pattern of phonePatterns) {
+        const match = pageText.match(pattern);
+        if (match) {
+          const phone = match[1] || match[0];
+          const cleaned = phone.replace(/[^\d]/g, '');
+          if (cleaned.length >= 10) {
+            result.phone = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+            break;
+          }
+        }
+      }
+      
+      // Method 2: If no labeled phone found, look for any phone pattern
+      if (!result.phone) {
+        const allPhones = pageText.match(/\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/g);
+        if (allPhones && allPhones.length > 0) {
+          // Take the first one that looks like a mobile number (not a fax)
+          for (const phone of allPhones) {
+            const cleaned = phone.replace(/[^\d]/g, '');
+            if (cleaned.length >= 10) {
+              // Skip if it looks like a date or ID
+              if (!pageText.includes(`ID: ${phone}`) && !pageText.includes(`Date: ${phone}`)) {
+                result.phone = `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // Extract email - look for email pattern (excluding system emails)
+      const emailMatches = pageText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi);
+      if (emailMatches) {
+        for (const email of emailMatches) {
+          const lowerEmail = email.toLowerCase();
+          // Skip system emails
+          if (!lowerEmail.includes('wfg.com') && 
+              !lowerEmail.includes('transamerica') && 
+              !lowerEmail.includes('noreply') &&
+              !lowerEmail.includes('support')) {
+            result.email = lowerEmail;
+            break;
+          }
+        }
+      }
+      
+      // Extract home address - look for address patterns
+      const addressPatterns = [
+        /Home Address[:\s]*([^\n]+(?:\n[^\n]+)?)/i,
+        /Address[:\s]*([^\n]+(?:,\s*[A-Z]{2}\s*\d{5}))/i,
+        /([\d]+\s+[\w\s]+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Dr|Drive|Rd|Road|Ln|Lane|Way|Ct|Court)[\s,]+[\w\s]+,\s*[A-Z]{2}\s*\d{5})/i
+      ];
+      
+      for (const pattern of addressPatterns) {
+        const match = pageText.match(pattern);
+        if (match) {
+          result.homeAddress = match[1].replace(/\s+/g, ' ').trim();
+          break;
+        }
+      }
+      
+      return result;
+    });
+    
+    if (contactInfo.phone) {
+      console.log(`[Hierarchy Tool] Found phone for ${agentCode}: ${contactInfo.phone}`);
+    }
+    if (contactInfo.email) {
+      console.log(`[Hierarchy Tool] Found email for ${agentCode}: ${contactInfo.email}`);
+    }
+    if (contactInfo.homeAddress) {
+      console.log(`[Hierarchy Tool] Found address for ${agentCode}: ${contactInfo.homeAddress.substring(0, 50)}...`);
+    }
+    
+    return contactInfo;
+  } catch (error) {
+    console.error(`[Hierarchy Tool] Error fetching contact info for ${agentCode}:`, error);
+    return { phone: null, email: null, homeAddress: null };
+  }
+}
+
+/**
+ * Fetch contact info for multiple agents (with rate limiting and batch processing)
+ */
+export async function fetchAgentContactInfoBatch(
+  page: Page, 
+  agentCodes: string[],
+  onProgress?: (current: number, total: number, agentCode: string) => void
+): Promise<Map<string, AgentContactInfo>> {
+  const contacts = new Map<string, AgentContactInfo>();
+  
+  console.log(`[Hierarchy Tool] Fetching contact info for ${agentCodes.length} agents...`);
+  
+  for (let i = 0; i < agentCodes.length; i++) {
+    const agentCode = agentCodes[i];
+    
+    if (onProgress) {
+      onProgress(i + 1, agentCodes.length, agentCode);
+    }
+    
+    const contactInfo = await fetchAgentContactInfo(page, agentCode);
+    if (contactInfo.phone || contactInfo.email || contactInfo.homeAddress) {
+      contacts.set(agentCode, contactInfo);
+    }
+    
+    // Rate limiting: wait 1 second between requests
+    if (i < agentCodes.length - 1) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  
+  console.log(`[Hierarchy Tool] Successfully fetched contact info for ${contacts.size} agents out of ${agentCodes.length}`);
+  
+  return contacts;
+}
+
+/**
  * Fetch home address for a single agent from MyWFG Hierarchy Tool
  */
 export async function fetchAgentAddress(page: Page, agentCode: string): Promise<string | null> {
@@ -1612,6 +1818,158 @@ export async function syncHierarchyFromMyWFG(db: any, schema: any, batchSize: nu
     
   } catch (error) {
     console.error('[Hierarchy Sync] Error:', error);
+    
+    return {
+      success: false,
+      updated: 0,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+
+/**
+ * Sync contact info (phone, email, address) from MyWFG for agents with missing data
+ * Processes agents in batches with session refresh between batches
+ */
+export async function syncContactInfoFromMyWFG(db: any, schema: any, batchSize: number = 15): Promise<{
+  success: boolean;
+  updated: number;
+  error?: string;
+}> {
+  
+  try {
+    console.log('[Contact Sync] Starting contact info sync from MyWFG...');
+    console.log(`[Contact Sync] Using batch size: ${batchSize}`);
+    
+    // Get all agents with missing phone numbers
+    const { isNull, or, eq } = await import('drizzle-orm');
+    const allAgents = await db
+      .select({
+        id: schema.agents.id,
+        agentCode: schema.agents.agentCode,
+        firstName: schema.agents.firstName,
+        lastName: schema.agents.lastName,
+        phone: schema.agents.phone,
+        email: schema.agents.email,
+      })
+      .from(schema.agents);
+    
+    // Filter to agents with missing phone
+    const agentsWithMissingPhone = allAgents.filter((a: any) => 
+      a.agentCode && (!a.phone || a.phone.trim() === '')
+    );
+    
+    if (agentsWithMissingPhone.length === 0) {
+      console.log('[Contact Sync] No agents with missing phone numbers');
+      return { success: true, updated: 0 };
+    }
+    
+    console.log(`[Contact Sync] Found ${agentsWithMissingPhone.length} agents with missing phone numbers`);
+    
+    // Split into batches
+    const batches: any[][] = [];
+    for (let i = 0; i < agentsWithMissingPhone.length; i += batchSize) {
+      batches.push(agentsWithMissingPhone.slice(i, i + batchSize));
+    }
+    
+    console.log(`[Contact Sync] Processing ${agentsWithMissingPhone.length} agents in ${batches.length} batches of ${batchSize}`);
+    
+    let totalUpdated = 0;
+    
+    // Process each batch with a fresh browser session
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`\n[Contact Sync] ========== BATCH ${batchIndex + 1}/${batches.length} (${batch.length} agents) ==========`);
+      
+      let browser: Browser | null = null;
+      
+      try {
+        // Launch fresh browser for this batch
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        });
+        
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        
+        // Login to MyWFG
+        console.log(`[Contact Sync] Batch ${batchIndex + 1}: Logging in to MyWFG...`);
+        const loggedIn = await loginToMyWFG(page);
+        
+        if (!loggedIn) {
+          console.error(`[Contact Sync] Batch ${batchIndex + 1}: Login failed, skipping batch`);
+          await browser.close();
+          continue;
+        }
+        
+        console.log(`[Contact Sync] Batch ${batchIndex + 1}: Login successful, fetching contact info...`);
+        
+        // Fetch contact info for each agent in this batch
+        for (let i = 0; i < batch.length; i++) {
+          const agent = batch[i];
+          const overallIndex = batchIndex * batchSize + i + 1;
+          
+          console.log(`[${overallIndex}/${agentsWithMissingPhone.length}] Fetching contact for ${agent.firstName} ${agent.lastName} (${agent.agentCode})...`);
+          
+          try {
+            const contactInfo = await fetchAgentContactInfo(page, agent.agentCode);
+            
+            // Update database if we found any contact info
+            if (contactInfo.phone || contactInfo.email || contactInfo.homeAddress) {
+              const updateData: any = {};
+              if (contactInfo.phone) updateData.phone = contactInfo.phone;
+              if (contactInfo.email && !agent.email) updateData.email = contactInfo.email;
+              if (contactInfo.homeAddress) updateData.homeAddress = contactInfo.homeAddress;
+              
+              if (Object.keys(updateData).length > 0) {
+                await db
+                  .update(schema.agents)
+                  .set(updateData)
+                  .where(eq(schema.agents.id, agent.id));
+                totalUpdated++;
+                console.log(`  → Updated: phone=${contactInfo.phone || 'N/A'}, email=${contactInfo.email || 'N/A'}`);
+              }
+            } else {
+              console.log(`  → No contact info found`);
+            }
+            
+            // Rate limiting
+            await new Promise(r => setTimeout(r, 500));
+            
+          } catch (agentError) {
+            console.error(`  → Error: ${agentError}`);
+          }
+        }
+        
+        await browser.close();
+        browser = null;
+        
+        console.log(`[Contact Sync] Batch ${batchIndex + 1} complete`);
+        
+        // Delay between batches
+        if (batchIndex < batches.length - 1) {
+          console.log(`[Contact Sync] Waiting 5 seconds before next batch...`);
+          await new Promise(r => setTimeout(r, 5000));
+        }
+        
+      } catch (batchError) {
+        console.error(`[Contact Sync] Batch ${batchIndex + 1} error:`, batchError);
+        if (browser) {
+          await browser.close();
+        }
+        // Continue with next batch even if this one fails
+        continue;
+      }
+    }
+    
+    console.log(`\n[Contact Sync] Sync complete: ${totalUpdated} agents updated with contact info`);
+    
+    return { success: true, updated: totalUpdated };
+    
+  } catch (error) {
+    console.error('[Contact Sync] Error:', error);
     
     return {
       success: false,

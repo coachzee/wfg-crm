@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as missing_phone, (SELECT COUNT(*) FROM agents) as total FROM agents WHERE phone IS NULL OR phone = '';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT COUNT(*) as missing_phone, (SELECT COUNT(*) FROM agents) as total FROM agents WHERE phone IS NULL OR phone = '';",
+  "rows": [
+    {
+      "missing_phone": "36",
+      "total": "51"
+    }
+  ],
+  "messages": [],
+  "stdout": "missing_phone\ttotal\n36\t51\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}
