@@ -1,0 +1,586 @@
+{
+  "query": "SELECT id, firstName, lastName, agentCode, isActive, teamType FROM agents ORDER BY agentCode;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, firstName, lastName, agentCode, isActive, teamType FROM agents ORDER BY agentCode;",
+  "rows": [
+    {
+      "id": "60044",
+      "firstName": "Folashade",
+      "lastName": "Olaiya",
+      "agentCode": "16CKG",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60039",
+      "firstName": "Clive",
+      "lastName": "Henry",
+      "agentCode": "42EBU",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60042",
+      "firstName": "Oluseyi",
+      "lastName": "Ogunlolu",
+      "agentCode": "49AEA",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810013",
+      "firstName": "Zaid",
+      "lastName": "Shopeju",
+      "agentCode": "73DXR",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60029",
+      "firstName": "Oluwaseun",
+      "lastName": "Kadiri",
+      "agentCode": "94ISM",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60045",
+      "firstName": "Oluwaseyi",
+      "lastName": "Adepitan",
+      "agentCode": "C3D01",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60037",
+      "firstName": "Stephen",
+      "lastName": "Monye",
+      "agentCode": "C8U78",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60043",
+      "firstName": "Mercy",
+      "lastName": "Okonofua",
+      "agentCode": "C9F3Z",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60038",
+      "firstName": "Oluwatosin",
+      "lastName": "Adetona",
+      "agentCode": "C9U9S",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810012",
+      "firstName": "Oluwaseyi",
+      "lastName": "Adepitan",
+      "agentCode": "C9Z87",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60001",
+      "firstName": "Augustina",
+      "lastName": "Armstrong-ogbonna",
+      "agentCode": "D0T7M",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60020",
+      "firstName": "Stanley",
+      "lastName": "Ejime",
+      "agentCode": "D3C5U",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60021",
+      "firstName": "Joy",
+      "lastName": "Ejime",
+      "agentCode": "D3C69",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810006",
+      "firstName": "Chidinma",
+      "lastName": "Chukwuedo",
+      "agentCode": "D3T7V",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810014",
+      "firstName": "Oluwatosin",
+      "lastName": "Ogunleye",
+      "agentCode": "D3T8P",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810015",
+      "firstName": "Oluwakemi",
+      "lastName": "Ogunleye",
+      "agentCode": "D3T8Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810028",
+      "firstName": "Oluwatoyosi",
+      "lastName": "Okonkwo",
+      "agentCode": "D3T8R",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810029",
+      "firstName": "Oluwafunmilayo",
+      "lastName": "Okonkwo",
+      "agentCode": "D3T8S",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60011",
+      "firstName": "Fredrick",
+      "lastName": "Chukwuedo",
+      "agentCode": "D3T9L",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810010",
+      "firstName": "Stephen",
+      "lastName": "Monye",
+      "agentCode": "D3Y0J",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810009",
+      "firstName": "Ese",
+      "lastName": "Moses",
+      "agentCode": "D3Y0K",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810005",
+      "firstName": "Esther",
+      "lastName": "Aikens",
+      "agentCode": "D3Y0L",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810022",
+      "firstName": "Oluwatobiloba",
+      "lastName": "Oladipo",
+      "agentCode": "D3Y0M",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810023",
+      "firstName": "Oluwakayode",
+      "lastName": "Oladipo",
+      "agentCode": "D3Y0N",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60041",
+      "firstName": "Odion",
+      "lastName": "Imasuen",
+      "agentCode": "D3Y16",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60002",
+      "firstName": "Ayodele",
+      "lastName": "Okulaja",
+      "agentCode": "D3Y2G",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810011",
+      "firstName": "Bukola",
+      "lastName": "Kolawole",
+      "agentCode": "D5L4B",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810007",
+      "firstName": "Stanley",
+      "lastName": "Ejime",
+      "agentCode": "D5L4C",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810008",
+      "firstName": "Joy",
+      "lastName": "Ejime",
+      "agentCode": "D5L4D",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810016",
+      "firstName": "Oluwaseun",
+      "lastName": "Adeyemi",
+      "agentCode": "D5L4E",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810017",
+      "firstName": "Oluwafemi",
+      "lastName": "Adeyemi",
+      "agentCode": "D5L4F",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810024",
+      "firstName": "Oluwatimilehin",
+      "lastName": "Fagbemi",
+      "agentCode": "D5L4G",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810025",
+      "firstName": "Oluwadamilare",
+      "lastName": "Fagbemi",
+      "agentCode": "D5L4H",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60004",
+      "firstName": "Adejare",
+      "lastName": "Adetona",
+      "agentCode": "D5L56",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60040",
+      "firstName": "Nonso",
+      "lastName": "Humphrey",
+      "agentCode": "D6W3S",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60033",
+      "firstName": "Helen",
+      "lastName": "Latimore",
+      "agentCode": "D8V8Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60027",
+      "firstName": "Karis",
+      "lastName": "Iboro",
+      "agentCode": "D8Z51",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60025",
+      "firstName": "Omolola",
+      "lastName": "Giwa",
+      "agentCode": "D9D09",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60008",
+      "firstName": "Bukola",
+      "lastName": "Aleshe",
+      "agentCode": "D9I3O",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60015",
+      "firstName": "Tamacia",
+      "lastName": "Derricotte",
+      "agentCode": "E1J3Y",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60030",
+      "firstName": "Bukola jumoke",
+      "lastName": "Kolawole",
+      "agentCode": "E1U8L",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60032",
+      "firstName": "Damilola",
+      "lastName": "Kole",
+      "agentCode": "E2K6Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60026",
+      "firstName": "Jasmine",
+      "lastName": "Heckstall",
+      "agentCode": "E2O7K",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60017",
+      "firstName": "Leyii",
+      "lastName": "Diginee",
+      "agentCode": "E2W8Y",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60031",
+      "firstName": "Oluwatosin",
+      "lastName": "Kolawole",
+      "agentCode": "E2Y8M",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60022",
+      "firstName": "Margaret",
+      "lastName": "Ereba",
+      "agentCode": "E3J1B",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60005",
+      "firstName": "Sarah",
+      "lastName": "Agbettor",
+      "agentCode": "E3W78",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810018",
+      "firstName": "Oluwadamilola",
+      "lastName": "Akinwale",
+      "agentCode": "E3W79",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810019",
+      "firstName": "Oluwabunmi",
+      "lastName": "Akinwale",
+      "agentCode": "E3W7A",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810026",
+      "firstName": "Oluwatomiwa",
+      "lastName": "Adebayo",
+      "agentCode": "E3W7B",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810027",
+      "firstName": "Oluwaseunfunmi",
+      "lastName": "Adebayo",
+      "agentCode": "E3W7C",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60013",
+      "firstName": "Shedrack",
+      "lastName": "Davies",
+      "agentCode": "E5C8X",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60012",
+      "firstName": "Modupeola",
+      "lastName": "Dada",
+      "agentCode": "E5R1E",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60006",
+      "firstName": "Rosette",
+      "lastName": "Aka",
+      "agentCode": "E6C17",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60034",
+      "firstName": "Abiodun",
+      "lastName": "Ligali",
+      "agentCode": "E6I1E",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60010",
+      "firstName": "Jeftha",
+      "lastName": "Amoah",
+      "agentCode": "E6U2T",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60024",
+      "firstName": "Omowunmi",
+      "lastName": "Fasakin",
+      "agentCode": "E6V0Z",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60009",
+      "firstName": "Ireoluwa",
+      "lastName": "Aloko",
+      "agentCode": "E7T7L",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60003",
+      "firstName": "Adeyinka",
+      "lastName": "Adedire",
+      "agentCode": "E7X0L",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810020",
+      "firstName": "Oluwayemisi",
+      "lastName": "Bakare",
+      "agentCode": "E7X0M",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810021",
+      "firstName": "Oluwasegun",
+      "lastName": "Bakare",
+      "agentCode": "E7X0N",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810030",
+      "firstName": "Oluwatunmise",
+      "lastName": "Adekunle",
+      "agentCode": "E7X0P",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "810031",
+      "firstName": "Oluwadabira",
+      "lastName": "Adekunle",
+      "agentCode": "E7X0Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60007",
+      "firstName": "Yvonne",
+      "lastName": "Akwue",
+      "agentCode": "E8D5H",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60014",
+      "firstName": "Somo",
+      "lastName": "Davies",
+      "agentCode": "E8X8M",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60019",
+      "firstName": "Villard",
+      "lastName": "Egbe",
+      "agentCode": "E9G1B",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60028",
+      "firstName": "Gloria",
+      "lastName": "Izu",
+      "agentCode": "E9I9A",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60035",
+      "firstName": "Ujunwa",
+      "lastName": "Madububa mbachu",
+      "agentCode": "E9P5K",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60016",
+      "firstName": "Moussa",
+      "lastName": "Diallo",
+      "agentCode": "E9U6Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60036",
+      "firstName": "Millicent",
+      "lastName": "Maiko",
+      "agentCode": "F0H13",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60023",
+      "firstName": "Benjamin",
+      "lastName": "Eyenla",
+      "agentCode": "F0H2P",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    },
+    {
+      "id": "60018",
+      "firstName": "Funmilayo",
+      "lastName": "Eboda",
+      "agentCode": "F0J1Q",
+      "isActive": "1",
+      "teamType": "BASE_SHOP"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\tagentCode\tisActive\tteamType\n60044\tFolashade\tOlaiya\t16CKG\t1\tBASE_SHOP\n60039\tClive\tHenry\t42EBU\t1\tBASE_SHOP\n60042\tOluseyi\tOgunlolu\t49AEA\t1\tBASE_SHOP\n810013\tZaid\tShopeju\t73DXR\t1\tBASE_SHOP\n60029\tOluwaseun\tKadiri\t94ISM\t1\tBASE_SHOP\n60045\tOluwaseyi\tAdepitan\tC3D01\t1\tBASE_SHOP\n60037\tStephen\tMonye\tC8U78\t1\tBASE_SHOP\n60043\tMercy\tOkonofua\tC9F3Z\t1\tBASE_SHOP\n60038\tOluwatosin\tAdetona\tC9U9S\t1\tBASE_SHOP\n810012\tOluwaseyi\tAdepitan\tC9Z87\t1\tBASE_SHOP\n60001\tAugustina\tArmstrong-ogbonna\tD0T7M\t1\tBASE_SHOP\n60020\tStanley\tEjime\tD3C5U\t1\tBASE_SHOP\n60021\tJoy\tEjime\tD3C69\t1\tBASE_SHOP\n810006\tChidinma\tChukwuedo\tD3T7V\t1\tBASE_SHOP\n810014\tOluwatosin\tOgunleye\tD3T8P\t1\tBASE_SHOP\n810015\tOluwakemi\tOgunleye\tD3T8Q\t1\tBASE_SHOP\n810028\tOluwatoyosi\tOkonkwo\tD3T8R\t1\tBASE_SHOP\n810029\tOluwafunmilayo\tOkonkwo\tD3T8S\t1\tBASE_SHOP\n60011\tFredrick\tChukwuedo\tD3T9L\t1\tBASE_SHOP\n810010\tStephen\tMonye\tD3Y0J\t1\tBASE_SHOP\n810009\tEse\tMoses\tD3Y0K\t1\tBASE_SHOP\n810005\tEsther\tAikens\tD3Y0L\t1\tBASE_SHOP\n810022\tOluwatobiloba\tOladipo\tD3Y0M\t1\tBASE_SHOP\n810023\tOluwakayode\tOladipo\tD3Y0N\t1\tBASE_SHOP\n60041\tOdion\tImasuen\tD3Y16\t1\tBASE_SHOP\n60002\tAyodele\tOkulaja\tD3Y2G\t1\tBASE_SHOP\n810011\tBukola\tKolawole\tD5L4B\t1\tBASE_SHOP\n810007\tStanley\tEjime\tD5L4C\t1\tBASE_SHOP\n810008\tJoy\tEjime\tD5L4D\t1\tBASE_SHOP\n810016\tOluwaseun\tAdeyemi\tD5L4E\t1\tBASE_SHOP\n810017\tOluwafemi\tAdeyemi\tD5L4F\t1\tBASE_SHOP\n810024\tOluwatimilehin\tFagbemi\tD5L4G\t1\tBASE_SHOP\n810025\tOluwadamilare\tFagbemi\tD5L4H\t1\tBASE_SHOP\n60004\tAdejare\tAdetona\tD5L56\t1\tBASE_SHOP\n60040\tNonso\tHumphrey\tD6W3S\t1\tBASE_SHOP\n60033\tHelen\tLatimore\tD8V8Q\t1\tBASE_SHOP\n60027\tKaris\tIboro\tD8Z51\t1\tBASE_SHOP\n60025\tOmolola\tGiwa\tD9D09\t1\tBASE_SHOP\n60008\tBukola\tAleshe\tD9I3O\t1\tBASE_SHOP\n60015\tTamacia\tDerricotte\tE1J3Y\t1\tBASE_SHOP\n60030\tBukola jumoke\tKolawole\tE1U8L\t1\tBASE_SHOP\n60032\tDamilola\tKole\tE2K6Q\t1\tBASE_SHOP\n60026\tJasmine\tHeckstall\tE2O7K\t1\tBASE_SHOP\n60017\tLeyii\tDiginee\tE2W8Y\t1\tBASE_SHOP\n60031\tOluwatosin\tKolawole\tE2Y8M\t1\tBASE_SHOP\n60022\tMargaret\tEreba\tE3J1B\t1\tBASE_SHOP\n60005\tSarah\tAgbettor\tE3W78\t1\tBASE_SHOP\n810018\tOluwadamilola\tAkinwale\tE3W79\t1\tBASE_SHOP\n810019\tOluwabunmi\tAkinwale\tE3W7A\t1\tBASE_SHOP\n810026\tOluwatomiwa\tAdebayo\tE3W7B\t1\tBASE_SHOP\n810027\tOluwaseunfunmi\tAdebayo\tE3W7C\t1\tBASE_SHOP\n60013\tShedrack\tDavies\tE5C8X\t1\tBASE_SHOP\n60012\tModupeola\tDada\tE5R1E\t1\tBASE_SHOP\n60006\tRosette\tAka\tE6C17\t1\tBASE_SHOP\n60034\tAbiodun\tLigali\tE6I1E\t1\tBASE_SHOP\n60010\tJeftha\tAmoah\tE6U2T\t1\tBASE_SHOP\n60024\tOmowunmi\tFasakin\tE6V0Z\t1\tBASE_SHOP\n60009\tIreoluwa\tAloko\tE7T7L\t1\tBASE_SHOP\n60003\tAdeyinka\tAdedire\tE7X0L\t1\tBASE_SHOP\n810020\tOluwayemisi\tBakare\tE7X0M\t1\tBASE_SHOP\n810021\tOluwasegun\tBakare\tE7X0N\t1\tBASE_SHOP\n810030\tOluwatunmise\tAdekunle\tE7X0P\t1\tBASE_SHOP\n810031\tOluwadabira\tAdekunle\tE7X0Q\t1\tBASE_SHOP\n60007\tYvonne\tAkwue\tE8D5H\t1\tBASE_SHOP\n60014\tSomo\tDavies\tE8X8M\t1\tBASE_SHOP\n60019\tVillard\tEgbe\tE9G1B\t1\tBASE_SHOP\n60028\tGloria\tIzu\tE9I9A\t1\tBASE_SHOP\n60035\tUjunwa\tMadububa mbachu\tE9P5K\t1\tBASE_SHOP\n60016\tMoussa\tDiallo\tE9U6Q\t1\tBASE_SHOP\n60036\tMillicent\tMaiko\tF0H13\t1\tBASE_SHOP\n60023\tBenjamin\tEyenla\tF0H2P\t1\tBASE_SHOP\n60018\tFunmilayo\tEboda\tF0J1Q\t1\tBASE_SHOP\n",
+  "stderr": "",
+  "execution_time_ms": 89
+}
