@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { 
   UserPlus, Search, Filter, ChevronRight, Phone, Mail, 
   Calendar, Award, MoreHorizontal, Eye, Edit, Trash2,
-  Users, TrendingUp, Clock, CheckCircle
+  Users, TrendingUp, Clock, CheckCircle, UserX
 } from "lucide-react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
@@ -84,8 +84,14 @@ const AgentCard = memo(function AgentCard({
               {agent.firstName?.charAt(0)}{agent.lastName?.charAt(0)}
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-base group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-base group-hover:text-primary transition-colors flex items-center gap-2">
                 {agent.firstName} {agent.lastName}
+                {agent.isActive === false && (
+                  <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-300 text-xs">
+                    <UserX className="h-3 w-3 mr-1" />
+                    Inactive
+                  </Badge>
+                )}
               </h3>
               {agent.agentCode && (
                 <p className="text-xs text-muted-foreground font-mono">
@@ -237,6 +243,7 @@ export default function Agents() {
     return params.get('filter');
   });
   const [teamFilter, setTeamFilter] = useState<"BASE_SHOP" | "SUPER_TEAM">("BASE_SHOP");
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">("active"); // Default to showing only active agents
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -291,9 +298,17 @@ export default function Agents() {
         matchesQuickFilter = new Date(agent.createdAt) >= startOfMonth;
       }
       
-      return matchesSearch && matchesStage && matchesRank && matchesQuickFilter && matchesTeam;
+      // Active/Inactive filter
+      let matchesActive = true;
+      if (activeFilter === "active") {
+        matchesActive = agent.isActive !== false; // Show active agents (isActive = true or undefined)
+      } else if (activeFilter === "inactive") {
+        matchesActive = agent.isActive === false; // Show only inactive agents
+      }
+      
+      return matchesSearch && matchesStage && matchesRank && matchesQuickFilter && matchesTeam && matchesActive;
     });
-  }, [agents, searchQuery, stageFilter, rankFilter, quickFilter, teamFilter]);
+  }, [agents, searchQuery, stageFilter, rankFilter, quickFilter, teamFilter, activeFilter]);
 
   // Memoized stats (based on current team filter)
   const stats = useMemo(() => {
@@ -549,6 +564,32 @@ export default function Agents() {
                     </div>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={activeFilter} onValueChange={(value) => setActiveFilter(value as "all" | "active" | "inactive")}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Active Only
+                  </div>
+                </SelectItem>
+                <SelectItem value="inactive">
+                  <div className="flex items-center gap-2">
+                    <UserX className="h-4 w-4 text-gray-400" />
+                    Inactive Only
+                  </div>
+                </SelectItem>
+                <SelectItem value="all">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    All Agents
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

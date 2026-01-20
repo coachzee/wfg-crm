@@ -950,18 +950,44 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
   success: boolean;
   added: number;
   updated: number;
+  deactivated: number;
+  reactivated: number;
   error?: string;
 }> {
   try {
     const result = await fetchDownlineStatus('73DXR', teamType);
     
     if (!result.success) {
-      return { success: false, added: 0, updated: 0, error: result.error };
+      return { success: false, added: 0, updated: 0, deactivated: 0, reactivated: 0, error: result.error };
     }
     
     let added = 0;
     let updated = 0;
+    let deactivated = 0;
+    let reactivated = 0;
     
+    // Get all agent codes from the MyWFG report
+    const activeAgentCodes = new Set(result.agents.map(a => a.agentCode));
+    
+    // First, mark all agents NOT in the report as inactive
+    const allAgents = await db.select()
+      .from(schema.agents)
+      .where(schema.eq(schema.agents.teamType, teamType));
+    
+    for (const existingAgent of allAgents) {
+      if (existingAgent.agentCode && !activeAgentCodes.has(existingAgent.agentCode)) {
+        // Agent is not in the active report - mark as inactive
+        if (existingAgent.isActive) {
+          await db.update(schema.agents)
+            .set({ isActive: false })
+            .where(schema.eq(schema.agents.id, existingAgent.id));
+          deactivated++;
+          console.log(`[Downline Scraper] Marked agent ${existingAgent.firstName} ${existingAgent.lastName} (${existingAgent.agentCode}) as INACTIVE`);
+        }
+      }
+    }
+    
+    // Now process agents from the report
     for (const agent of result.agents) {
       // Check if agent exists
       const existing = await db.select()
@@ -970,7 +996,8 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
         .limit(1);
       
       if (existing.length > 0) {
-        // Update existing agent (only update homeAddress if we have a new one)
+        // Update existing agent - mark as active and update fields
+        const wasInactive = !existing[0].isActive;
         const updateData: any = {
           firstName: agent.firstName,
           lastName: agent.lastName,
@@ -978,6 +1005,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
           isLifeLicensed: agent.isLifeLicensed,
           licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
           currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
+          isActive: true, // Mark as active since they're in the report
         };
         if (agent.homeAddress) {
           updateData.homeAddress = agent.homeAddress;
@@ -986,8 +1014,12 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
           .set(updateData)
           .where(schema.eq(schema.agents.agentCode, agent.agentCode));
         updated++;
+        if (wasInactive) {
+          reactivated++;
+          console.log(`[Downline Scraper] Reactivated agent ${agent.firstName} ${agent.lastName} (${agent.agentCode})`);
+        }
       } else {
-        // Insert new agent
+        // Insert new agent (active by default)
         await db.insert(schema.agents).values({
           firstName: agent.firstName,
           lastName: agent.lastName,
@@ -998,14 +1030,15 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
           licenseExpirationDate: agent.llEndDate ? new Date(agent.llEndDate) : null,
           currentStage: agent.isLifeLicensed ? 'LICENSED' : 'EXAM_PREP',
           teamType: teamType,
+          isActive: true,
         });
         added++;
       }
     }
     
-    console.log(`[Downline Scraper] Sync complete: ${added} added, ${updated} updated`);
+    console.log(`[Downline Scraper] Sync complete: ${added} added, ${updated} updated, ${deactivated} deactivated, ${reactivated} reactivated`);
     
-    return { success: true, added, updated };
+    return { success: true, added, updated, deactivated, reactivated };
     
   } catch (error) {
     console.error('[Downline Scraper] Sync error:', error);
@@ -1013,6 +1046,8 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
       success: false,
       added: 0,
       updated: 0,
+      deactivated: 0,
+      reactivated: 0,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }

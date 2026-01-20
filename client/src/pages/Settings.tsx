@@ -31,6 +31,8 @@ export default function Settings() {
     agentsFetched: number;
     agentsAdded: number;
     agentsUpdated: number;
+    agentsDeactivated: number;
+    agentsReactivated: number;
     error?: string;
   } | null>(null);
 
@@ -384,18 +386,26 @@ export default function Settings() {
                     </span>
                   </div>
                   {downlineSyncResult.success ? (
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-5 gap-3 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Agents Fetched</p>
+                        <p className="text-muted-foreground text-xs">Fetched</p>
                         <p className="font-medium text-green-700">{downlineSyncResult.agentsFetched}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Added</p>
+                        <p className="text-muted-foreground text-xs">Added</p>
                         <p className="font-medium text-green-700">{downlineSyncResult.agentsAdded}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Updated</p>
+                        <p className="text-muted-foreground text-xs">Updated</p>
                         <p className="font-medium text-green-700">{downlineSyncResult.agentsUpdated}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Deactivated</p>
+                        <p className="font-medium text-orange-600">{downlineSyncResult.agentsDeactivated || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Reactivated</p>
+                        <p className="font-medium text-blue-600">{downlineSyncResult.agentsReactivated || 0}</p>
                       </div>
                     </div>
                   ) : (

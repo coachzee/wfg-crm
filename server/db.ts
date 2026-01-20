@@ -379,13 +379,19 @@ export async function getDashboardMetrics() {
   let licensedAgents = 0;
   
   if (db) {
+    // Count only ACTIVE agents (isActive = true)
+    // This ensures the count matches the MyWFG Active report
     const agentCounts = await db.select({
       total: sql<number>`COUNT(*)`,
-      licensed: sql<number>`SUM(CASE WHEN ${agents.isLifeLicensed} = true THEN 1 ELSE 0 END)`,
+      active: sql<number>`SUM(CASE WHEN ${agents.isActive} = true THEN 1 ELSE 0 END)`,
+      licensed: sql<number>`SUM(CASE WHEN ${agents.isLifeLicensed} = true AND ${agents.isActive} = true THEN 1 ELSE 0 END)`,
+      inactive: sql<number>`SUM(CASE WHEN ${agents.isActive} = false THEN 1 ELSE 0 END)`,
     }).from(agents);
     
-    activeAssociates = Number(agentCounts[0]?.total || 0);
+    // Use active count for dashboard (matches MyWFG Active report)
+    activeAssociates = Number(agentCounts[0]?.active || 0);
     licensedAgents = Number(agentCounts[0]?.licensed || 0);
+    console.log(`[Dashboard Metrics] Active: ${activeAssociates}, Licensed: ${licensedAgents}, Inactive: ${agentCounts[0]?.inactive || 0}, Total in DB: ${agentCounts[0]?.total || 0}`);
   }
   
   // Transamerica Life Access data - Zaid Shopeju's Writing Agent Book of Business

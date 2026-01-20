@@ -1099,3 +1099,22 @@
 - [x] Add UI button on Settings page to trigger sync
 - [x] Show sync progress and status in UI
 - [x] Test manual sync and verify agent count updates
+
+
+## Inactive Agent Tracking (In Progress)
+- [ ] Add isActive field to agents schema
+- [ ] Update sync logic to mark agents inactive when not in MyWFG Active report
+- [ ] Update dashboard metrics to count only active agents
+- [ ] Update Agents page to show active/inactive status with visual indicator
+- [ ] Add filter on Agents page to show/hide inactive agents
+- [ ] Test feature and verify agent count matches MyWFG report
+
+
+## Inactive Agent Tracking (Completed)
+- [x] Add isActive field to agents schema (already exists)
+- [x] Update sync logic to mark agents as inactive when not in MyWFG Active report
+- [x] Update dashboard metrics to count only active agents (isActive = true)
+- [x] Update Agents page to show active/inactive status badge
+- [x] Add active/inactive filter dropdown to Agents page
+- [x] Update Settings page sync result to show deactivated/reactivated counts
+- [x] Test feature and verify agent counts are accurate

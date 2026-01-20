@@ -756,6 +756,7 @@ export const appRouter = router({
 
     // Sync agents from MyWFG Downline Status report
     // Filters: Type=Active, Team=SMD Base, Title Level=TA/A/SA/MD
+    // Also marks agents as inactive if they're no longer in the report
     syncDownlineStatus: protectedProcedure.mutation(async () => {
       const { fetchDownlineStatus, syncAgentsFromDownlineStatus } = await import("./mywfg-downline-scraper");
       const { getDb } = await import("./db");
@@ -773,6 +774,8 @@ export const appRouter = router({
           agentsFetched: 0,
           agentsAdded: 0,
           agentsUpdated: 0,
+          agentsDeactivated: 0,
+          agentsReactivated: 0,
         };
       }
       
@@ -787,12 +790,14 @@ export const appRouter = router({
           agentsFetched: fetchResult.agents.length,
           agentsAdded: 0,
           agentsUpdated: 0,
+          agentsDeactivated: 0,
+          agentsReactivated: 0,
         };
       }
       
       const syncResult = await syncAgentsFromDownlineStatus(db, schema);
       
-      console.log(`[Manual Sync] Sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}`);
+      console.log(`[Manual Sync] Sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}, Deactivated: ${syncResult.deactivated}, Reactivated: ${syncResult.reactivated}`);
       
       return {
         success: syncResult.success,
@@ -800,6 +805,8 @@ export const appRouter = router({
         agentsFetched: fetchResult.agents.length,
         agentsAdded: syncResult.added,
         agentsUpdated: syncResult.updated,
+        agentsDeactivated: syncResult.deactivated,
+        agentsReactivated: syncResult.reactivated,
       };
     }),
   }),
