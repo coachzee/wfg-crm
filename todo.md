@@ -1184,3 +1184,7 @@
 - [x] Identify and add other missing upline agents referenced in uplineAgentId
 - [x] Update uplineAgentId references from 810013 to Zaid's correct ID
 - [x] Verify Agent Exam Prep page displays recruiter names correctly
+
+
+## UI Navigation Updates
+- [x] Move "Agent Exam Prep" menu item to appear under "Agents" section in sidebar

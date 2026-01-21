@@ -37,13 +37,13 @@ import { Badge } from "./ui/badge";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", description: "Overview & analytics" },
   { icon: Users, label: "Agents", path: "/agents", description: "Manage recruits" },
+  { icon: GraduationCap, label: "Agent Exam Prep", path: "/exam-prep", description: "License exam status" },
   { icon: FileText, label: "Clients", path: "/clients", description: "Client relationships" },
   { icon: BarChart3, label: "Production", path: "/production", description: "Performance metrics" },
   { icon: ClipboardList, label: "Pending Policies", path: "/pending-policies", description: "Transamerica pending" },
   { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
   { icon: Users, label: "Team", path: "/team", description: "Team members" },
-  { icon: GraduationCap, label: "Agent Exam Prep", path: "/exam-prep", description: "License exam status" },
   { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
 ];
 
