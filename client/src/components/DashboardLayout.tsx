@@ -43,7 +43,7 @@ const menuItems = [
   { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
   { icon: Users, label: "Team", path: "/team", description: "Team members" },
-  { icon: GraduationCap, label: "Exam Prep", path: "/exam-prep", description: "License exam status" },
+  { icon: GraduationCap, label: "Agent Exam Prep", path: "/exam-prep", description: "License exam status" },
   { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
 ];
 

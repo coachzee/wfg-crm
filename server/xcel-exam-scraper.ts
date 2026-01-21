@@ -538,11 +538,12 @@ export async function syncExamPrepFromEmail(): Promise<SyncResult> {
   };
 }
 
-// Get all exam prep records
+// Get all exam prep records with recruiter info
 export async function getExamPrepRecords() {
   const db = await getDb();
   if (!db) return [];
   
+  // First get the basic records with agent info
   const records = await db.select({
     id: agentExamPrep.id,
     agentId: agentExamPrep.agentId,
@@ -559,10 +560,24 @@ export async function getExamPrepRecords() {
     agentCode: agents.agentCode,
     agentFirstName: agents.firstName,
     agentLastName: agents.lastName,
+    uplineAgentId: agents.uplineAgentId,
   })
   .from(agentExamPrep)
   .leftJoin(agents, eq(agentExamPrep.agentId, agents.id))
   .orderBy(agentExamPrep.lastSyncedAt);
   
-  return records;
+  // Get all agents to lookup recruiter names
+  const allAgents = await db.select({
+    id: agents.id,
+    firstName: agents.firstName,
+    lastName: agents.lastName,
+  }).from(agents);
+  
+  const agentMap = new Map(allAgents.map(a => [a.id, `${a.firstName} ${a.lastName}`]));
+  
+  // Add recruiter name to each record
+  return records.map(record => ({
+    ...record,
+    recruiterName: record.uplineAgentId ? agentMap.get(record.uplineAgentId) || null : null,
+  }));
 }

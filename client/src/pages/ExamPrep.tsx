@@ -70,9 +70,12 @@ export default function ExamPrep() {
     return "bg-red-500";
   };
   
-  const getPreparedBadge = (prepared: string | null) => {
+  const getStatusBadge = (prepared: string | null, progress: number | null) => {
+    if (progress === 100) {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+    }
     if (prepared?.toLowerCase() === "yes") {
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Ready</Badge>;
+      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ready</Badge>;
     }
     return <Badge variant="outline" className="text-orange-600 border-orange-300">In Progress</Badge>;
   };
@@ -82,7 +85,7 @@ export default function ExamPrep() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Exam Prep Status</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Agent Exam Prep</h1>
           <p className="text-gray-500 mt-1">Track your team's license exam preparation progress</p>
         </div>
         <Button 
@@ -226,6 +229,7 @@ export default function ExamPrep() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Agent Code</TableHead>
+                    <TableHead>Recruiter</TableHead>
                     <TableHead>Course</TableHead>
                     <TableHead>Enrolled</TableHead>
                     <TableHead>Last Login</TableHead>
@@ -262,6 +266,13 @@ export default function ExamPrep() {
                         )}
                       </TableCell>
                       <TableCell>
+                        {record.recruiterName ? (
+                          <span className="text-sm">{record.recruiterName}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div>
                           <p className="font-medium">{record.course}</p>
                           {record.state && (
@@ -271,7 +282,14 @@ export default function ExamPrep() {
                       </TableCell>
                       <TableCell>
                         {record.dateEnrolled ? (
-                          <span className="text-sm">{String(record.dateEnrolled)}</span>
+                          <span className="text-sm">
+                            {(() => {
+                              const dateStr = String(record.dateEnrolled);
+                              // Extract just the date part (e.g., "May 31, 2025")
+                              const dateMatch = dateStr.match(/([A-Za-z]+\s+\d{1,2},?\s+\d{4})/);
+                              return dateMatch ? dateMatch[1] : dateStr.split(' ').slice(0, 3).join(' ');
+                            })()}
+                          </span>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
@@ -298,7 +316,7 @@ export default function ExamPrep() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getPreparedBadge(record.preparedToPass)}
+                        {getStatusBadge(record.preparedToPass, record.pleCompletePercent)}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1163,3 +1163,10 @@
 - [x] Match agents by first/last name to their agent codes
 - [x] Track: Course (state), date enrolled, last login, %PLE Complete, Prepared to Pass
 - [x] Add unit tests for exam prep feature (9 tests passing)
+
+
+## Agent Exam Prep UI Updates (Completed)
+- [x] Rename section from "Exam Prep" to "Agent Exam Prep" in sidebar and page title
+- [x] Clean enrolled date format to show only date (e.g., "May 31, 2025")
+- [x] Change status to "Completed" when progress is 100%
+- [x] Add recruiter name column for each agent studying (via uplineAgentId lookup)
