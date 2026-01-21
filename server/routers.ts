@@ -82,11 +82,19 @@ const ClientSchema = z.object({
   agentId: z.number(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
   address: z.string().optional(),
   renewalDate: z.date().optional(),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
+});
+
+const ClientUpdateSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 const WorkflowTaskSchema = z.object({
@@ -188,7 +196,7 @@ export const appRouter = router({
       }),
     
     update: protectedProcedure
-      .input(z.object({ id: z.number(), data: ClientSchema.partial() }))
+      .input(z.object({ id: z.number(), data: ClientUpdateSchema }))
       .mutation(async ({ input }) => {
         return updateClient(input.id, input.data);
       }),

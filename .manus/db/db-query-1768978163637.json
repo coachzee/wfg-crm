@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, firstName, lastName, email, phone, renewalDate FROM clients LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, firstName, lastName, email, phone, renewalDate FROM clients LIMIT 10;",
+  "rows": [
+    {
+      "id": "30001",
+      "firstName": "Zoe",
+      "lastName": "Deline",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-27"
+    },
+    {
+      "id": "30002",
+      "firstName": "Moussa",
+      "lastName": "Diallo",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-11"
+    },
+    {
+      "id": "30003",
+      "firstName": "Mariama",
+      "lastName": "Diallo",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-27"
+    },
+    {
+      "id": "30004",
+      "firstName": "Micheal",
+      "lastName": "William",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-04"
+    },
+    {
+      "id": "30005",
+      "firstName": "Oluwamuyiwa",
+      "lastName": "Onamuti",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-11-25"
+    },
+    {
+      "id": "30006",
+      "firstName": "Abdulazeez",
+      "lastName": "N Akwuh",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-01"
+    },
+    {
+      "id": "30007",
+      "firstName": "Ayodele",
+      "lastName": "Okulaja",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-11-14"
+    },
+    {
+      "id": "30008",
+      "firstName": "Ekhuemuenogiemwen",
+      "lastName": "Ekunwe",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-11-19"
+    },
+    {
+      "id": "30009",
+      "firstName": "Ekhuemuenogiemwen",
+      "lastName": "Ekhuemuenogiemwen",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-12-27"
+    },
+    {
+      "id": "30010",
+      "firstName": "Augustina",
+      "lastName": "Armstrong Ogbonna",
+      "email": "NULL",
+      "phone": "NULL",
+      "renewalDate": "2025-02-26"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\temail\tphone\trenewalDate\n30001\tZoe\tDeline\tNULL\tNULL\t2025-12-27\n30002\tMoussa\tDiallo\tNULL\tNULL\t2025-12-11\n30003\tMariama\tDiallo\tNULL\tNULL\t2025-12-27\n30004\tMicheal\tWilliam\tNULL\tNULL\t2025-12-04\n30005\tOluwamuyiwa\tOnamuti\tNULL\tNULL\t2025-11-25\n30006\tAbdulazeez\tN Akwuh\tNULL\tNULL\t2025-12-01\n30007\tAyodele\tOkulaja\tNULL\tNULL\t2025-11-14\n30008\tEkhuemuenogiemwen\tEkunwe\tNULL\tNULL\t2025-11-19\n30009\tEkhuemuenogiemwen\tEkhuemuenogiemwen\tNULL\tNULL\t2025-12-27\n30010\tAugustina\tArmstrong Ogbonna\tNULL\tNULL\t2025-02-26\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

@@ -185,6 +185,8 @@ function ClientsSkeleton() {
 export default function Clients() {
   const [, setLocation] = useLocation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -192,6 +194,13 @@ export default function Clients() {
     email: "",
     phone: "",
     agentId: "",
+    notes: "",
+  });
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     notes: "",
   });
 
@@ -209,6 +218,19 @@ export default function Clients() {
     },
     onError: (error) => {
       toast.error(`Failed to create client: ${error.message}`);
+    },
+  });
+
+  const updateClient = trpc.clients.update.useMutation({
+    onSuccess: () => {
+      toast.success("Client updated successfully!");
+      setIsEditDialogOpen(false);
+      setEditingClient(null);
+      setEditFormData({ firstName: "", lastName: "", email: "", phone: "", notes: "" });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update client: ${error.message}`);
     },
   });
 
@@ -262,9 +284,31 @@ export default function Clients() {
     setLocation(`/clients/${id}`);
   }, [setLocation]);
 
-  const handleEditClient = useCallback((id: number) => {
-    toast.info("Edit functionality coming soon");
+  const handleEditClient = useCallback((client: any) => {
+    setEditingClient(client);
+    setEditFormData({
+      firstName: client.firstName || "",
+      lastName: client.lastName || "",
+      email: client.email || "",
+      phone: client.phone || "",
+      notes: client.notes || "",
+    });
+    setIsEditDialogOpen(true);
   }, []);
+
+  const handleEditSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+    
+    const payload: any = {};
+    if (editFormData.firstName) payload.firstName = editFormData.firstName;
+    if (editFormData.lastName) payload.lastName = editFormData.lastName;
+    payload.email = editFormData.email || null;
+    payload.phone = editFormData.phone || null;
+    payload.notes = editFormData.notes || null;
+    
+    updateClient.mutate({ id: editingClient.id, data: payload });
+  }, [editingClient, editFormData, updateClient]);
 
   const handleDeleteClient = useCallback((id: number) => {
     toast.info("Delete functionality coming soon");
@@ -432,7 +476,7 @@ export default function Clients() {
               key={client.id}
               client={client}
               onView={() => handleViewClient(client.id)}
-              onEdit={() => handleEditClient(client.id)}
+              onEdit={() => handleEditClient(client)}
               onDelete={() => handleDeleteClient(client.id)}
             />
           ))}
@@ -458,6 +502,80 @@ export default function Clients() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>
+              Update client contact information for anniversary greetings and communications.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">First Name *</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editFormData.firstName}
+                  onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                  placeholder="John"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name *</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editFormData.lastName}
+                  onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                  placeholder="Doe"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                placeholder="john@example.com"
+              />
+              <p className="text-xs text-muted-foreground">Used for sending anniversary greetings</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={editFormData.phone}
+                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                value={editFormData.notes}
+                onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                placeholder="Any additional notes..."
+                rows={3}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateClient.isPending}>
+                {updateClient.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

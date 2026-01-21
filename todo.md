@@ -1236,3 +1236,16 @@
 - [x] Implement persistent sync solution with self-healing (auto-restore from checkpoint if sandbox resets)
 - [x] Clean up Production section - verified data is accurate (97 policies, $467K premium, $576K commission)
 - [x] Populate Clients section with 65 clients extracted from inforce policies
+
+
+## Client Data Enrichment (Jan 21, 2026)
+- [ ] Check available contact data in inforce policies (email, phone)
+- [ ] Update client records with email and phone numbers
+- [ ] Verify enriched data displays correctly in Clients section
+
+
+## Client Contact Information Enhancement (New)
+- [x] Add edit client dialog with email and phone fields
+- [x] Enable inline editing of client contact information
+- [x] Add contact info display in client detail page
+- [ ] Support sending anniversary greetings via email

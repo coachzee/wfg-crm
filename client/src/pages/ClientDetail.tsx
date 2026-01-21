@@ -4,7 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, FileText, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, FileText, User, Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useState, useCallback } from "react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 
@@ -12,14 +18,60 @@ export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const clientId = id ? parseInt(id) : 0;
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    notes: "",
+  });
 
-  const { data: client, isLoading } = trpc.clients.getById.useQuery(clientId, {
+  const { data: client, isLoading, refetch } = trpc.clients.getById.useQuery(clientId, {
     enabled: clientId > 0,
   });
 
   const { data: agent } = trpc.agents.getById.useQuery(client?.agentId || 0, {
     enabled: !!client?.agentId,
   });
+
+  const updateClient = trpc.clients.update.useMutation({
+    onSuccess: () => {
+      toast.success("Client updated successfully!");
+      setIsEditDialogOpen(false);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update client: ${error.message}`);
+    },
+  });
+
+  const handleOpenEdit = useCallback(() => {
+    if (client) {
+      setEditFormData({
+        firstName: client.firstName || "",
+        lastName: client.lastName || "",
+        email: client.email || "",
+        phone: client.phone || "",
+        notes: client.notes || "",
+      });
+      setIsEditDialogOpen(true);
+    }
+  }, [client]);
+
+  const handleEditSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!client) return;
+    
+    const payload: any = {};
+    if (editFormData.firstName) payload.firstName = editFormData.firstName;
+    if (editFormData.lastName) payload.lastName = editFormData.lastName;
+    payload.email = editFormData.email || null;
+    payload.phone = editFormData.phone || null;
+    payload.notes = editFormData.notes || null;
+    
+    updateClient.mutate({ id: client.id, data: payload });
+  }, [client, editFormData, updateClient]);
 
   if (isLoading) {
     return (
@@ -66,6 +118,10 @@ export default function ClientDetail() {
               </p>
             )}
           </div>
+          <Button variant="outline" size="sm" onClick={handleOpenEdit} className="gap-2">
+            <Edit className="h-4 w-4" />
+            Edit
+          </Button>
         </div>
       </div>
 
@@ -200,6 +256,80 @@ export default function ClientDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>
+              Update client contact information for anniversary greetings and communications.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">First Name *</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editFormData.firstName}
+                  onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                  placeholder="John"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name *</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editFormData.lastName}
+                  onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                  placeholder="Doe"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                placeholder="john@example.com"
+              />
+              <p className="text-xs text-muted-foreground">Used for sending anniversary greetings</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={editFormData.phone}
+                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                value={editFormData.notes}
+                onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                placeholder="Any additional notes..."
+                rows={3}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateClient.isPending}>
+                {updateClient.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
