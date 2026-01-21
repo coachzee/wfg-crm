@@ -1170,3 +1170,17 @@
 - [x] Clean enrolled date format to show only date (e.g., "May 31, 2025")
 - [x] Change status to "Completed" when progress is 100%
 - [x] Add recruiter name column for each agent studying (via uplineAgentId lookup)
+
+
+## Team Chart Hierarchy Scraper (In Progress)
+- [ ] Remove 'WFG - Zaid Shopeju Group' text from Agent Exam Prep page
+- [ ] Create MyWFG Team Chart scraper to extract hierarchy relationships
+- [ ] Update agent upline data from Team Chart hierarchy bubble visualization
+- [ ] Test and verify recruiter names are accurate
+
+
+## Fix Recruiter Relationships in Agent Exam Prep (New)
+- [x] Add Zaid Shopeju (73DXR) to agents table as team leader
+- [x] Identify and add other missing upline agents referenced in uplineAgentId
+- [x] Update uplineAgentId references from 810013 to Zaid's correct ID
+- [x] Verify Agent Exam Prep page displays recruiter names correctly
