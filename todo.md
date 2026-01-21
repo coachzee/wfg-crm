@@ -1202,3 +1202,6 @@
 
 ## Data Cleanup
 - [x] Clean up Anniversary Email Tracking - removed all test records (@example.com emails)
+
+- [x] Run MyWFG sync to refresh dashboard Last Sync timestamp
+- [x] Delete test anniversary email tracking record (TEST-ANNIVERSARY-001)

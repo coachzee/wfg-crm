@@ -1,0 +1,23 @@
+{
+  "query": "SELECT id, trackingId, emailType, recipientEmail, recipientName, subject, relatedEntityId, sendStatus, sentAt, openCount, clickCount FROM emailTracking ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT id, trackingId, emailType, recipientEmail, recipientName, subject, relatedEntityId, sendStatus, sentAt, openCount, clickCount FROM emailTracking ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "240021",
+      "trackingId": "6ddceb44-184c-43c8-a615-312701e80faf",
+      "emailType": "ANNIVERSARY_GREETING",
+      "recipientEmail": "zaidshopejuwbh@gmail.com",
+      "recipientName": "Zaid Shopeju",
+      "subject": "Happy Policy Anniversary, Zaid!",
+      "relatedEntityId": "TEST-ANNIVERSARY-001",
+      "sendStatus": "SENT",
+      "sentAt": "2026-01-21 03:54:57",
+      "openCount": "0",
+      "clickCount": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttrackingId\temailType\trecipientEmail\trecipientName\tsubject\trelatedEntityId\tsendStatus\tsentAt\topenCount\tclickCount\n240021\t6ddceb44-184c-43c8-a615-312701e80faf\tANNIVERSARY_GREETING\tzaidshopejuwbh@gmail.com\tZaid Shopeju\tHappy Policy Anniversary, Zaid!\tTEST-ANNIVERSARY-001\tSENT\t2026-01-21 03:54:57\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}
