@@ -1198,3 +1198,7 @@
 - [x] Reorganize Exam Prep page: divide into "In Progress" (top) and "Completed" (bottom) sections
 - [x] Sort agents within each section by most recent login first
 - [x] Add exam prep status badges ("Studying X%") on Agents list cards
+
+
+## Data Cleanup
+- [x] Clean up Anniversary Email Tracking - removed all test records (@example.com emails)
