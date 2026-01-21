@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { waitForOTP, getMyWFGCredentials } from './gmail-otp';
+import { startOTPSession, waitForOTPWithSession, getMyWFGCredentials, clearUsedOTPs } from './gmail-otp-v2';
 
 export interface AgentCashFlow {
   rank: number;
@@ -85,29 +85,39 @@ export async function scrapeMyWFGCashFlow(): Promise<CashFlowReportResult> {
     // Wait for page to load after login
     await new Promise(resolve => setTimeout(resolve, 3000));
     
+    // START OTP SESSION BEFORE CHECKING
+    const gmailCreds = getMyWFGCredentials();
+    const otpSessionId = startOTPSession('mywfg');
+    
     // Check if OTP is required
     const pageContent = await page.content();
     const otpRequired = pageContent.toLowerCase().includes('verification') || 
                         pageContent.toLowerCase().includes('security code') ||
-                        pageContent.toLowerCase().includes('one time');
+                        pageContent.toLowerCase().includes('one time') ||
+                        pageContent.includes('mywfgOtppswd');
     
     if (otpRequired) {
-      console.log('[MyWFG Scraper] OTP verification required, waiting for email...');
+      console.log('[MyWFG Scraper] OTP verification required, waiting for email (session-based, 180s timeout)...');
       
-      // Get Gmail credentials for OTP
-      const gmailCreds = getMyWFGCredentials();
-      
-      // Wait for OTP email (up to 90 seconds, check every 5 seconds)
-      const otpResult = await waitForOTP(gmailCreds, 'wfg', 90, 5);
+      // Wait for OTP using the session we started BEFORE login
+      const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3);
       
       if (!otpResult.success || !otpResult.otp) {
         return { success: false, error: `Failed to get OTP: ${otpResult.error}`, agents: [], lastUpdated: '', reportPeriod: '' };
       }
       
       console.log(`[MyWFG Scraper] OTP received: ${otpResult.otp}`);
+      const otpToEnter = otpResult.otp.length > 6 ? otpResult.otp.slice(-6) : otpResult.otp;
       
       // Enter OTP
-      await page.type('input[name="SecurityCode"], input[type="text"]', otpResult.otp, { delay: 100 });
+      const otpInput = await page.$('input[id="mywfgOtppswd"]') || 
+                       await page.$('input[name="SecurityCode"]') || 
+                       await page.$('input[type="text"]');
+      if (otpInput) {
+        await otpInput.click({ clickCount: 3 });
+        await page.keyboard.press('Backspace');
+        await otpInput.type(otpToEnter, { delay: 50 });
+      }
       
       // Submit OTP
       await page.click('button[type="submit"], input[type="submit"]');

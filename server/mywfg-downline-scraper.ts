@@ -15,7 +15,8 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { waitForOTP } from './gmail-otp.js';
+import { startOTPSession, waitForOTPWithSession, clearUsedOTPs } from './gmail-otp-v2';
+import { eq } from 'drizzle-orm';
 
 // Get MyWFG login credentials from environment
 function getMyWFGLoginCredentials() {
@@ -95,10 +96,11 @@ export interface DownlineStatusResult {
 }
 
 /**
- * Login to MyWFG with OTP handling
+ * Login to MyWFG with OTP handling (V2 - session-based)
  */
 async function loginToMyWFG(page: Page): Promise<boolean> {
   const creds = getMyWFGLoginCredentials();
+  const gmailCreds = getGmailCredentials();
   
   console.log('[Downline Scraper] Navigating to MyWFG...');
   await page.goto('https://www.mywfg.com', { waitUntil: 'networkidle2', timeout: 60000 });
@@ -106,21 +108,27 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
   // Wait for login form
   await page.waitForSelector('input[id="myWfgUsernameDisplay"], input[name="username"]', { timeout: 30000 });
   
+  // START OTP SESSION BEFORE TRIGGERING LOGIN
+  // This ensures we only accept OTPs that arrive AFTER this point
+  console.log('[Downline Scraper] Starting OTP session before login...');
+  const otpSessionId = startOTPSession('mywfg');
+  
   // Find and fill username
   const usernameInput = await page.$('input[id="myWfgUsernameDisplay"]') || await page.$('input[name="username"]');
   if (!usernameInput) throw new Error('Username input not found');
   
   await usernameInput.click({ clickCount: 3 });
-  await usernameInput.type(creds.username);
+  await usernameInput.type(creds.username, { delay: 30 });
   
   // Find and fill password
   const passwordInput = await page.$('input[id="myWfgPasswordDisplay"]') || await page.$('input[name="password"]');
   if (!passwordInput) throw new Error('Password input not found');
   
   await passwordInput.click({ clickCount: 3 });
-  await passwordInput.type(creds.password);
+  await passwordInput.type(creds.password, { delay: 30 });
   
-  // Click login button
+  // Click login button - this triggers the OTP email
+  console.log('[Downline Scraper] Clicking login button (this triggers OTP)...');
   const loginButton = await page.$('button[id="mywfgTheyLive"]') || await page.$('button[type="submit"]');
   if (loginButton) {
     await Promise.all([
@@ -129,7 +137,7 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     ]);
   }
   
-  await new Promise(r => setTimeout(r, 5000));
+  await new Promise(r => setTimeout(r, 3000));
   
   // Check for OTP requirement
   const pageContent = await page.content();
@@ -138,6 +146,7 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
   // Check for error page
   if (pageText.includes('ERROR OCCURRED') || pageText.includes('Bad Request')) {
     console.log('[Downline Scraper] Error page detected, retrying...');
+    clearUsedOTPs();
     await page.goto('https://www.mywfg.com', { waitUntil: 'networkidle2', timeout: 60000 });
     return loginToMyWFG(page);
   }
@@ -148,45 +157,29 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
                       pageText.includes('Validation Code');
   
   if (otpRequired) {
-    console.log('[Downline Scraper] OTP required, waiting for email...');
+    console.log('[Downline Scraper] OTP required, waiting for email (session-based, 180s timeout)...');
     
-    // First, get the prefix shown on the page
+    // Get the prefix shown on the page - REQUIRED for verification
     const pagePrefix = await page.evaluate(() => {
-      // Look for the prefix text (e.g., "3106 -")
       const bodyText = document.body.innerText;
       const prefixMatch = bodyText.match(/(\d{4})\s*-/);
       return prefixMatch ? prefixMatch[1] : null;
     });
-    console.log(`[Downline Scraper] Page shows OTP prefix: ${pagePrefix}`);
-    
-    // Wait a moment for the email to arrive
-    await new Promise(r => setTimeout(r, 5000));
-    
-    const gmailCreds = getGmailCredentials();
-    
-    // Try multiple times to get a matching OTP
-    let otpResult: any = null;
-    let attempts = 0;
-    const maxAttempts = 5;
-    
-    while (attempts < maxAttempts) {
-      attempts++;
-      console.log(`[Downline Scraper] Fetching OTP (attempt ${attempts}/${maxAttempts})...`);
-      
-      otpResult = await waitForOTP(gmailCreds, 'transamerica', 120, 3);
-      
-      if (otpResult.success && otpResult.otp) {
-        console.log(`[Downline Scraper] ✓ OTP received: ${otpResult.otp}`);
-        break;
-      }
-      
-      // Wait before retrying
-      await new Promise(r => setTimeout(r, 3000));
+    if (pagePrefix) {
+      console.log(`[Downline Scraper] Page shows OTP prefix: ${pagePrefix}`);
+    } else {
+      console.log('[Downline Scraper] Warning: Could not extract OTP prefix from page');
     }
+    
+    // Wait for OTP using the session we started BEFORE login
+    // Pass the expected prefix to ensure we get the correct OTP
+    const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3, pagePrefix || undefined);
     
     if (!otpResult?.success || !otpResult?.otp) {
-      throw new Error(`Failed to get OTP after ${maxAttempts} attempts: ${otpResult?.error}`);
+      throw new Error(`Failed to get OTP: ${otpResult?.error}`);
     }
+    
+    console.log(`[Downline Scraper] ✓ OTP received: ${otpResult.otp}`);
     
     // The OTP from email is already just the 6 digits we need to enter
     const fullOtp = otpResult.otp;
@@ -895,9 +888,15 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
 
 /**
  * Main function to fetch downline status from MyWFG
+ * @param agentId - Agent ID to fetch downline for (default: 73DXR)
  * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
+ * @param cachedCookies - Optional cached session cookies to skip login
  */
-export async function fetchDownlineStatus(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult> {
+export async function fetchDownlineStatus(
+  agentId: string = '73DXR', 
+  teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP',
+  cachedCookies?: any[]
+): Promise<DownlineStatusResult> {
   let browser: Browser | null = null;
   
   try {
@@ -911,10 +910,29 @@ export async function fetchDownlineStatus(agentId: string = '73DXR', teamType: '
     const page = await browser.newPage();
     await page.setViewport({ width: 1920, height: 1080 });
     
-    // Login to MyWFG
-    const loggedIn = await loginToMyWFG(page);
-    if (!loggedIn) {
-      throw new Error('Failed to login to MyWFG');
+    // Use cached cookies if provided, otherwise login fresh
+    if (cachedCookies && cachedCookies.length > 0) {
+      console.log('[Downline Scraper] Using cached session cookies...');
+      await page.setCookie(...cachedCookies);
+      
+      // Navigate directly to the downline status report to verify session
+      const reportUrl = `https://www.mywfg.com/reports-downline-status?AgentID=${agentId}`;
+      await page.goto(reportUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+      
+      // Check if we got redirected to login
+      const currentUrl = page.url();
+      if (currentUrl.includes('login')) {
+        console.log('[Downline Scraper] Session expired, need fresh login');
+        throw new Error('Session expired - need fresh login');
+      }
+      
+      console.log('[Downline Scraper] Cached session valid, on downline page');
+    } else {
+      // Login to MyWFG fresh
+      const loggedIn = await loginToMyWFG(page);
+      if (!loggedIn) {
+        throw new Error('Failed to login to MyWFG');
+      }
     }
     
     // Extract downline status
@@ -944,9 +962,17 @@ export async function fetchDownlineStatus(agentId: string = '73DXR', teamType: '
 
 /**
  * Sync agents from MyWFG Downline Status to database
+ * @param db - Database instance
+ * @param schema - Database schema
+ * @param prefetchedResult - Optional pre-fetched downline status result (to avoid duplicate fetches)
  * @param teamType - 'BASE_SHOP' or 'SUPER_TEAM' to filter by downline type
  */
-export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<{
+export async function syncAgentsFromDownlineStatus(
+  db: any, 
+  schema: any, 
+  prefetchedResult?: DownlineStatusResult,
+  teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'
+): Promise<{
   success: boolean;
   added: number;
   updated: number;
@@ -955,7 +981,8 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
   error?: string;
 }> {
   try {
-    const result = await fetchDownlineStatus('73DXR', teamType);
+    // Use pre-fetched result if provided, otherwise fetch fresh
+    const result = prefetchedResult || await fetchDownlineStatus('73DXR', teamType);
     
     if (!result.success) {
       return { success: false, added: 0, updated: 0, deactivated: 0, reactivated: 0, error: result.error };
@@ -972,7 +999,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
     // First, mark all agents NOT in the report as inactive
     const allAgents = await db.select()
       .from(schema.agents)
-      .where(schema.eq(schema.agents.teamType, teamType));
+      .where(eq(schema.agents.teamType, teamType));
     
     for (const existingAgent of allAgents) {
       if (existingAgent.agentCode && !activeAgentCodes.has(existingAgent.agentCode)) {
@@ -980,7 +1007,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
         if (existingAgent.isActive) {
           await db.update(schema.agents)
             .set({ isActive: false })
-            .where(schema.eq(schema.agents.id, existingAgent.id));
+            .where(eq(schema.agents.id, existingAgent.id));
           deactivated++;
           console.log(`[Downline Scraper] Marked agent ${existingAgent.firstName} ${existingAgent.lastName} (${existingAgent.agentCode}) as INACTIVE`);
         }
@@ -992,7 +1019,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
       // Check if agent exists
       const existing = await db.select()
         .from(schema.agents)
-        .where(schema.eq(schema.agents.agentCode, agent.agentCode))
+        .where(eq(schema.agents.agentCode, agent.agentCode))
         .limit(1);
       
       if (existing.length > 0) {
@@ -1012,7 +1039,7 @@ export async function syncAgentsFromDownlineStatus(db: any, schema: any, teamTyp
         }
         await db.update(schema.agents)
           .set(updateData)
-          .where(schema.eq(schema.agents.agentCode, agent.agentCode));
+          .where(eq(schema.agents.agentCode, agent.agentCode));
         updated++;
         if (wasInactive) {
           reactivated++;

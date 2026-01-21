@@ -3,6 +3,7 @@ import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts }
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
 import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses, syncHierarchyFromMyWFG } from './mywfg-downline-scraper';
+import { runUnifiedMyWFGSync } from './mywfg-unified-sync';
 import { syncExamPrepFromEmail } from './xcel-exam-scraper';
 import { getDb } from './db';
 import * as schema from '../drizzle/schema';
@@ -15,68 +16,39 @@ interface SyncResult {
   timestamp: Date;
 }
 
-// Sync MyWFG data - fetches downline status and updates agent ranks
+// Sync MyWFG data - uses unified sync with robust OTP handling
 export async function syncMyWFGData(): Promise<SyncResult> {
   const timestamp = new Date();
   console.log(`[Sync] Starting MyWFG sync at ${timestamp.toISOString()}`);
   
   try {
-    // First try to login to establish session
-    const loginResult = await loginToMyWFGWithCache();
+    // Use the new unified sync which handles login, OTP, and data fetch in one session
+    const result = await runUnifiedMyWFGSync();
     
-    if (!loginResult.success) {
-      console.log('[Sync] Login cache failed, will try direct fetch...');
-    }
-    
-    // Fetch downline status data from MyWFG
-    console.log('[Sync] Fetching downline status from MyWFG...');
-    const downlineResult = await fetchDownlineStatus();
-    
-    if (!downlineResult.success) {
+    if (!result.success) {
       return {
         success: false,
         platform: 'MyWFG',
-        error: downlineResult.error || 'Failed to fetch downline status',
+        error: result.error || 'Failed to sync MyWFG data',
         timestamp
       };
     }
     
-    console.log(`[Sync] Fetched ${downlineResult.agents.length} agents from MyWFG`);
-    
-    // Sync agents to database (this updates ranks based on title levels)
-    const db = await getDb();
-    if (!db) {
-      return {
-        success: false,
-        platform: 'MyWFG',
-        error: 'Database not available',
-        timestamp
-      };
-    }
-    
-    const syncResult = await syncAgentsFromDownlineStatus(db, schema);
-    
-    if (!syncResult.success) {
-      return {
-        success: false,
-        platform: 'MyWFG',
-        error: syncResult.error || 'Failed to sync agents to database',
-        timestamp
-      };
-    }
-    
-    console.log(`[Sync] MyWFG agent sync completed - Added: ${syncResult.added}, Updated: ${syncResult.updated}, Deactivated: ${syncResult.deactivated || 0}, Reactivated: ${syncResult.reactivated || 0}`);
+    console.log(`[Sync] MyWFG sync completed - Found: ${result.agentsFound}, Updated: ${result.agentsUpdated}`);
     
     // Sync hierarchy (upline relationships) - process in batches of 15
     console.log('[Sync] Starting hierarchy sync...');
     let hierarchyUpdated = 0;
     try {
-      const hierarchyResult = await syncHierarchyFromMyWFG(db, schema, 15);
-      if (hierarchyResult.success) {
-        hierarchyUpdated = hierarchyResult.updated;
-        console.log(`[Sync] Hierarchy sync completed - Updated: ${hierarchyUpdated} upline relationships`);
-      } else {
-        console.log(`[Sync] Hierarchy sync failed: ${hierarchyResult.error}`);
+      const db = await getDb();
+      if (db) {
+        const hierarchyResult = await syncHierarchyFromMyWFG(db, schema, 15);
+        if (hierarchyResult.success) {
+          hierarchyUpdated = hierarchyResult.updated;
+          console.log(`[Sync] Hierarchy sync completed - Updated: ${hierarchyUpdated} upline relationships`);
+        } else {
+          console.log(`[Sync] Hierarchy sync failed: ${hierarchyResult.error}`);
+        }
       }
     } catch (hierarchyError) {
       console.error('[Sync] Hierarchy sync error:', hierarchyError);
@@ -88,12 +60,9 @@ export async function syncMyWFGData(): Promise<SyncResult> {
       timestamp,
       data: { 
         message: 'Sync completed',
-        agentsAdded: syncResult.added,
-        agentsUpdated: syncResult.updated,
-        agentsDeactivated: syncResult.deactivated || 0,
-        agentsReactivated: syncResult.reactivated || 0,
+        agentsUpdated: result.agentsUpdated,
         hierarchyUpdated,
-        totalAgents: downlineResult.agents.length
+        totalAgents: result.agentsFound
       }
     };
     

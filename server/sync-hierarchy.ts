@@ -10,7 +10,7 @@ import { chromium, type Page, type Browser, type BrowserContext } from "playwrig
 import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, isNotNull } from "drizzle-orm";
-import { waitForOTP, getMyWFGCredentials } from "./gmail-otp";
+import { startOTPSession, waitForOTPWithSession, getMyWFGCredentials, clearUsedOTPs } from "./gmail-otp-v2";
 
 // Configuration
 const BATCH_SIZE = 15; // Process 15 agents per batch
@@ -24,7 +24,7 @@ interface UplineData {
 }
 
 /**
- * Login to MyWFG with OTP handling
+ * Login to MyWFG with OTP handling (V2 - session-based)
  */
 async function loginToMyWFG(page: Page): Promise<boolean> {
   try {
@@ -38,42 +38,62 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     // Wait for login form
     await page.waitForSelector('input[id="myWfgUsernameDisplay"], input[name="username"]', { timeout: 30000 });
     
+    // START OTP SESSION BEFORE TRIGGERING LOGIN
+    console.log("📧 Starting OTP session before login...");
+    const otpSessionId = startOTPSession('mywfg');
+    
     // Fill username
     const usernameInput = await page.$('input[id="myWfgUsernameDisplay"]') || await page.$('input[name="username"]');
     if (usernameInput) {
       await usernameInput.click({ clickCount: 3 });
-      await usernameInput.type(username);
+      await usernameInput.type(username, { delay: 30 });
     }
     
     // Fill password
     const passwordInput = await page.$('input[id="myWfgPasswordDisplay"]') || await page.$('input[name="password"]');
     if (passwordInput) {
       await passwordInput.click({ clickCount: 3 });
-      await passwordInput.type(password);
+      await passwordInput.type(password, { delay: 30 });
     }
     
-    // Click login button
+    // Click login button - this triggers the OTP email
+    console.log("🔐 Clicking login button (this triggers OTP)...");
     const loginButton = await page.$('button[id="mywfgTheyLive"]') || await page.$('button[type="submit"]');
     if (loginButton) {
       await loginButton.click();
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(3000);
     }
     
     // Check for OTP requirement
     const pageContent = await page.content();
+    const pageText = await page.evaluate(() => document.body.innerText);
+    
+    // Check for error page
+    if (pageText.includes('ERROR OCCURRED') || pageText.includes('Bad Request')) {
+      console.log("⚠️ Error page detected, retrying...");
+      clearUsedOTPs();
+      await page.goto("https://www.mywfg.com", { waitUntil: "networkidle", timeout: 60000 });
+      return loginToMyWFG(page);
+    }
+    
     const otpRequired = pageContent.includes('mywfgOtppswd') || 
-                        pageContent.includes('One-Time Password') ||
-                        pageContent.includes('Security Code');
+                        pageText.includes('One-Time Password') ||
+                        pageText.includes('Security Code') ||
+                        pageText.includes('Validation Code');
     
     if (otpRequired) {
-      console.log("📧 OTP required, waiting for email...");
-      await page.waitForTimeout(5000);
+      console.log("📧 OTP required, waiting for email (session-based, 180s timeout)...");
       
-      // Get OTP from email
-      const otpResult = await waitForOTP(gmailCreds, "transamerica", 120000);
-      if (!otpResult || !otpResult.otp) {
-        throw new Error("Failed to get OTP");
+      // Wait for OTP using the session we started BEFORE login
+      const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3);
+      if (!otpResult.success || !otpResult.otp) {
+        throw new Error(`Failed to get OTP: ${otpResult.error}`);
       }
+      
+      console.log(`✓ OTP received: ${otpResult.otp}`);
+      
+      // The OTP from email is the 6 digits we need to enter
+      const otpToEnter = otpResult.otp.length > 6 ? otpResult.otp.slice(-6) : otpResult.otp;
       
       // Enter OTP
       const otpInput = await page.$('input[id="mywfgOtppswd"]') || 
@@ -81,23 +101,36 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
                        await page.$('input[type="text"][maxlength="6"]');
       if (otpInput) {
         await otpInput.click({ clickCount: 3 });
-        await otpInput.type(otpResult.otp);
+        await page.keyboard.press('Backspace');
+        await otpInput.type(otpToEnter, { delay: 50 });
       }
       
       // Submit OTP
-      const submitBtn = await page.$('button[id="mywfgOtpSubmit"]') || await page.$('button[type="submit"]');
+      let submitBtn = await page.$('button[id="mywfgTheylive"]');
+      if (!submitBtn) submitBtn = await page.$('button[id="mywfgTheyLive"]');
+      if (!submitBtn) submitBtn = await page.$('button[type="submit"]');
       if (submitBtn) {
         await submitBtn.click();
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(3000);
       }
     }
     
     // Verify login success
     const currentUrl = page.url();
-    if (currentUrl.includes('login') || currentUrl.includes('error')) {
+    const finalPageText = await page.evaluate(() => document.body.innerText);
+    
+    const isLoggedIn = (currentUrl.includes('mywfg.com') && 
+                        !currentUrl.includes('login') && 
+                        !currentUrl.includes('signin')) ||
+                       finalPageText.includes('Welcome') ||
+                       finalPageText.includes('Dashboard');
+    
+    if (!isLoggedIn) {
+      console.log("❌ Login verification failed");
       return false;
     }
     
+    console.log("✅ Login successful");
     return true;
   } catch (error) {
     console.error("Login error:", error);

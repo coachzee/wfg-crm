@@ -1,5 +1,10 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { waitForOTP, getTransamericaCredentials } from './gmail-otp';
+import { 
+  startOTPSession, 
+  waitForOTPWithSession, 
+  getTransamericaCredentials,
+  clearUsedOTPs 
+} from './gmail-otp-v2';
 
 interface LoginResult {
   success: boolean;
@@ -22,7 +27,23 @@ function getTransamericaLoginCredentials(): TransamericaCredentials {
   };
 }
 
-// Automated login to Transamerica with OTP handling
+// Get security question answers from environment
+function getSecurityAnswers() {
+  return {
+    firstJobCity: process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'lagos',
+    petName: process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo',
+  };
+}
+
+/**
+ * Robust automated login to Transamerica with proper OTP handling
+ * 
+ * Key improvements:
+ * 1. Starts OTP session BEFORE triggering login
+ * 2. Uses longer wait times (180 seconds) with proper polling
+ * 3. Better error handling and retry logic
+ * 4. Handles security questions
+ */
 export async function loginToTransamerica(keepBrowserOpen: boolean = false): Promise<LoginResult> {
   let browser: Browser | null = null;
   
@@ -37,10 +58,26 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
       console.error('[Transamerica] Failed to send credentials alert:', e);
     }
     
+    // Get credentials first
+    const credentials = getTransamericaLoginCredentials();
+    if (!credentials.username || !credentials.password) {
+      return { success: false, error: 'Transamerica credentials not configured' };
+    }
+    
+    const gmailCreds = getTransamericaCredentials();
+    if (!gmailCreds.email || !gmailCreds.appPassword) {
+      return { success: false, error: 'Gmail credentials not configured for OTP' };
+    }
+    
     // Launch browser
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+      ],
     });
     
     const page = await browser.newPage();
@@ -53,60 +90,105 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     console.log('[Transamerica] Navigating to login page...');
     await page.goto('https://secure.transamerica.com/login/sign-in/login.html', { 
       waitUntil: 'networkidle2',
-      timeout: 30000 
+      timeout: 60000 
     });
     
-    // Get credentials
-    const credentials = getTransamericaLoginCredentials();
-    if (!credentials.username || !credentials.password) {
-      return { success: false, error: 'Transamerica credentials not configured' };
-    }
-    
     // Wait for login form
-    await page.waitForSelector('input[name="username"], input[id="username"], #username', { timeout: 10000 });
+    await page.waitForSelector('input[name="username"], input[id="username"], #username', { timeout: 30000 });
+    
+    // START OTP SESSION BEFORE TRIGGERING LOGIN
+    console.log('[Transamerica] Starting OTP session before login...');
+    const otpSessionId = startOTPSession('transamerica');
     
     // Fill in username
     console.log('[Transamerica] Entering username...');
-    await page.type('input[name="username"], input[id="username"], #username', credentials.username, { delay: 50 });
+    await page.type('input[name="username"], input[id="username"], #username', credentials.username, { delay: 30 });
     
     // Fill in password
     console.log('[Transamerica] Entering password...');
-    await page.type('input[name="password"], input[id="password"], #password', credentials.password, { delay: 50 });
+    await page.type('input[name="password"], input[id="password"], #password', credentials.password, { delay: 30 });
     
-    // Click login button
-    console.log('[Transamerica] Clicking login button...');
+    // Click login button - this triggers the OTP email
+    console.log('[Transamerica] Clicking login button (this triggers OTP)...');
     await page.waitForSelector('#formLogin', { timeout: 5000 });
-    await page.click('#formLogin');
+    await Promise.all([
+      page.click('#formLogin'),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }).catch(() => {}),
+    ]);
     
-    // Wait for page to load after login
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 }).catch(() => {});
+    // Wait for page to settle
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Check for security question
+    const pageContent = await page.content();
+    const pageText = await page.evaluate(() => document.body.innerText);
+    
+    if (pageText.toLowerCase().includes('security question') || 
+        pageText.toLowerCase().includes('what city') ||
+        pageText.toLowerCase().includes('pet')) {
+      console.log('[Transamerica] Security question detected...');
+      
+      const securityAnswers = getSecurityAnswers();
+      let answer = '';
+      
+      if (pageText.toLowerCase().includes('city') || pageText.toLowerCase().includes('job')) {
+        answer = securityAnswers.firstJobCity;
+        console.log('[Transamerica] Answering first job city question...');
+      } else if (pageText.toLowerCase().includes('pet')) {
+        answer = securityAnswers.petName;
+        console.log('[Transamerica] Answering pet name question...');
+      }
+      
+      if (answer) {
+        const answerInput = await page.$('input[type="text"]') || 
+                           await page.$('input[name="answer"]') ||
+                           await page.$('#answer');
+        if (answerInput) {
+          await answerInput.type(answer, { delay: 50 });
+          
+          // Check "remember this device" if present
+          const rememberCheckbox = await page.$('input[type="checkbox"]');
+          if (rememberCheckbox) {
+            await rememberCheckbox.click();
+            console.log('[Transamerica] Checked "remember this device"');
+          }
+          
+          // Submit
+          const submitBtn = await page.$('button[type="submit"]') || await page.$('input[type="submit"]');
+          if (submitBtn) {
+            await submitBtn.click();
+            await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+          }
+        }
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
     
     // Check if OTP is required
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for any redirects
-    const pageContent = await page.content();
     const pageUrl = page.url();
+    const currentContent = await page.content();
+    const currentText = await page.evaluate(() => document.body.innerText);
     
-    const otpRequired = pageContent.toLowerCase().includes('verification') || 
-                        pageContent.toLowerCase().includes('one-time') || 
-                        pageContent.toLowerCase().includes('security code') ||
-                        pageContent.toLowerCase().includes('enter the code') ||
+    const otpRequired = currentContent.toLowerCase().includes('verification') || 
+                        currentContent.toLowerCase().includes('one-time') || 
+                        currentContent.toLowerCase().includes('security code') ||
+                        currentText.toLowerCase().includes('enter the code') ||
                         pageUrl.includes('mfa') ||
                         pageUrl.includes('verify');
     
     if (otpRequired) {
-      console.log('[Transamerica] OTP verification required, waiting for email...');
+      console.log('[Transamerica] OTP verification required, waiting for email (session-based, 180s timeout)...');
       
-      // Get Gmail credentials for OTP
-      const gmailCreds = getTransamericaCredentials();
-      
-      // Wait for OTP email (Transamerica emails)
-      const otpResult = await waitForOTP(gmailCreds, 'transamerica', 90, 5);
+      // Wait for OTP using the session we started BEFORE login
+      const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3);
       
       if (!otpResult.success || !otpResult.otp) {
         return { success: false, error: `Failed to get OTP: ${otpResult.error}` };
       }
       
       console.log(`[Transamerica] OTP received: ${otpResult.otp}`);
+      const otpToEnter = otpResult.otp.length > 6 ? otpResult.otp.slice(-6) : otpResult.otp;
       
       // Find and enter OTP
       const otpSelectors = [
@@ -120,12 +202,33 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
         '#code'
       ];
       
+      let otpEntered = false;
       for (const selector of otpSelectors) {
         const otpInput = await page.$(selector);
         if (otpInput) {
-          await otpInput.type(otpResult.otp, { delay: 100 });
+          await otpInput.click({ clickCount: 3 });
+          await page.keyboard.press('Backspace');
+          await otpInput.type(otpToEnter, { delay: 50 });
           console.log(`[Transamerica] OTP entered using selector: ${selector}`);
+          otpEntered = true;
           break;
+        }
+      }
+      
+      if (!otpEntered) {
+        // Try to find any visible text input
+        const inputs = await page.$$('input');
+        for (const input of inputs) {
+          const type = await input.evaluate(el => el.getAttribute('type'));
+          const isVisible = await input.isVisible();
+          if (isVisible && (type === 'text' || type === 'tel' || type === null)) {
+            await input.click({ clickCount: 3 });
+            await page.keyboard.press('Backspace');
+            await input.type(otpToEnter, { delay: 50 });
+            console.log('[Transamerica] OTP entered using fallback input');
+            otpEntered = true;
+            break;
+          }
         }
       }
       
@@ -146,7 +249,8 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
       }
       
       // Wait for successful login
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 }).catch(() => {});
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
     // Verify login success
@@ -270,6 +374,12 @@ export function getCachedTransamericaCookies(): any[] | null {
     return null;
   }
   return cachedCookies;
+}
+
+export function clearCachedTransamericaCookies(): void {
+  cachedCookies = null;
+  cookieExpiry = null;
+  console.log('[Transamerica] Cached session cleared');
 }
 
 // Login with session reuse

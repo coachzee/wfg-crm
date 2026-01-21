@@ -13,7 +13,7 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { getDb } from './db';
 import { inforcePolicies, syncLogs, agents } from '../drizzle/schema';
 import { eq, sql } from 'drizzle-orm';
-import { fetchTransamericaOTP } from './gmail-otp';
+import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from './gmail-otp-v2';
 
 // Environment variables
 const TA_USERNAME = process.env.TRANSAMERICA_USERNAME || 'larex3030';
@@ -87,7 +87,7 @@ function calculateCommission(
 }
 
 /**
- * Login to Transamerica secure portal
+ * Login to Transamerica secure portal (V2 - session-based OTP)
  */
 async function loginToTransamerica(page: Page): Promise<boolean> {
   console.log('[TA Inforce] Navigating to Transamerica login...');
@@ -100,6 +100,11 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
     
     await delay(2000);
     
+    // START OTP SESSION BEFORE TRIGGERING LOGIN
+    console.log('[TA Inforce] Starting OTP session before login...');
+    const otpSessionId = startOTPSession('transamerica');
+    const gmailCreds = getTransamericaCredentials();
+    
     // Fill login form using specific selectors
     console.log('[TA Inforce] Filling login credentials...');
     await page.evaluate((username: string, password: string) => {
@@ -109,7 +114,8 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
       if (passInput) passInput.value = password;
     }, TA_USERNAME, TA_PASSWORD);
     
-    // Click login button
+    // Click login button - this triggers the OTP email
+    console.log('[TA Inforce] Clicking login button (this triggers OTP)...');
     await page.click('button[type="submit"]');
     await delay(5000);
     
@@ -118,25 +124,24 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
     if (pageContent.includes('Extra Security Step')) {
       console.log('[TA Inforce] OTP verification required...');
       
-      // Select email option
+      // Select email option and click send
       await page.click('input[value="email"]');
       await page.click('button[type="submit"]');
-      await delay(10000);
       
-      // Fetch OTP from Gmail
-      console.log('[TA Inforce] Fetching OTP from Gmail...');
-      const otpResult = await fetchTransamericaOTP();
-        const otp = otpResult.otp;
+      // Wait for OTP using the session we started BEFORE login
+      console.log('[TA Inforce] Waiting for OTP (session-based, 180s timeout)...');
+      const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3);
       
-      if (otp) {
-        console.log('[TA Inforce] OTP received, entering code...');
-        await page.type('input[type="text"]', otp);
-        await page.click('button[type="submit"]');
-        await delay(5000);
-      } else {
-        console.error('[TA Inforce] Failed to retrieve OTP');
+      if (!otpResult.success || !otpResult.otp) {
+        console.error('[TA Inforce] Failed to retrieve OTP:', otpResult.error);
         return false;
       }
+      
+      const otp = otpResult.otp.length > 6 ? otpResult.otp.slice(-6) : otpResult.otp;
+      console.log(`[TA Inforce] OTP received: ${otp}, entering code...`);
+      await page.type('input[type="text"]', otp);
+      await page.click('button[type="submit"]');
+      await delay(5000);
     }
     
     // Check for security question

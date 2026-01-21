@@ -18,7 +18,7 @@ const TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY = process.env.TRANSAMERICA_SECURITY
 const TRANSAMERICA_SECURITY_Q_PET_NAME = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || "";
 
 // Gmail OTP extraction (reuse from existing service)
-import { fetchTransamericaOTP } from "./gmail-otp";
+import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from "./gmail-otp-v2";
 
 interface PendingPolicyData {
   policyNumber: string;
@@ -133,7 +133,7 @@ export async function syncTransamericaPendingPolicies(): Promise<SyncResult> {
 }
 
 /**
- * Login to Transamerica secure portal
+ * Login to Transamerica secure portal (V2 - session-based OTP)
  */
 async function loginToTransamerica(page: Page): Promise<boolean> {
   try {
@@ -145,6 +145,10 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
 
     // Wait for login form
     await page.waitForSelector('input[name="username"], input[type="text"]', { timeout: 10000 });
+    
+    // START OTP SESSION BEFORE TRIGGERING LOGIN
+    console.log("[Transamerica Login] Starting OTP session before login...");
+    const otpSessionId = startOTPSession('transamerica');
 
     // Fill credentials
     await page.evaluate((username: string, password: string) => {
@@ -214,7 +218,7 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
     
     if (otpRequired) {
       console.log("[Transamerica Login] OTP required, handling...");
-      await handleOtpVerification(page);
+      await handleOtpVerification(page, otpSessionId);
       await new Promise(resolve => setTimeout(resolve, 5000));
       pageContent = await page.content();
     }
@@ -264,9 +268,9 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
 }
 
 /**
- * Handle OTP verification
+ * Handle OTP verification (V2 - session-based)
  */
-async function handleOtpVerification(page: Page): Promise<void> {
+async function handleOtpVerification(page: Page, otpSessionId: string): Promise<void> {
   try {
     // Select email option using JavaScript
     await page.evaluate(() => {
@@ -290,7 +294,8 @@ async function handleOtpVerification(page: Page): Promise<void> {
     });
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Click Submit/Send button
+    // Click Submit/Send button - this triggers the OTP email
+    console.log("[Transamerica OTP] Clicking send button (this triggers OTP)...");
     await page.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button'));
       for (const btn of buttons) {
@@ -302,15 +307,17 @@ async function handleOtpVerification(page: Page): Promise<void> {
       }
     });
 
-    // Wait for OTP email
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    // Fetch OTP from Gmail
-    const otpResult = await fetchTransamericaOTP();
-    const otp = otpResult.otp;
-    if (!otp) {
-      throw new Error("Failed to fetch OTP from email");
+    // Wait for OTP using the session we started BEFORE login
+    console.log("[Transamerica OTP] Waiting for OTP (session-based, 180s timeout)...");
+    const gmailCreds = getTransamericaCredentials();
+    const otpResult = await waitForOTPWithSession(gmailCreds, otpSessionId, 180, 3);
+    
+    if (!otpResult.success || !otpResult.otp) {
+      throw new Error(`Failed to fetch OTP from email: ${otpResult.error}`);
     }
+    
+    const otp = otpResult.otp.length > 6 ? otpResult.otp.slice(-6) : otpResult.otp;
+    console.log(`[Transamerica OTP] OTP received: ${otp}`);
 
     // Enter OTP
     await page.evaluate((otpCode) => {

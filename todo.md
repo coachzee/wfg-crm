@@ -1205,3 +1205,27 @@
 
 - [x] Run MyWFG sync to refresh dashboard Last Sync timestamp
 - [x] Delete test anniversary email tracking record (TEST-ANNIVERSARY-001)
+
+
+## OTP V2 Fix - Permanent Solution (Completed)
+- [x] Analyzed current OTP flow to identify failure points (stale OTPs, race conditions, timing issues)
+- [x] Created gmail-otp-v2.ts with session-based OTP tracking (start session BEFORE login trigger)
+- [x] Added longer wait times (180 seconds) with proper polling (5 second intervals)
+- [x] Updated all login files to use new OTP V2 service:
+  - [x] mywfg-downline-scraper.ts
+  - [x] auto-login-mywfg.ts
+  - [x] auto-login-transamerica.ts
+  - [x] sync-hierarchy.ts
+  - [x] mywfg-cashflow-scraper.ts
+  - [x] transamerica-sync.ts
+  - [x] transamerica-inforce-sync.ts
+  - [x] extract-agent-data.ts
+- [x] Test the complete sync flow end-to-end - SUCCESS!
+
+## Unified MyWFG Sync (Completed - Jan 21, 2026)
+- [x] Created mywfg-unified-sync.ts - single browser session for login + data fetch
+- [x] Implemented prefix matching for OTP (only accepts OTPs matching page-displayed prefix)
+- [x] Fixed Gmail IMAP indexing delay by fetching 20 recent emails and 20-second initial wait
+- [x] Integrated unified sync into main sync-service.ts
+- [x] Successfully synced 51 agents from MyWFG Downline Status report
+- [x] All 156 tests passing
