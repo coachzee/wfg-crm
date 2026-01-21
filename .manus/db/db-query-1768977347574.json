@@ -1,0 +1,67 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "advancementProgress"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "agentCashFlowHistory"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "agentExamPrep"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "agents"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "clients"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "commissionPayments"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "credentials"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "emailTracking"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "incomeHistory"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "inforcePolicies"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "mywfgSyncLogs"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "pendingPolicies"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "pendingRequirements"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "productionRecords"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "scheduledEmails"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "syncLogs"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "users"
+    },
+    {
+      "Tables_in_iwEifGeLgtJbCVjTZgrjir": "workflowTasks"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_iwEifGeLgtJbCVjTZgrjir\n__drizzle_migrations\nadvancementProgress\nagentCashFlowHistory\nagentExamPrep\nagents\nclients\ncommissionPayments\ncredentials\nemailTracking\nincomeHistory\ninforcePolicies\nmywfgSyncLogs\npendingPolicies\npendingRequirements\nproductionRecords\nscheduledEmails\nsyncLogs\nusers\nworkflowTasks\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}
