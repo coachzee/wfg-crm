@@ -25,7 +25,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { 
   LayoutDashboard, LogOut, PanelLeft, Users, FileText, 
   CheckCircle, Settings, BarChart3, UserCircle, Shield,
-  ChevronRight, Sparkles, ClipboardList, CalendarDays
+  ChevronRight, Sparkles, ClipboardList, CalendarDays, GraduationCap
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState, memo, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -43,6 +43,7 @@ const menuItems = [
   { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
   { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
   { icon: Users, label: "Team", path: "/team", description: "Team members" },
+  { icon: GraduationCap, label: "Exam Prep", path: "/exam-prep", description: "License exam status" },
   { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
 ];
 

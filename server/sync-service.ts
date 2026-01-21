@@ -3,6 +3,7 @@ import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts }
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
 import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses, syncHierarchyFromMyWFG } from './mywfg-downline-scraper';
+import { syncExamPrepFromEmail } from './xcel-exam-scraper';
 import { getDb } from './db';
 import * as schema from '../drizzle/schema';
 
@@ -338,10 +339,83 @@ export function setLastSyncTime(time: Date) {
   lastSyncTime = time;
 }
 
+// Sync Exam Prep data from XCEL Solutions emails
+export async function syncExamPrepData(): Promise<SyncResult> {
+  const timestamp = new Date();
+  console.log(`[Sync] Starting Exam Prep sync at ${timestamp.toISOString()}`);
+  
+  try {
+    const result = await syncExamPrepFromEmail();
+    
+    if (!result.success) {
+      return {
+        success: false,
+        platform: 'XCEL Exam Prep',
+        error: result.error || 'Failed to sync exam prep data',
+        timestamp
+      };
+    }
+    
+    console.log(`[Sync] Exam Prep sync completed - Found: ${result.recordsFound}, Matched: ${result.recordsMatched}, Created: ${result.recordsCreated}, Updated: ${result.recordsUpdated}`);
+    
+    // Notify about unmatched agents if any
+    if (result.unmatchedAgents.length > 0) {
+      console.log(`[Sync] Unmatched agents: ${result.unmatchedAgents.join(', ')}`);
+    }
+    
+    return {
+      success: true,
+      platform: 'XCEL Exam Prep',
+      timestamp,
+      data: {
+        recordsFound: result.recordsFound,
+        recordsMatched: result.recordsMatched,
+        recordsCreated: result.recordsCreated,
+        recordsUpdated: result.recordsUpdated,
+        unmatchedAgents: result.unmatchedAgents
+      }
+    };
+    
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Sync] Exam Prep sync failed:', errorMessage);
+    return {
+      success: false,
+      platform: 'XCEL Exam Prep',
+      error: errorMessage,
+      timestamp
+    };
+  }
+}
+
 // Scheduled sync runner
 export async function scheduledSync() {
   console.log('[Sync] Running scheduled sync...');
   const results = await runFullSync();
   setLastSyncTime(new Date());
   return results;
+}
+
+// Scheduled exam prep sync runner (8am EST daily)
+export async function scheduledExamPrepSync() {
+  console.log('[Sync] Running scheduled exam prep sync (8am EST)...');
+  const result = await syncExamPrepData();
+  
+  // Send notification about sync results
+  if (result.success && result.data) {
+    const { recordsFound, recordsMatched, unmatchedAgents } = result.data;
+    if (recordsFound > 0) {
+      await notifyOwner({
+        title: 'Exam Prep Sync Complete',
+        content: `Found ${recordsFound} exam prep records, matched ${recordsMatched} to agents.${unmatchedAgents.length > 0 ? `\n\nUnmatched agents: ${unmatchedAgents.join(', ')}` : ''}`
+      });
+    }
+  } else if (!result.success) {
+    await notifyOwner({
+      title: 'Exam Prep Sync Failed',
+      content: `Failed to sync exam prep data: ${result.error}`
+    });
+  }
+  
+  return result;
 }

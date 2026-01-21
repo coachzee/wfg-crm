@@ -1152,3 +1152,14 @@
 - [x] Add tRPC procedure to update agent contact info (phone, email) - using existing agents.update procedure
 - [x] Add edit contact dialog component to Agents page with phone and email fields
 - [x] Test the edit functionality and verify changes persist
+
+
+## Agents Exam Prep Status Feature (Completed)
+- [x] Add exam prep status schema to database (agentExamPrep table)
+- [x] Create email scraper for XCEL Solutions exam prep reports (xcel-exam-scraper.ts)
+- [x] Add tRPC procedures for exam prep data (list, sync, syncExamPrep, getExamPrepRecords)
+- [x] Create Exam Prep Status UI page with progress tracking and agent matching
+- [x] Set up scheduled task for 8am EST daily sync (syncExamPrepData in sync-service.ts)
+- [x] Match agents by first/last name to their agent codes
+- [x] Track: Course (state), date enrolled, last login, %PLE Complete, Prepared to Pass
+- [x] Add unit tests for exam prep feature (9 tests passing)

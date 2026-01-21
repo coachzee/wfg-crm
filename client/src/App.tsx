@@ -19,6 +19,7 @@ import Team from "./pages/Team";
 import SyncHistory from "./pages/SyncHistory";
 import PendingPolicies from "./pages/PendingPolicies";
 import PolicyAnniversaries from "./pages/PolicyAnniversaries";
+import ExamPrep from "./pages/ExamPrep";
 import DashboardLayout from "./components/DashboardLayout";
 
 function Router() {
@@ -113,6 +114,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <TeamMembers />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/exam-prep"}>
+        {() => (
+          <DashboardLayout>
+            <ExamPrep />
           </DashboardLayout>
         )}
       </Route>

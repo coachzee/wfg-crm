@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
+import { syncExamPrepFromEmail, getExamPrepRecords } from './xcel-exam-scraper';
 import { 
   getAgents, 
   getAgentById, 
@@ -808,6 +809,22 @@ export const appRouter = router({
         agentsDeactivated: syncResult.deactivated,
         agentsReactivated: syncResult.reactivated,
       };
+    }),
+    
+    // Sync exam prep status from XCEL Solutions emails
+    syncExamPrep: protectedProcedure.mutation(async () => {
+      console.log("[Manual Sync] Starting Exam Prep sync from XCEL emails...");
+      
+      const result = await syncExamPrepFromEmail();
+      
+      console.log(`[Manual Sync] Exam Prep sync completed - Found: ${result.recordsFound}, Matched: ${result.recordsMatched}, Created: ${result.recordsCreated}, Updated: ${result.recordsUpdated}`);
+      
+      return result;
+    }),
+    
+    // Get all exam prep records
+    getExamPrepRecords: protectedProcedure.query(async () => {
+      return getExamPrepRecords();
     }),
     
     // Sync contact info (phone, email, address) for agents with missing data

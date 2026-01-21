@@ -784,3 +784,41 @@ export const scheduledEmails = mysqlTable("scheduledEmails", {
 
 export type ScheduledEmail = typeof scheduledEmails.$inferSelect;
 export type InsertScheduledEmail = typeof scheduledEmails.$inferInsert;
+
+
+// Agent Exam Prep Status - Track agents studying for license exams via XCEL Solutions
+export const agentExamPrep = mysqlTable("agentExamPrep", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Agent reference (matched by name)
+  agentId: int("agentId").references(() => agents.id),
+  
+  // Raw name from XCEL Solutions (for matching)
+  xcelFirstName: varchar("xcelFirstName", { length: 255 }).notNull(),
+  xcelLastName: varchar("xcelLastName", { length: 255 }).notNull(),
+  
+  // Course info
+  course: varchar("course", { length: 255 }).notNull(), // e.g., "Texas Life & Health"
+  state: varchar("state", { length: 50 }), // Extracted state from course name
+  
+  // Progress tracking
+  dateEnrolled: date("dateEnrolled"),
+  lastLogin: timestamp("lastLogin"),
+  pleCompletePercent: int("pleCompletePercent").default(0), // 0-100
+  preparedToPass: varchar("preparedToPass", { length: 50 }), // e.g., "Yes", "No", "In Progress"
+  
+  // Sync metadata
+  lastSyncedAt: timestamp("lastSyncedAt").defaultNow().notNull(),
+  emailSubject: varchar("emailSubject", { length: 500 }), // Original email subject for reference
+  emailReceivedAt: timestamp("emailReceivedAt"), // When the XCEL email was received
+  
+  // Status
+  isActive: boolean("isActive").default(true).notNull(), // Still actively studying
+  completedAt: timestamp("completedAt"), // When they finished/passed
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentExamPrep = typeof agentExamPrep.$inferSelect;
+export type InsertAgentExamPrep = typeof agentExamPrep.$inferInsert;
