@@ -33,19 +33,59 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
-// Menu configuration with icons and metadata
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", description: "Overview & analytics" },
-  { icon: Users, label: "Agents", path: "/agents", description: "Manage recruits" },
-  { icon: GraduationCap, label: "Agent Exam Prep", path: "/exam-prep", description: "License exam status" },
-  { icon: FileText, label: "Clients", path: "/clients", description: "Client relationships" },
-  { icon: BarChart3, label: "Production", path: "/production", description: "Performance metrics" },
-  { icon: ClipboardList, label: "Pending Policies", path: "/pending-policies", description: "Transamerica pending" },
-  { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
-  { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
-  { icon: Users, label: "Team", path: "/team", description: "Team members" },
-  { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
+// Menu configuration with icons, metadata, and section groupings
+type MenuItem = {
+  icon: typeof LayoutDashboard;
+  label: string;
+  path: string;
+  description: string;
+};
+
+type MenuSection = {
+  title: string;
+  items: MenuItem[];
+};
+
+const menuSections: MenuSection[] = [
+  {
+    title: "",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", description: "Overview & analytics" },
+    ]
+  },
+  {
+    title: "Agent Management",
+    items: [
+      { icon: Users, label: "Agents", path: "/agents", description: "Manage recruits" },
+      { icon: GraduationCap, label: "Agent Exam Prep", path: "/exam-prep", description: "License exam status" },
+      { icon: Users, label: "Team", path: "/team", description: "Team hierarchy" },
+    ]
+  },
+  {
+    title: "Business Operations",
+    items: [
+      { icon: FileText, label: "Clients", path: "/clients", description: "Client relationships" },
+      { icon: BarChart3, label: "Production", path: "/production", description: "Performance metrics" },
+      { icon: ClipboardList, label: "Pending Policies", path: "/pending-policies", description: "Transamerica pending" },
+      { icon: CalendarDays, label: "Policy Anniversaries", path: "/anniversaries", description: "Client review reminders" },
+    ]
+  },
+  {
+    title: "Workflow",
+    items: [
+      { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
+    ]
+  },
+  {
+    title: "",
+    items: [
+      { icon: Settings, label: "Settings", path: "/settings", description: "System configuration" },
+    ]
+  },
 ];
+
+// Flat list for backward compatibility
+const menuItems = menuSections.flatMap(section => section.items);
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -53,13 +93,13 @@ const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
 // Memoized menu item component
-const MenuItem = memo(function MenuItem({ 
+const MenuItemComponent = memo(function MenuItemComponent({ 
   item, 
   isActive, 
   isCollapsed,
   onClick 
 }: { 
-  item: typeof menuItems[0];
+  item: MenuItem;
   isActive: boolean;
   isCollapsed: boolean;
   onClick: () => void;
@@ -258,20 +298,34 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0 px-2 py-4">
-            <SidebarMenu className="space-y-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <MenuItem
-                    key={item.path}
-                    item={item}
-                    isActive={isActive}
-                    isCollapsed={isCollapsed}
-                    onClick={() => handleNavigation(item.path)}
-                  />
-                );
-              })}
-            </SidebarMenu>
+            {menuSections.map((section, sectionIndex) => (
+              <div key={section.title || `section-${sectionIndex}`} className={sectionIndex > 0 ? "mt-4" : ""}>
+                {section.title && !isCollapsed && (
+                  <div className="px-3 py-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                      {section.title}
+                    </span>
+                  </div>
+                )}
+                {section.title && isCollapsed && sectionIndex > 0 && (
+                  <div className="mx-2 my-2 border-t border-sidebar-border/30" />
+                )}
+                <SidebarMenu className="space-y-1">
+                  {section.items.map(item => {
+                    const isActive = location === item.path;
+                    return (
+                      <MenuItemComponent
+                        key={item.path}
+                        item={item}
+                        isActive={isActive}
+                        isCollapsed={isCollapsed}
+                        onClick={() => handleNavigation(item.path)}
+                      />
+                    );
+                  })}
+                </SidebarMenu>
+              </div>
+            ))}
           </SidebarContent>
 
           <SidebarFooter className="p-3 border-t border-sidebar-border/50">

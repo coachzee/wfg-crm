@@ -1188,3 +1188,13 @@
 
 ## UI Navigation Updates
 - [x] Move "Agent Exam Prep" menu item to appear under "Agents" section in sidebar
+
+
+## UI Improvements - Agent Exam Prep Integration
+- [x] Add visual section groupings to sidebar navigation (Agent Management, Business Operations, etc.)
+- [x] Add quick link from Agents page to Agent Exam Prep (Exam Prep Status button)
+- [x] Add exam prep status indicator badges on Agents list page
+
+- [x] Reorganize Exam Prep page: divide into "In Progress" (top) and "Completed" (bottom) sections
+- [x] Sort agents within each section by most recent login first
+- [x] Add exam prep status badges ("Studying X%") on Agents list cards

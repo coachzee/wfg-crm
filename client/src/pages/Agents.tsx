@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { 
   UserPlus, Search, Filter, ChevronRight, Phone, Mail, 
   Calendar, Award, MoreHorizontal, Eye, Edit, Trash2,
-  Users, TrendingUp, Clock, CheckCircle, UserX
+  Users, TrendingUp, Clock, CheckCircle, UserX, GraduationCap
 } from "lucide-react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
@@ -68,12 +68,14 @@ const AgentCard = memo(function AgentCard({
   agent, 
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  examPrepStatus
 }: { 
   agent: any;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  examPrepStatus?: { isStudying: boolean; progress: number; course: string };
 }) {
   return (
     <Card className="card-hover group cursor-pointer" onClick={onView}>
@@ -98,12 +100,18 @@ const AgentCard = memo(function AgentCard({
                   Code: {agent.agentCode}
                 </p>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <StageBadge stage={agent.currentStage as WorkflowStage} />
                 {agent.currentRank && RANK_CONFIG[agent.currentRank] && (
                   <Badge variant="outline" className={`${RANK_CONFIG[agent.currentRank].color} border-0 text-xs`}>
                     <span className="mr-1">{RANK_CONFIG[agent.currentRank].icon}</span>
                     {RANK_CONFIG[agent.currentRank].label}
+                  </Badge>
+                )}
+                {examPrepStatus?.isStudying && (
+                  <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                    <GraduationCap className="h-3 w-3 mr-1" />
+                    Studying ({examPrepStatus.progress}%)
                   </Badge>
                 )}
               </div>
@@ -262,6 +270,29 @@ export default function Agents() {
     staleTime: 30000,
   });
   
+  // Fetch exam prep data to show studying status on agent cards
+  const { data: examPrepRecords } = trpc.mywfg.getExamPrepRecords.useQuery();
+  
+  // Create a map of agent IDs to their exam prep status
+  const examPrepByAgentId = useMemo(() => {
+    if (!examPrepRecords) return new Map();
+    const map = new Map<number, { isStudying: boolean; progress: number; course: string }>(); 
+    examPrepRecords.forEach(record => {
+      if (record.agentId) {
+        const existing = map.get(record.agentId);
+        // If agent has multiple courses, show the one with lowest progress (most needs attention)
+        if (!existing || (record.pleCompletePercent || 0) < existing.progress) {
+          map.set(record.agentId, {
+            isStudying: (record.pleCompletePercent || 0) < 100,
+            progress: record.pleCompletePercent || 0,
+            course: record.state || record.course || 'License Exam'
+          });
+        }
+      }
+    });
+    return map;
+  }, [examPrepRecords]);
+  
   const createAgent = trpc.agents.create.useMutation({
     onSuccess: () => {
       toast.success("Agent created successfully!");
@@ -398,6 +429,15 @@ export default function Agents() {
           <h1 className="text-2xl font-bold tracking-tight">Agents</h1>
           <p className="text-muted-foreground">Manage your team's recruits and track their progress</p>
         </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => setLocation("/exam-prep")}
+          >
+            <GraduationCap className="h-4 w-4" />
+            Exam Prep Status
+          </Button>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg hover:shadow-xl transition-all">
@@ -486,6 +526,7 @@ export default function Agents() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Team Tabs */}
@@ -649,6 +690,7 @@ export default function Agents() {
               onView={() => handleViewAgent(agent.id)}
               onEdit={() => handleEditAgent(agent.id)}
               onDelete={() => handleDeleteAgent(agent.id)}
+              examPrepStatus={examPrepByAgentId.get(agent.id)}
             />
           ))}
         </div>
