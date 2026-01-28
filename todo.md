@@ -1471,3 +1471,17 @@
 - Dashboard.tsx: 269 lines (was 2,318 lines)
 - Dashboard components: 1,754 lines total (12 modules)
 - All 195 tests passing
+
+
+## Follow-up Improvements
+- [x] Add database indexes on frequently queried columns (agentCode, status, createdAt)
+  - Added indexes to agents table (agentCode, currentStage, isActive, recruiterUserId, createdAt)
+  - Added indexes to pendingPolicies table (status, agentCode, createdAt)
+  - Added indexes to inforcePolicies table (status, writingAgentCode, agentId, createdAt)
+  - Added indexes to syncLogs table (syncType, status, createdAt)
+- [x] Implement route-level code splitting with React.lazy() to reduce initial bundle size
+  - All page components now lazy-loaded with Suspense fallback
+  - PageLoader component shows spinner during chunk loading
+- [x] Add getTransamericaAlerts procedure to enable TransamericaAlertsCard on dashboard
+  - Added dashboard.getTransamericaAlerts query procedure
+  - TransamericaAlertsCard now displays chargeback alerts from Transamerica

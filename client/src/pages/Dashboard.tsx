@@ -66,6 +66,11 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: transamericaAlerts } = trpc.dashboard.getTransamericaAlerts.useQuery(undefined, {
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
+
 
   const taskCompletionRate = useMemo(() => {
     if (!stats?.taskStats?.total) return 0;
@@ -193,7 +198,14 @@ export default function Dashboard() {
         onShowNoRecurring={() => setShowNoRecurringModal(true)}
       />
 
-
+      {/* Transamerica Alerts Card */}
+      {transamericaAlerts && (transamericaAlerts.reversedPremiumPayments?.length > 0 || transamericaAlerts.eftRemovals?.length > 0) && (
+        <TransamericaAlertsCard
+          alerts={transamericaAlerts}
+          notificationStatus={notificationStatus}
+          onSendNotification={() => sendNotification.mutate()}
+        />
+      )}
 
       {/* Net Licensed Modal */}
       <NetLicensedModal

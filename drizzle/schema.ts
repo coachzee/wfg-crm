@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, json, boolean, date, uniqueIndex } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, json, boolean, date, uniqueIndex, index } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 /**
@@ -118,7 +118,13 @@ export const agents = mysqlTable("agents", {
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  agentCodeIdx: index("idx_agents_agent_code").on(table.agentCode),
+  currentStageIdx: index("idx_agents_current_stage").on(table.currentStage),
+  isActiveIdx: index("idx_agents_is_active").on(table.isActive),
+  recruiterUserIdIdx: index("idx_agents_recruiter_user_id").on(table.recruiterUserId),
+  createdAtIdx: index("idx_agents_created_at").on(table.createdAt),
+}));
 
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = typeof agents.$inferInsert;
@@ -473,7 +479,11 @@ export const syncLogs = mysqlTable("syncLogs", {
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  syncTypeIdx: index("idx_sync_logs_sync_type").on(table.syncType),
+  statusIdx: index("idx_sync_logs_status").on(table.status),
+  createdAtIdx: index("idx_sync_logs_created_at").on(table.createdAt),
+}));
 
 export type SyncLog = typeof syncLogs.$inferSelect;
 export type InsertSyncLog = typeof syncLogs.$inferInsert;
@@ -519,7 +529,11 @@ export const pendingPolicies = mysqlTable("pendingPolicies", {
   lastSyncedAt: timestamp("lastSyncedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  statusIdx: index("idx_pending_policies_status").on(table.status),
+  agentCodeIdx: index("idx_pending_policies_agent_code").on(table.agentCode),
+  createdAtIdx: index("idx_pending_policies_created_at").on(table.createdAt),
+}));
 
 export type PendingPolicy = typeof pendingPolicies.$inferSelect;
 export type InsertPendingPolicy = typeof pendingPolicies.$inferInsert;
@@ -627,7 +641,12 @@ export const inforcePolicies = mysqlTable("inforcePolicies", {
   lastSyncedAt: timestamp("lastSyncedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  statusIdx: index("idx_inforce_policies_status").on(table.status),
+  writingAgentCodeIdx: index("idx_inforce_policies_writing_agent_code").on(table.writingAgentCode),
+  agentIdIdx: index("idx_inforce_policies_agent_id").on(table.agentId),
+  createdAtIdx: index("idx_inforce_policies_created_at").on(table.createdAt),
+}));
 
 export type InforcePolicy = typeof inforcePolicies.$inferSelect;
 export type InsertInforcePolicy = typeof inforcePolicies.$inferInsert;

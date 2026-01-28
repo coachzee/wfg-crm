@@ -115,6 +115,12 @@ export const dashboardRouter = router({
     return getRecentSyncLogs(10);
   }),
   
+  getTransamericaAlerts: protectedProcedure.query(async () => {
+    logger.info("Fetching Transamerica alerts");
+    const { getCurrentTransamericaAlerts } = await import("../chargeback-notification");
+    return getCurrentTransamericaAlerts();
+  }),
+
   sendChargebackNotification: protectedProcedure.mutation(async () => {
     logger.info("Sending chargeback notification");
     const { sendChargebackNotification, getCurrentTransamericaAlerts } = await import("../chargeback-notification");
