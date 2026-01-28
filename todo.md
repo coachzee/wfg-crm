@@ -1315,3 +1315,34 @@
 - [x] 1C: Fix open redirect vulnerability with domain allowlist
 - [x] Add security tests (14 tests passing)
 - [x] All 184 tests passing after security fixes
+
+
+## Senior Dev Review - Phase 2 Refactoring (Jan 28, 2026)
+### 2A: Split routers.ts into domain routers
+- [x] Create server/routers/ directory structure
+- [x] Extract dashboard router to routers/dashboard.ts
+- [x] Extract agents router to routers/agents.ts
+- [x] Extract clients router to routers/clients.ts
+- [x] Extract tasks router to routers/tasks.ts
+- [ ] Extract mywfg router to routers/mywfg.ts
+- [ ] Extract transamerica router to routers/transamerica.ts
+- [ ] Update main routers.ts to re-export from domain files
+
+### 2B: Split db.ts into repositories
+- [ ] Create server/repositories/ directory structure
+- [ ] Extract agent queries to repositories/agents.ts
+- [ ] Extract client queries to repositories/clients.ts
+- [ ] Extract task queries to repositories/tasks.ts
+- [ ] Extract dashboard queries to repositories/dashboard.ts
+- [ ] Update db.ts to re-export from repository files
+
+### 2C: Add request correlation logging
+- [x] Create structured logger with request ID support (server/_core/logger.ts)
+- [x] Add request ID middleware to Express
+- [x] Add log levels (info, warn, error, debug)
+- [ ] Update all console.log calls to use structured logger (incremental)
+
+### 2D: Encryption key rotation
+- [x] Create key rotation migration script (scripts/rotate-encryption-key.mjs)
+- [x] Add support for multiple encryption keys during rotation
+- [x] Document key rotation procedure in script comments
