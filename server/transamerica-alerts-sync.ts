@@ -13,7 +13,15 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { getDb } from './db';
 import { syncLogs } from '../drizzle/schema';
 import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from './gmail-otp-v2';
-import { TransamericaAlerts, PolicyAlert, sendChargebackNotification, hasNewAlerts } from './chargeback-notification';
+import { TransamericaAlerts, sendChargebackNotification, hasNewAlerts } from './chargeback-notification';
+
+// Local type definition to avoid import issues
+interface PolicyAlert {
+  policyNumber: string;
+  ownerName: string;
+  alertDate: string;
+  alertType: string;
+}
 
 // Helper to require environment variables
 function mustGetEnv(name: string): string {

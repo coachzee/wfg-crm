@@ -46,12 +46,39 @@ export default defineConfig({
     // Enable chunk splitting for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks for better caching
-          "vendor-react": ["react", "react-dom"],
-          "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select"],
-          "vendor-charts": ["recharts"],
-          "vendor-utils": ["date-fns", "clsx", "tailwind-merge"],
+        manualChunks(id) {
+          // React core - smallest possible chunk
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor-react';
+          }
+          // tRPC client - separate chunk for API layer
+          if (id.includes('@trpc/client') || id.includes('@trpc/react-query') || id.includes('@tanstack/react-query')) {
+            return 'vendor-trpc';
+          }
+          // Charts library - heavy, lazy-loaded with Dashboard
+          if (id.includes('recharts') || id.includes('d3-')) {
+            return 'vendor-charts';
+          }
+          // UI components - used across many pages
+          if (id.includes('@radix-ui/') || id.includes('lucide-react')) {
+            return 'vendor-ui';
+          }
+          // Form handling
+          if (id.includes('react-hook-form') || id.includes('@hookform/') || id.includes('zod')) {
+            return 'vendor-forms';
+          }
+          // Date utilities
+          if (id.includes('date-fns')) {
+            return 'vendor-date';
+          }
+          // Other utilities
+          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
+            return 'vendor-utils';
+          }
+          // Wouter router
+          if (id.includes('wouter')) {
+            return 'vendor-router';
+          }
         },
       },
     },

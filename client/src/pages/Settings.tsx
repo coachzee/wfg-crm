@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, AlertCircle, CheckCircle2, RefreshCw, Clock, CalendarClock, Activity, Users, Download } from "lucide-react";
+import { Lock, AlertCircle, CheckCircle2, RefreshCw, Clock, CalendarClock, Activity, Users, Download, Database } from "lucide-react";
+import { QueryMetricsWidget } from "@/components/QueryMetricsWidget";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -125,6 +126,7 @@ export default function Settings() {
       <Tabs defaultValue="mywfg" className="space-y-4">
         <TabsList>
           <TabsTrigger value="mywfg">MyWFG Integration</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
         </TabsList>
 
@@ -518,6 +520,11 @@ export default function Settings() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-6">
+          <QueryMetricsWidget />
         </TabsContent>
 
         {/* General Tab */}

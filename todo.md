@@ -1507,3 +1507,22 @@
   - Added getQueryMetrics endpoint to dashboard router
   - Tracks slow queries (>1000ms), failed queries, and query types
   - Configurable via ENABLE_QUERY_LOGGING and SLOW_QUERY_THRESHOLD_MS env vars
+
+
+## Follow-up Improvements Round 2
+- [x] Add query metrics dashboard widget to Settings page
+  - Created QueryMetricsWidget component with real-time stats
+  - Added Performance tab to Settings page
+  - Shows total queries, avg duration, slow queries, failed queries
+  - Displays query type breakdown and recent slow queries
+- [x] Schedule Transamerica alerts sync every 6 hours
+  - Created scheduler.ts with 6-hour interval for alerts sync
+  - Added /api/cron/transamerica-alerts endpoint for external cron jobs
+  - Scheduler starts automatically with server and runs initial sync after 30s
+  - Sends notifications when new alerts are detected
+- [x] Optimize large chunks by lazy-loading more components
+  - Improved manualChunks configuration with function-based splitting
+  - Split tRPC client into separate vendor-trpc chunk (85 KB)
+  - Split date-fns into vendor-date chunk (23 KB)
+  - Main index.js reduced from 625 KB to 152 KB (76% reduction)
+  - Better parallel loading of vendor chunks

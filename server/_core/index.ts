@@ -65,6 +65,10 @@ async function startServer() {
     });
   });
 
+  // Start the scheduler for background tasks
+  const { startScheduler } = await import('../scheduler');
+  startScheduler();
+
   // Cron-triggered sync endpoint for Hostinger/self-hosted deployments
   // This endpoint can be called by external cron jobs to trigger data sync
   // Requires SYNC_SECRET environment variable for authentication
@@ -138,6 +142,35 @@ async function startServer() {
         error: errorMessage,
         timestamp: new Date().toISOString()
       });
+    }
+  });
+
+  // Cron endpoint for Transamerica alerts sync
+  app.get("/api/cron/transamerica-alerts", async (req, res) => {
+    try {
+      const syncSecret = process.env.SYNC_SECRET;
+      const providedSecret = req.query.secret;
+      
+      if (!syncSecret || providedSecret !== syncSecret) {
+        return res.status(401).json({ success: false, error: 'Invalid sync secret' });
+      }
+      
+      console.log('[Cron] Starting Transamerica alerts sync...');
+      
+      const { syncTransamericaAlerts } = await import('../scheduler');
+      const result = await syncTransamericaAlerts();
+      
+      res.status(200).json({
+        success: result.success,
+        timestamp: new Date().toISOString(),
+        alertsCount: result.alertsCount,
+        newAlertsDetected: result.newAlertsDetected,
+        notificationSent: result.notificationSent,
+        error: result.error,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ success: false, error: errorMessage });
     }
   });
 

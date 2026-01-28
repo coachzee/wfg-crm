@@ -1,0 +1,137 @@
+/**
+ * Scheduler Module
+ * 
+ * Handles scheduled background tasks including:
+ * - Transamerica alerts sync (every 6 hours)
+ * - Other periodic maintenance tasks
+ */
+
+import { logger } from "./_core/logger";
+
+// Track scheduled intervals for cleanup
+const scheduledIntervals: NodeJS.Timeout[] = [];
+
+// Track last sync times
+const lastSyncTimes: Record<string, Date> = {};
+
+/**
+ * Get the last sync time for a specific task
+ */
+export function getLastSyncTime(taskName: string): Date | null {
+  return lastSyncTimes[taskName] || null;
+}
+
+/**
+ * Get all scheduled task statuses
+ */
+export function getSchedulerStatus() {
+  return {
+    isRunning: scheduledIntervals.length > 0,
+    tasks: {
+      transamericaAlerts: {
+        lastSync: lastSyncTimes['transamericaAlerts'] || null,
+        intervalHours: 6,
+      },
+    },
+  };
+}
+
+/**
+ * Sync Transamerica alerts
+ * Can be called manually or by the scheduler
+ */
+export async function syncTransamericaAlerts(): Promise<{
+  success: boolean;
+  alertsCount: number;
+  newAlertsDetected: boolean;
+  notificationSent: boolean;
+  error?: string;
+}> {
+  try {
+    logger.info("[Scheduler] Starting Transamerica alerts sync...");
+    
+    const { syncTransamericaAlerts: runSync } = await import("./transamerica-alerts-sync");
+    const result = await runSync();
+    
+    lastSyncTimes['transamericaAlerts'] = new Date();
+    
+    const alertsCount = result.alerts.reversedPremiumPayments.length + result.alerts.eftRemovals.length;
+    
+    logger.info("[Scheduler] Transamerica alerts sync completed", {
+      success: result.success,
+      alertsCount,
+      newAlertsDetected: result.newAlertsDetected,
+    });
+    
+    return {
+      success: result.success,
+      alertsCount,
+      newAlertsDetected: result.newAlertsDetected,
+      notificationSent: result.notificationSent,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("[Scheduler] Transamerica alerts sync failed", undefined, { errorMsg: errorMessage });
+    return {
+      success: false,
+      alertsCount: 0,
+      newAlertsDetected: false,
+      notificationSent: false,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Start all scheduled tasks
+ * Called when the server starts
+ */
+export function startScheduler() {
+  logger.info("[Scheduler] Starting scheduled tasks...");
+  
+  // Transamerica alerts sync - every 6 hours (21600000 ms)
+  const SIX_HOURS = 6 * 60 * 60 * 1000;
+  
+  // Run immediately on startup (with a small delay to let the server initialize)
+  setTimeout(async () => {
+    logger.info("[Scheduler] Running initial Transamerica alerts sync...");
+    await syncTransamericaAlerts();
+  }, 30000); // 30 second delay after server start
+  
+  // Then run every 6 hours
+  const transamericaInterval = setInterval(async () => {
+    logger.info("[Scheduler] Running scheduled Transamerica alerts sync...");
+    await syncTransamericaAlerts();
+  }, SIX_HOURS);
+  
+  scheduledIntervals.push(transamericaInterval);
+  
+  logger.info("[Scheduler] Scheduled tasks started", {
+    tasks: ["transamericaAlerts"],
+    intervals: {
+      transamericaAlerts: "6 hours",
+    },
+  });
+}
+
+/**
+ * Stop all scheduled tasks
+ * Called when the server shuts down
+ */
+export function stopScheduler() {
+  logger.info("[Scheduler] Stopping scheduled tasks...");
+  
+  scheduledIntervals.forEach(interval => clearInterval(interval));
+  scheduledIntervals.length = 0;
+  
+  logger.info("[Scheduler] All scheduled tasks stopped");
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  stopScheduler();
+});
+
+process.on('SIGINT', () => {
+  stopScheduler();
+});
