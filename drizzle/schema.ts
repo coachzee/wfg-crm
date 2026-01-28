@@ -457,6 +457,7 @@ export const syncLogs = mysqlTable("syncLogs", {
     "PRODUCTION",
     "TRANSAMERICA_PENDING",
     "TRANSAMERICA_INFORCE",
+    "TRANSAMERICA_ALERTS",
   ]).notNull(),
   scheduledTime: varchar("scheduledTime", { length: 20 }), // "3:30 PM" or "6:30 PM"
   status: mysqlEnum("status", ["PENDING", "RUNNING", "SUCCESS", "FAILED", "PARTIAL"]).default("PENDING").notNull(),

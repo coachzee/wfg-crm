@@ -5,9 +5,28 @@ import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { visualizer } from "rollup-plugin-visualizer";
 
+// Only include visualizer in build mode when ANALYZE env is set
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+];
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
+// Add visualizer plugin when ANALYZE=true
+if (process.env.ANALYZE === "true") {
+  plugins.push(
+    visualizer({
+      filename: "dist/stats.html",
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      template: "treemap", // Options: treemap, sunburst, network
+    }) as any
+  );
+}
 
 export default defineConfig({
   plugins,
@@ -24,6 +43,18 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Enable chunk splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          "vendor-react": ["react", "react-dom"],
+          "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select"],
+          "vendor-charts": ["recharts"],
+          "vendor-utils": ["date-fns", "clsx", "tailwind-merge"],
+        },
+      },
+    },
   },
   server: {
     host: true,

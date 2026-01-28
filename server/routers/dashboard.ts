@@ -454,6 +454,13 @@ export const dashboardRouter = router({
       const result = await processScheduledEmails();
       return result;
     }),
+
+  // Database query metrics endpoint
+  getQueryMetrics: protectedProcedure.query(async () => {
+    logger.info("Fetching database query metrics");
+    const { getQueryMetrics } = await import("../db-logger");
+    return getQueryMetrics();
+  }),
 });
 
 export default dashboardRouter;

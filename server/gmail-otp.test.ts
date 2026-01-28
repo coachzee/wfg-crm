@@ -1,6 +1,28 @@
 import { describe, it, expect } from 'vitest';
 import { verifyGmailCredentials, getMyWFGCredentials, getTransamericaCredentials } from './gmail-otp';
 
+// Helper function to retry async operations with exponential backoff
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        console.log(`[Retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 describe('Gmail OTP Service', () => {
   it('should have MyWFG email credentials configured', () => {
     const credentials = getMyWFGCredentials();
@@ -20,21 +42,31 @@ describe('Gmail OTP Service', () => {
 
   it('should connect to MyWFG Gmail account via IMAP', async () => {
     const credentials = getMyWFGCredentials();
-    const result = await verifyGmailCredentials(credentials);
+    
+    // Use retry logic for network resilience
+    const result = await withRetry(async () => {
+      const res = await verifyGmailCredentials(credentials);
+      if (!res.success) {
+        throw new Error(res.error || 'Connection failed');
+      }
+      return res;
+    });
     
     expect(result.success).toBe(true);
-    if (!result.success) {
-      console.error('MyWFG Gmail connection failed:', result.error);
-    }
-  }, 30000); // 30 second timeout for IMAP connection
+  }, 60000); // 60 second timeout to allow for retries
 
   it('should connect to Transamerica Gmail account via IMAP', async () => {
     const credentials = getTransamericaCredentials();
-    const result = await verifyGmailCredentials(credentials);
+    
+    // Use retry logic for network resilience
+    const result = await withRetry(async () => {
+      const res = await verifyGmailCredentials(credentials);
+      if (!res.success) {
+        throw new Error(res.error || 'Connection failed');
+      }
+      return res;
+    });
     
     expect(result.success).toBe(true);
-    if (!result.success) {
-      console.error('Transamerica Gmail connection failed:', result.error);
-    }
-  }, 30000); // 30 second timeout for IMAP connection
+  }, 60000); // 60 second timeout to allow for retries
 });

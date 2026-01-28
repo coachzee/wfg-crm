@@ -1485,3 +1485,25 @@
 - [x] Add getTransamericaAlerts procedure to enable TransamericaAlertsCard on dashboard
   - Added dashboard.getTransamericaAlerts query procedure
   - TransamericaAlertsCard now displays chargeback alerts from Transamerica
+
+
+## Gmail IMAP Fix and Additional Follow-ups
+- [x] Fix Gmail IMAP test failure (Transamerica connection)
+  - Added retry logic with exponential backoff for network resilience
+  - Fixed Puppeteer to use system Chromium browser
+  - All 198 tests now pass
+- [x] Implement real-time Transamerica sync (automated scraping for live chargeback alerts)
+  - Created transamerica-alerts-sync.ts with full Puppeteer-based scraping
+  - Added TRANSAMERICA_ALERTS sync type to schema
+  - Integrates with existing OTP and login automation
+  - Falls back to cached data if scraping fails
+- [x] Add bundle analyzer for chunk size analysis
+  - Installed rollup-plugin-visualizer
+  - Added ANALYZE=true build mode to generate stats.html
+  - Configured manual chunks for vendor libraries (react, ui, charts, utils)
+  - Build generates treemap visualization at dist/stats.html
+- [x] Add database query logging for performance metrics
+  - Created db-logger.ts with query timing and metrics tracking
+  - Added getQueryMetrics endpoint to dashboard router
+  - Tracks slow queries (>1000ms), failed queries, and query types
+  - Configurable via ENABLE_QUERY_LOGGING and SLOW_QUERY_THRESHOLD_MS env vars
