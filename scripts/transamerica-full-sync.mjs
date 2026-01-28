@@ -9,16 +9,22 @@ import { getDb } from '../server/db.ts';
 import { pendingPolicies, pendingRequirements } from '../drizzle/schema.ts';
 import { eq } from 'drizzle-orm';
 
+// Helper to require environment variables
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 const credentials = {
-  username: process.env.TRANSAMERICA_USERNAME || '',
-  password: process.env.TRANSAMERICA_PASSWORD || '',
+  username: mustGetEnv('TRANSAMERICA_USERNAME'),
+  password: mustGetEnv('TRANSAMERICA_PASSWORD'),
 };
 
-console.log('[Transamerica Sync] Validating credentials...');
-if (!credentials.username || !credentials.password) {
-  console.error('[Transamerica Sync] Missing TRANSAMERICA_USERNAME or TRANSAMERICA_PASSWORD');
-  process.exit(1);
-}
+console.log('[Transamerica Sync] Credentials validated.');
 
 async function loginToTransamerica(page) {
   console.log('[Transamerica Sync] Navigating to Transamerica...');

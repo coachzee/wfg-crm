@@ -10,18 +10,28 @@ import mysql from 'mysql2/promise';
 import { eq } from 'drizzle-orm';
 import * as schema from '../drizzle/schema.js';
 
+// Helper to require environment variables
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // Get credentials
 function getMyWFGLoginCredentials() {
   return {
-    username: process.env.MYWFG_USERNAME || '',
-    password: process.env.MYWFG_PASSWORD || '',
+    username: mustGetEnv('MYWFG_USERNAME'),
+    password: mustGetEnv('MYWFG_PASSWORD'),
   };
 }
 
 function getGmailCredentials() {
   return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: mustGetEnv('MYWFG_EMAIL'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
   };
 }
 

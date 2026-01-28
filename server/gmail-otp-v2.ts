@@ -12,6 +12,15 @@
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 // Types
 interface GmailCredentials {
   email: string;
@@ -75,8 +84,8 @@ export function clearUsedOTPs(): void {
  */
 export function getMyWFGCredentials(): GmailCredentials {
   return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: mustGetEnv('MYWFG_EMAIL'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
   };
 }
 
@@ -85,8 +94,8 @@ export function getMyWFGCredentials(): GmailCredentials {
  */
 export function getTransamericaCredentials(): GmailCredentials {
   return {
-    email: process.env.TRANSAMERICA_EMAIL || '',
-    appPassword: process.env.TRANSAMERICA_APP_PASSWORD || '',
+    email: mustGetEnv('TRANSAMERICA_EMAIL'),
+    appPassword: mustGetEnv('TRANSAMERICA_APP_PASSWORD'),
   };
 }
 

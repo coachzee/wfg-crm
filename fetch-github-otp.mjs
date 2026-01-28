@@ -7,8 +7,17 @@ import 'dotenv/config';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
-const GMAIL_USER = process.env.MYWFG_EMAIL || 'zaidshopejuwbh@gmail.com';
-const GMAIL_APP_PASSWORD = process.env.MYWFG_APP_PASSWORD;
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
+const GMAIL_USER = mustGetEnv('MYWFG_EMAIL');
+const GMAIL_APP_PASSWORD = mustGetEnv('MYWFG_APP_PASSWORD');
 
 async function fetchGitHubOTP() {
   return new Promise((resolve, reject) => {

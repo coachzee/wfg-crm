@@ -5,6 +5,15 @@ import { getDb } from './db';
 import { agents, agentExamPrep } from '../drizzle/schema';
 import { eq, and, like, or, sql } from 'drizzle-orm';
 
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 interface GmailCredentials {
   email: string;
   appPassword: string;
@@ -46,11 +55,11 @@ function createImapConfig(credentials: GmailCredentials): Imap.Config {
   };
 }
 
-// Get credentials from environment variables
+// Get credentials from environment variables (fail fast if missing)
 function getXcelEmailCredentials(): GmailCredentials {
   return {
-    email: process.env.MYWFG_EMAIL || 'zaidshopejuwbh@gmail.com',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: mustGetEnv('MYWFG_EMAIL'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
   };
 }
 

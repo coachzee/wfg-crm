@@ -16,11 +16,20 @@ import { inforcePolicies } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from './gmail-otp-v2';
 
-// Environment variables
-const TA_USERNAME = process.env.TRANSAMERICA_USERNAME || '';
-const TA_PASSWORD = process.env.TRANSAMERICA_PASSWORD || '';
-const SECURITY_Q_FIRST_JOB = process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || '';
-const SECURITY_Q_PET = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || '';
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Environment variables (fail fast if missing)
+const TA_USERNAME = mustGetEnv('TRANSAMERICA_USERNAME');
+const TA_PASSWORD = mustGetEnv('TRANSAMERICA_PASSWORD');
+const SECURITY_Q_FIRST_JOB = mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+const SECURITY_Q_PET = mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
 
 // Commission constants
 const TRANSAMERICA_MULTIPLIER = 1.25;

@@ -26,14 +26,19 @@
 import https from 'https';
 import http from 'http';
 
-// Configuration
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
-const SYNC_SECRET = process.env.SYNC_SECRET;
-
-if (!SYNC_SECRET) {
-  console.error('[Cron Sync] Error: SYNC_SECRET environment variable is required');
-  process.exit(1);
+// Helper to require environment variables
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`[Cron Sync] ❌ Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
 }
+
+// Configuration
+const APP_URL = mustGetEnv('APP_URL');
+const SYNC_SECRET = mustGetEnv('SYNC_SECRET');
 
 const syncUrl = new URL('/api/cron/sync', APP_URL);
 syncUrl.searchParams.set('secret', SYNC_SECRET);

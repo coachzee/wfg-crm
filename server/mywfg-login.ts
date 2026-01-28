@@ -12,15 +12,24 @@ import { simpleParser } from 'mailparser';
 // Track used OTPs to prevent reuse
 const usedOTPs = new Set<string>();
 
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 function getCredentials() {
   return {
     mywfg: {
-      username: process.env.MYWFG_USERNAME || '',
-      password: process.env.MYWFG_PASSWORD || '',
+      username: mustGetEnv('MYWFG_USERNAME'),
+      password: mustGetEnv('MYWFG_PASSWORD'),
     },
     gmail: {
-      email: process.env.MYWFG_EMAIL || '',
-      appPassword: process.env.MYWFG_APP_PASSWORD || '',
+      email: mustGetEnv('MYWFG_EMAIL'),
+      appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
     }
   };
 }

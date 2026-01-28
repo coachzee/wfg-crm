@@ -18,19 +18,28 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { startOTPSession, waitForOTPWithSession, clearUsedOTPs } from './gmail-otp-v2';
 import { eq } from 'drizzle-orm';
 
-// Get MyWFG login credentials from environment
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Get MyWFG login credentials from environment (fail fast if missing)
 function getMyWFGLoginCredentials() {
   return {
-    username: process.env.MYWFG_USERNAME || '',
-    password: process.env.MYWFG_PASSWORD || '',
+    username: mustGetEnv('MYWFG_USERNAME'),
+    password: mustGetEnv('MYWFG_PASSWORD'),
   };
 }
 
-// Get Gmail credentials for OTP
+// Get Gmail credentials for OTP (fail fast if missing)
 function getGmailCredentials() {
   return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: mustGetEnv('MYWFG_EMAIL'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
   };
 }
 

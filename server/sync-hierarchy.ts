@@ -12,6 +12,15 @@ import { agents } from "../drizzle/schema";
 import { eq, isNotNull } from "drizzle-orm";
 import { startOTPSession, waitForOTPWithSession, getMyWFGCredentials, clearUsedOTPs } from "./gmail-otp-v2";
 
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 // Configuration
 const BATCH_SIZE = 15; // Process 15 agents per batch
 const DELAY_BETWEEN_AGENTS = 500; // 500ms delay between agents
@@ -28,8 +37,8 @@ interface UplineData {
  */
 async function loginToMyWFG(page: Page): Promise<boolean> {
   try {
-    const username = process.env.MYWFG_USERNAME || '';
-    const password = process.env.MYWFG_PASSWORD || '';
+    const username = mustGetEnv('MYWFG_USERNAME');
+    const password = mustGetEnv('MYWFG_PASSWORD');
     const gmailCreds = getMyWFGCredentials();
     
     // Navigate to MyWFG

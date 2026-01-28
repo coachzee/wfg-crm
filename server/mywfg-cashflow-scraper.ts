@@ -19,11 +19,20 @@ export interface CashFlowReportResult {
   reportPeriod: string;
 }
 
-// Get MyWFG login credentials from environment
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Get MyWFG login credentials from environment (fail fast if missing)
 function getMyWFGLoginCredentials() {
   return {
-    username: process.env.MYWFG_USERNAME || '',
-    password: process.env.MYWFG_PASSWORD || '',
+    username: mustGetEnv('MYWFG_USERNAME'),
+    password: mustGetEnv('MYWFG_PASSWORD'),
   };
 }
 

@@ -10,12 +10,21 @@ import { getDb } from "./db";
 import { pendingPolicies, pendingRequirements } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-// Transamerica credentials from environment
-const TRANSAMERICA_USERNAME = process.env.TRANSAMERICA_USERNAME || "";
-const TRANSAMERICA_PASSWORD = process.env.TRANSAMERICA_PASSWORD || "";
-const TRANSAMERICA_EMAIL = process.env.TRANSAMERICA_EMAIL || "";
-const TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY = process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || "";
-const TRANSAMERICA_SECURITY_Q_PET_NAME = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || "";
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Transamerica credentials from environment (fail fast if missing)
+const TRANSAMERICA_USERNAME = mustGetEnv('TRANSAMERICA_USERNAME');
+const TRANSAMERICA_PASSWORD = mustGetEnv('TRANSAMERICA_PASSWORD');
+const TRANSAMERICA_EMAIL = mustGetEnv('TRANSAMERICA_EMAIL');
+const TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY = mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+const TRANSAMERICA_SECURITY_Q_PET_NAME = mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
 
 // Gmail OTP extraction (reuse from existing service)
 import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from "./gmail-otp-v2";

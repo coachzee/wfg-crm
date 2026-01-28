@@ -19,19 +19,28 @@ import { fetchDownlineStatus, syncAgentsFromDownlineStatus } from './mywfg-downl
 // Track used OTPs to avoid reuse
 const usedOTPs = new Set<string>();
 
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 function getMyWFGLoginCredentials() {
   return {
-    username: process.env.MYWFG_USERNAME || '',
-    password: process.env.MYWFG_PASSWORD || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
-    email: process.env.MYWFG_EMAIL || '',
+    username: mustGetEnv('MYWFG_USERNAME'),
+    password: mustGetEnv('MYWFG_PASSWORD'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
+    email: mustGetEnv('MYWFG_EMAIL'),
   };
 }
 
 function getGmailCredentials() {
   return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: mustGetEnv('MYWFG_EMAIL'),
+    appPassword: mustGetEnv('MYWFG_APP_PASSWORD'),
   };
 }
 

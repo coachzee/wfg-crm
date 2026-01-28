@@ -4,9 +4,19 @@ import { getDb, createScheduledSyncLog, updateScheduledSyncLog } from '../server
 import { agents } from '../drizzle/schema.ts';
 import { eq } from 'drizzle-orm';
 
+// Helper to require environment variables
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 const credentials = {
-  username: process.env.MYWFG_USERNAME || '',
-  password: process.env.MYWFG_PASSWORD || '',
+  username: mustGetEnv('MYWFG_USERNAME'),
+  password: mustGetEnv('MYWFG_PASSWORD'),
 };
 
 // Map MyWFG title levels to WFG ranks
@@ -24,11 +34,7 @@ const TITLE_LEVEL_TO_RANK = {
   '50': 'CHAIRMAN',
 };
 
-console.log('[Full Sync] Validating credentials...');
-if (!credentials.username || !credentials.password) {
-  console.error('[Full Sync] Missing MYWFG_USERNAME or MYWFG_PASSWORD');
-  process.exit(1);
-}
+console.log('[Full Sync] Credentials validated.');
 
 async function loginToMyWFG(page) {
   console.log('[Full Sync] Navigating to MyWFG...');

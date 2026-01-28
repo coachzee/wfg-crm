@@ -9,11 +9,20 @@ import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
 
-// Environment variables
-const MYWFG_USERNAME = process.env.MYWFG_USERNAME || "";
-const MYWFG_PASSWORD = process.env.MYWFG_PASSWORD || "";
-const MYWFG_APP_PASSWORD = process.env.MYWFG_APP_PASSWORD || "";
-const MYWFG_EMAIL = process.env.MYWFG_EMAIL || "";
+// Helper to require environment variables
+function mustGetEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Environment variables (fail fast if missing)
+const MYWFG_USERNAME = mustGetEnv('MYWFG_USERNAME');
+const MYWFG_PASSWORD = mustGetEnv('MYWFG_PASSWORD');
+const MYWFG_APP_PASSWORD = mustGetEnv('MYWFG_APP_PASSWORD');
+const MYWFG_EMAIL = mustGetEnv('MYWFG_EMAIL');
 
 interface HierarchyNode {
   name: string;
