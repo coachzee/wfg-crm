@@ -13,14 +13,21 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { getDb } from './db';
 import { syncLogs } from '../drizzle/schema';
 import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from './gmail-otp-v2';
-import { TransamericaAlerts, sendChargebackNotification, hasNewAlerts } from './chargeback-notification';
+import { sendChargebackNotification, hasNewAlerts } from './chargeback-notification';
 
-// Local type definition to avoid import issues
+// Local type definitions to avoid ESM import issues
 interface PolicyAlert {
   policyNumber: string;
   ownerName: string;
   alertDate: string;
   alertType: string;
+}
+
+interface TransamericaAlerts {
+  totalUnreadAlerts: number;
+  reversedPremiumPayments: PolicyAlert[];
+  eftRemovals: PolicyAlert[];
+  lastSyncDate: string;
 }
 
 // Helper to require environment variables
