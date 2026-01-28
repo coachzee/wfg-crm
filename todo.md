@@ -1596,3 +1596,12 @@
 - [x] Push workflows to GitHub repository
 - [x] Add Dependabot for automated dependency updates
 - [ ] Verify pipeline runs successfully on GitHub
+
+
+## GitHub Integration (Persistent)
+- [x] Configure GitHub CLI authentication (gh auth)
+- [x] Set up git credential helper to use gh CLI
+- [x] Add 'github' remote pointing to https://github.com/coachzee/wfg-crm.git
+- [x] Configure local git settings (push.default, pull.rebase)
+- [x] Verify push/pull access works without manual intervention
+- [x] GitHub token stored in ~/.config/gh/hosts.yml for persistence
