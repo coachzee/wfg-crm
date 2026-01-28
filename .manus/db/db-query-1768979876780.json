@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  COUNT(*) as totalPolicies,\n  SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as activePolicies,\n  SUM(CAST(premium AS DECIMAL(15,2))) as totalPremium,\n  SUM(CAST(calculatedCommission AS DECIMAL(15,2))) as totalCommission,\n  SUM(CAST(targetPremium AS DECIMAL(15,2))) as totalTargetPremium\nFROM inforcePolicies;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT \n  COUNT(*) as totalPolicies,\n  SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as activePolicies,\n  SUM(CAST(premium AS DECIMAL(15,2))) as totalPremium,\n  SUM(CAST(calculatedCommission AS DECIMAL(15,2))) as totalCommission,\n  SUM(CAST(targetPremium AS DECIMAL(15,2))) as totalTargetPremium\nFROM inforcePolicies;",
+  "rows": [
+    {
+      "totalPolicies": "97",
+      "activePolicies": "83",
+      "totalPremium": "467457.36",
+      "totalCommission": "576409.92",
+      "totalTargetPremium": "691828.57"
+    }
+  ],
+  "messages": [],
+  "stdout": "totalPolicies\tactivePolicies\ttotalPremium\ttotalCommission\ttotalTargetPremium\n97\t83\t467457.36\t576409.92\t691828.57\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

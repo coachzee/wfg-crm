@@ -1249,3 +1249,17 @@
 - [x] Enable inline editing of client contact information
 - [x] Add contact info display in client detail page
 - [ ] Support sending anniversary greetings via email
+
+
+## Dashboard Metrics Bug Fix (New)
+- [x] Investigate Total Commission vs Super Team Cash Flow discrepancy
+- [ ] Automate Super Team Cash Flow to pull from MyWFG dynamically
+- [ ] Sync cash flow data from MyWFG
+- [ ] Verify dashboard shows accurate numbers
+
+
+## Dashboard Metrics Bug Fix (Completed - Jan 27, 2026)
+- [x] Investigate Total Commission vs Super Team Cash Flow discrepancy
+- [x] Sync Super Team Cash Flow data from MyWFG (Feb 2025 - Jan 2026)
+- [x] Update superTeamCashFlow to $319,570.24 (accurate current value)
+- [x] Verify dashboard shows accurate numbers ($319.6K)

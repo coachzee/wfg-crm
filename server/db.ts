@@ -363,10 +363,10 @@ export async function getDashboardMetrics() {
   const db = await getDb();
   
   // MyWFG extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
-  // These are the actual values from the MyWFG account as of Jan 4, 2026
+  // These are the actual values from the MyWFG account as of Jan 27, 2026
   // NOTE: activeAssociates and licensedAgents are now fetched dynamically from database
   const mywfgData = {
-    superTeamCashFlow: 290099.22, // Super Team Total Cash Flow (Jan-Dec 2025)
+    superTeamCashFlow: 319570.24, // Super Team Total Cash Flow (Feb 2025 - Jan 2026)
     personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
     familiesProtected: 77, // Unique policies from Commissions Summary
     totalPolicies: 77, // Total policies written in 2025
