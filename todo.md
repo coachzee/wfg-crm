@@ -1583,8 +1583,15 @@
 
 
 ## GitHub Push and Preview Fix
-- [ ] Push codebase to GitHub repository (use Settings → GitHub in Management UI)
+- [x] Push codebase to GitHub repository https://github.com/coachzee/wfg-crm
 - [x] Fix preview portal to display correctly
   - Fixed requestCorrelationMiddleware() call (was missing parentheses)
   - Disabled immediate Transamerica sync on startup in development mode
   - Server now responds correctly to health checks
+
+
+## CI/CD Pipeline Setup
+- [ ] Create GitHub Actions CI workflow for testing (type checks, unit tests, bundle size)
+- [ ] Create GitHub Actions CD workflow for deployment
+- [ ] Push workflows to GitHub repository
+- [ ] Verify pipeline runs successfully

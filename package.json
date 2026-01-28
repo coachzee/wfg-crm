@@ -10,6 +10,8 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=verbose",
+    "typecheck": "tsc --noEmit",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "check:bundle:strict": "node scripts/check-bundle-size.mjs --max-size=150",
