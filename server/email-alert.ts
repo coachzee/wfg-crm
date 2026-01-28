@@ -7,11 +7,15 @@ interface EmailAlertOptions {
   timestamp?: Date;
 }
 
-// Get Gmail SMTP credentials from environment
+// Get Gmail SMTP credentials from environment (required for email sending)
 function getGmailCredentials() {
+  const email = process.env.MYWFG_EMAIL;
+  const appPassword = process.env.MYWFG_APP_PASSWORD;
+  
+  // Return empty strings if not configured - caller will handle the error
   return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
+    email: email || '',
+    appPassword: appPassword || '',
   };
 }
 

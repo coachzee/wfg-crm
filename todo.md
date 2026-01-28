@@ -1279,3 +1279,39 @@
 
 ## Chart Tooltip Bug Fix (Jan 28, 2026) - COMPLETED
 - [x] Fix monthly cash flow chart tooltip positioning - numbers now display clearly above the bars
+
+
+## Senior Dev Review Refactoring (Jan 28, 2026)
+
+### Phase 1 - Security + Correctness (Critical)
+- [ ] 1.1 Remove hardcoded credentials from scripts (extract-full-policy-data.mjs, extract-production-data.mjs, extract-target-premiums.mjs, transamerica-inforce-sync.ts)
+- [ ] 1.2 Add env.schema.ts with Zod validation for all required env vars
+- [ ] 1.3 Add .env.example listing required vars
+- [ ] 1.4 Fix encryption.ts - remove default key fallback, switch to AES-256-GCM
+- [ ] 1.5 Fix open redirect vulnerability in /api/track/click/:trackingId endpoint
+
+### Phase 2 - Structure Without Behavior Changes
+- [ ] 2.1 Split routers.ts into domain routers (agents, clients, policies, sync, email)
+- [ ] 2.2 Split db.ts into repositories (agents.repo.ts, clients.repo.ts, policies.repo.ts, sync.repo.ts)
+- [ ] 2.3 Add services layer (agents.service.ts, clients.service.ts, etc.)
+- [ ] 2.4 Refactor scripts to call jobs/ modules (thin wrappers)
+- [ ] 2.5 Add getDbOrThrow() for server runtime, getDbMaybe() for tooling
+
+### Phase 3 - UI Maintainability
+- [ ] 3.1 Split Dashboard.tsx (~2195 lines) into smaller components (KPIGrid, Charts, AlertsPanel, QuickActions)
+- [ ] 3.2 Split TeamHierarchy.tsx (~807 lines) into smaller components
+- [ ] 3.3 Create useDashboardData hook for data fetching logic
+
+### Phase 4 - Quality + Confidence
+- [ ] 4.1 Reorganize tests into tests/unit/, tests/integration/, tests/e2e/
+- [ ] 4.2 Add pino logger with requestId correlation
+- [ ] 4.3 Centralize error mapping for tRPC (consistent error shape)
+
+
+## Senior Dev Review - Phase 1 Security Fixes (COMPLETED - Jan 28, 2026)
+- [x] 1A: Remove hardcoded secrets from 8 files (scripts + server)
+- [x] 1A: Add env validation with Zod in env.schema.ts
+- [x] 1B: Fix encryption to use AES-256-GCM with required key (backward compatible)
+- [x] 1C: Fix open redirect vulnerability with domain allowlist
+- [x] Add security tests (14 tests passing)
+- [x] All 184 tests passing after security fixes

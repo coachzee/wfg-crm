@@ -16,13 +16,24 @@ import { eq } from 'drizzle-orm';
 import * as schema from '../drizzle/schema.js';
 import Imap from 'imap';
 
-// Environment variables
-const TRANSAMERICA_USERNAME = process.env.TRANSAMERICA_USERNAME || 'larex3030';
-const TRANSAMERICA_PASSWORD = process.env.TRANSAMERICA_PASSWORD || 'Jesulob@1241';
-const TRANSAMERICA_EMAIL = process.env.TRANSAMERICA_EMAIL || 'zaidshopejuwfg@gmail.com';
-const TRANSAMERICA_APP_PASSWORD = process.env.TRANSAMERICA_APP_PASSWORD;
-const SECURITY_Q_FIRST_JOB_CITY = process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'lagos';
-const SECURITY_Q_PET_NAME = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo';
+// SECURITY: Credentials must be set via environment variables - no fallbacks
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    console.error('Please set all required Transamerica credentials in your environment.');
+    process.exit(1);
+  }
+  return value;
+}
+
+// Environment variables (required)
+const TRANSAMERICA_USERNAME = mustGetEnv('TRANSAMERICA_USERNAME');
+const TRANSAMERICA_PASSWORD = mustGetEnv('TRANSAMERICA_PASSWORD');
+const TRANSAMERICA_EMAIL = mustGetEnv('TRANSAMERICA_EMAIL');
+const TRANSAMERICA_APP_PASSWORD = mustGetEnv('TRANSAMERICA_APP_PASSWORD');
+const SECURITY_Q_FIRST_JOB_CITY = mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+const SECURITY_Q_PET_NAME = mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
 
 // Database connection
 async function getDb() {

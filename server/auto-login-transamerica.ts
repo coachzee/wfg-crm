@@ -19,20 +19,30 @@ interface TransamericaCredentials {
   password: string;
 }
 
-// Get Transamerica login credentials from environment
+import { mustGetEnv, getEnv } from './_core/env';
+
+// Get Transamerica login credentials from environment (required)
 function getTransamericaLoginCredentials(): TransamericaCredentials {
-  return {
-    username: process.env.TRANSAMERICA_USERNAME || '',
-    password: process.env.TRANSAMERICA_PASSWORD || '',
-  };
+  const username = getEnv('TRANSAMERICA_USERNAME');
+  const password = getEnv('TRANSAMERICA_PASSWORD');
+  
+  if (!username || !password) {
+    throw new Error('Transamerica credentials not configured. Set TRANSAMERICA_USERNAME and TRANSAMERICA_PASSWORD.');
+  }
+  
+  return { username, password };
 }
 
-// Get security question answers from environment
+// Get security question answers from environment (required)
 function getSecurityAnswers() {
-  return {
-    firstJobCity: process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'lagos',
-    petName: process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo',
-  };
+  const firstJobCity = getEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+  const petName = getEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
+  
+  if (!firstJobCity || !petName) {
+    throw new Error('Transamerica security questions not configured. Set TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY and TRANSAMERICA_SECURITY_Q_PET_NAME.');
+  }
+  
+  return { firstJobCity, petName };
 }
 
 /**

@@ -15,10 +15,22 @@ import path from 'path';
 
 // Configuration
 const TRANSAMERICA_URL = 'https://secure.transamerica.com/login/sign-in/login.html';
-const USERNAME = process.env.TRANSAMERICA_USERNAME || 'larex3030';
-const PASSWORD = process.env.TRANSAMERICA_PASSWORD || 'Jesulob@1241';
-const SECURITY_Q_FIRST_JOB = process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'lagos';
-const SECURITY_Q_PET = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo';
+
+// SECURITY: Credentials must be set via environment variables - no fallbacks
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    console.error('Please set all required Transamerica credentials in your environment.');
+    process.exit(1);
+  }
+  return value;
+}
+
+const USERNAME = mustGetEnv('TRANSAMERICA_USERNAME');
+const PASSWORD = mustGetEnv('TRANSAMERICA_PASSWORD');
+const SECURITY_Q_FIRST_JOB = mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+const SECURITY_Q_PET = mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
 
 const OUTPUT_FILE = '/home/ubuntu/wfg-crm/data/policy-details-extracted.json';
 

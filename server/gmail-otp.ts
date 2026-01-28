@@ -235,19 +235,27 @@ export async function waitForOTP(
   return { success: false, error: `Timeout waiting for NEW OTP after ${maxWaitSeconds} seconds` };
 }
 
-// Get credentials from environment variables
+// Get credentials from environment variables (required for OTP fetching)
 export function getMyWFGCredentials(): GmailCredentials {
-  return {
-    email: process.env.MYWFG_EMAIL || '',
-    appPassword: process.env.MYWFG_APP_PASSWORD || '',
-  };
+  const email = process.env.MYWFG_EMAIL;
+  const appPassword = process.env.MYWFG_APP_PASSWORD;
+  
+  if (!email || !appPassword) {
+    throw new Error('MyWFG Gmail credentials not configured. Set MYWFG_EMAIL and MYWFG_APP_PASSWORD.');
+  }
+  
+  return { email, appPassword };
 }
 
 export function getTransamericaCredentials(): GmailCredentials {
-  return {
-    email: process.env.TRANSAMERICA_EMAIL || '',
-    appPassword: process.env.TRANSAMERICA_APP_PASSWORD || '',
-  };
+  const email = process.env.TRANSAMERICA_EMAIL;
+  const appPassword = process.env.TRANSAMERICA_APP_PASSWORD;
+  
+  if (!email || !appPassword) {
+    throw new Error('Transamerica Gmail credentials not configured. Set TRANSAMERICA_EMAIL and TRANSAMERICA_APP_PASSWORD.');
+  }
+  
+  return { email, appPassword };
 }
 
 // Platform-specific OTP fetchers

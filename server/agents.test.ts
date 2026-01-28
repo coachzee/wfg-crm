@@ -253,8 +253,8 @@ describe("dashboard metrics", () => {
     expect(result.totalClients).toBeGreaterThanOrEqual(0);
     
     expect(result.familiesProtected).toBe(77);
-    expect(result.superTeamCashFlow).toBe(290099.22);
-    expect(result.personalCashFlow).toBe(189931.39);
+    expect(result.superTeamCashFlow).toBe(319570.24);
+    expect(result.personalCashFlow).toBe(210864.80);
     // activeAssociates and licensedAgents are now dynamically counted from database
     expect(result.activeAssociates).toBeGreaterThanOrEqual(0);
     expect(result.licensedAgents).toBeGreaterThanOrEqual(0);

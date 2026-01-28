@@ -95,6 +95,87 @@ export async function recordEmailOpen(
   console.log(`[Email Tracking] Open recorded for ${trackingId} (total: ${(existing.openCount || 0) + 1})`);
 }
 
+// Allowlist of domains that are safe to redirect to
+const ALLOWED_REDIRECT_DOMAINS = [
+  // Add your own domains here
+  'manus.space',
+  'manus.im',
+  'mywfg.com',
+  'transamerica.com',
+  'wfgconnects.com',
+  // Common safe domains
+  'google.com',
+  'linkedin.com',
+  'facebook.com',
+  'twitter.com',
+  'youtube.com',
+];
+
+/**
+ * Validate a redirect URL against an allowlist of safe domains.
+ * SECURITY: Prevents open redirect attacks by only allowing redirects to known-safe domains.
+ * 
+ * @param trackingId - The email tracking ID
+ * @param providedUrl - The URL provided in the query string (optional)
+ * @returns The validated URL or null if invalid
+ */
+export async function getValidatedRedirectUrl(
+  trackingId: string,
+  providedUrl?: string
+): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // First, try to get the stored URL from the email tracking record
+  const [record] = await db
+    .select()
+    .from(emailTracking)
+    .where(eq(emailTracking.trackingId, trackingId))
+    .limit(1);
+  
+  // If we have a stored URL in metadata, use that (most secure)
+  if (record?.metadata && typeof record.metadata === 'object') {
+    const metadata = record.metadata as Record<string, unknown>;
+    if (metadata.redirectUrl && typeof metadata.redirectUrl === 'string') {
+      return metadata.redirectUrl;
+    }
+  }
+  
+  // If no stored URL, validate the provided URL against allowlist
+  if (!providedUrl) {
+    return null;
+  }
+  
+  try {
+    const url = new URL(providedUrl);
+    const hostname = url.hostname.toLowerCase();
+    
+    // Check if the hostname matches any allowed domain (including subdomains)
+    const isAllowed = ALLOWED_REDIRECT_DOMAINS.some(domain => {
+      return hostname === domain || hostname.endsWith(`.${domain}`);
+    });
+    
+    if (isAllowed) {
+      return providedUrl;
+    }
+    
+    // Also allow same-origin redirects
+    const appUrl = process.env.VITE_APP_URL || process.env.APP_URL || '';
+    if (appUrl) {
+      const appHostname = new URL(appUrl).hostname.toLowerCase();
+      if (hostname === appHostname || hostname.endsWith(`.${appHostname}`)) {
+        return providedUrl;
+      }
+    }
+    
+    console.warn(`[Click Tracking] Blocked redirect to untrusted domain: ${hostname}`);
+    return null;
+  } catch (error) {
+    console.warn(`[Click Tracking] Invalid URL format: ${providedUrl}`);
+    return null;
+  }
+}
+
 // Record email click event
 export async function recordEmailClick(
   trackingId: string,

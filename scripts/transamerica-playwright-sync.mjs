@@ -6,14 +6,25 @@
 import { chromium } from 'playwright';
 import Imap from 'imap';
 
+// SECURITY: Credentials must be set via environment variables - no fallbacks
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    console.error('Please set all required credentials in your environment.');
+    process.exit(1);
+  }
+  return value;
+}
+
 const credentials = {
-  username: process.env.TRANSAMERICA_USERNAME || '',
-  password: process.env.TRANSAMERICA_PASSWORD || '',
+  username: mustGetEnv('TRANSAMERICA_USERNAME'),
+  password: mustGetEnv('TRANSAMERICA_PASSWORD'),
 };
 
 const gmailCredentials = {
-  email: process.env.TRANSAMERICA_EMAIL || '',
-  password: process.env.TRANSAMERICA_APP_PASSWORD || '',
+  email: mustGetEnv('TRANSAMERICA_EMAIL'),
+  password: mustGetEnv('TRANSAMERICA_APP_PASSWORD'),
 };
 
 console.log('[Transamerica Sync] Starting...');
@@ -301,8 +312,8 @@ async function main() {
       
       // Security question answers from environment (case-sensitive!)
       const securityAnswers = {
-        'first job': process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'Lagos',
-        'pet': process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'Bingo',
+        'first job': mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY'),
+        'pet': mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME'),
         'mother': 'Ode Remo',  // Where did your mother and father meet
         'father': 'Ode Remo',  // Where did your mother and father meet
         'parent': 'Ode Remo',  // Where did your parents meet

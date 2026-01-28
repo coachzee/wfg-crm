@@ -184,6 +184,7 @@ async function startServer() {
   });
 
   // Click tracking endpoint - records link clicks and redirects
+  // SECURITY: Only allows redirects to validated URLs stored server-side or allowlisted domains
   app.get("/api/track/click/:trackingId", async (req, res) => {
     try {
       const { trackingId } = req.params;
@@ -191,24 +192,26 @@ async function startServer() {
       const userAgent = req.headers['user-agent'] || '';
       const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '';
       
-      // Import and record the click event
-      const { recordEmailClick } = await import('../email-tracking');
-      await recordEmailClick(trackingId, url as string, userAgent, ipAddress);
+      // Import and record the click event, get validated redirect URL
+      const { recordEmailClick, getValidatedRedirectUrl } = await import('../email-tracking');
       
-      // Redirect to the actual URL
-      if (url && typeof url === 'string') {
-        res.redirect(302, url);
-      } else {
-        res.status(400).send('Missing redirect URL');
+      // Get the validated redirect URL from server-side storage or validate against allowlist
+      const validatedUrl = await getValidatedRedirectUrl(trackingId, url as string | undefined);
+      
+      if (!validatedUrl) {
+        console.warn(`[Click Tracking] Invalid or missing redirect URL for tracking ID: ${trackingId}`);
+        res.status(400).send('Invalid or missing redirect URL');
+        return;
       }
+      
+      // Record the click event
+      await recordEmailClick(trackingId, validatedUrl, userAgent, ipAddress);
+      
+      // Redirect to the validated URL
+      res.redirect(302, validatedUrl);
     } catch (error) {
-      // Still redirect even if tracking fails
-      const { url } = req.query;
-      if (url && typeof url === 'string') {
-        res.redirect(302, url);
-      } else {
-        res.status(400).send('Missing redirect URL');
-      }
+      console.error('[Click Tracking] Error:', error);
+      res.status(400).send('Invalid tracking request');
     }
   });
 

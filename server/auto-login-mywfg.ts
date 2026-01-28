@@ -17,12 +17,18 @@ interface MyWFGCredentials {
   password: string;
 }
 
-// Get MyWFG login credentials from environment
+import { getEnv } from './_core/env';
+
+// Get MyWFG login credentials from environment (required)
 function getMyWFGLoginCredentials(): MyWFGCredentials {
-  return {
-    username: process.env.MYWFG_USERNAME || '',
-    password: process.env.MYWFG_PASSWORD || '',
-  };
+  const username = getEnv('MYWFG_USERNAME');
+  const password = getEnv('MYWFG_PASSWORD');
+  
+  if (!username || !password) {
+    throw new Error('MyWFG credentials not configured. Set MYWFG_USERNAME and MYWFG_PASSWORD.');
+  }
+  
+  return { username, password };
 }
 
 /**

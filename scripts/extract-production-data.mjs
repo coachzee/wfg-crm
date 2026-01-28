@@ -17,11 +17,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Transamerica credentials from environment
-const TA_USERNAME = process.env.TRANSAMERICA_USERNAME || 'larex3030';
-const TA_PASSWORD = process.env.TRANSAMERICA_PASSWORD || 'Jesulob@1241';
-const SECURITY_Q_FIRST_JOB = process.env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || 'lagos';
-const SECURITY_Q_PET = process.env.TRANSAMERICA_SECURITY_Q_PET_NAME || 'bingo';
+// SECURITY: Credentials must be set via environment variables - no fallbacks
+function mustGetEnv(name) {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    console.error(`❌ Missing required environment variable: ${name}`);
+    console.error('Please set all required Transamerica credentials in your environment.');
+    process.exit(1);
+  }
+  return value;
+}
+
+// Transamerica credentials from environment (required)
+const TA_USERNAME = mustGetEnv('TRANSAMERICA_USERNAME');
+const TA_PASSWORD = mustGetEnv('TRANSAMERICA_PASSWORD');
+const SECURITY_Q_FIRST_JOB = mustGetEnv('TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY');
+const SECURITY_Q_PET = mustGetEnv('TRANSAMERICA_SECURITY_Q_PET_NAME');
 
 // Commission constants
 const TRANSAMERICA_MULTIPLIER = 1.25; // 125%
