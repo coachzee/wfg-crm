@@ -98,7 +98,7 @@ describe('Transamerica Login', () => {
     
     // Check the result - we should either be logged in or see OTP verification
     const currentUrl = page.url();
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
     
     // Login is successful if we're not on the login page anymore OR if OTP is required
     const loginSuccessOrOtpRequired = 

@@ -105,3 +105,15 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Manus development artifacts (not for production)
+.manus/
+.manus-logs/
+.sessions/
+
+# Job artifacts (screenshots, HTML dumps on failure)
+artifacts/
+
+# Data files (should not be committed)
+data/
+*.csv

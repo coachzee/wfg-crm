@@ -55,15 +55,20 @@ async function startServer() {
     });
     next();
   });
-  // Health check endpoint for uptime monitoring
-  app.get("/api/health", (req, res) => {
-    res.status(200).json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      service: "Wealth Builders Haven CRM"
-    });
-  });
+  // Health check endpoints for container orchestration and monitoring
+  const { healthz, readyz, healthDetailed } = await import('../lib/health');
+  
+  // Liveness probe - indicates the server is running
+  app.get("/healthz", healthz);
+  app.get("/api/healthz", healthz);
+  
+  // Readiness probe - indicates the server can handle traffic
+  app.get("/readyz", readyz);
+  app.get("/api/readyz", readyz);
+  
+  // Detailed health check for debugging
+  app.get("/api/health", healthDetailed);
+  app.get("/api/health/detailed", healthDetailed);
 
   // Start the scheduler for background tasks
   const { startScheduler } = await import('../scheduler');

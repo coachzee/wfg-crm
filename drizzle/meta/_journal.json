@@ -176,6 +176,13 @@
       "when": 1769613974016,
       "tag": "0024_graceful_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1769618347357,
+      "tag": "0025_handy_exodus",
+      "breakpoints": true
     }
   ]
 }

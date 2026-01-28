@@ -956,3 +956,42 @@ export const queryMetricsHistory = mysqlTable("queryMetricsHistory", {
 
 export type QueryMetricsHistory = typeof queryMetricsHistory.$inferSelect;
 export type InsertQueryMetricsHistory = typeof queryMetricsHistory.$inferInsert;
+
+
+// ============================================
+// Job Locking - Prevent overlapping sync runs
+// ============================================
+export const jobLocks = mysqlTable("job_locks", {
+  name: varchar("name", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 64 }).notNull(),
+  lockedAt: timestamp("lockedAt").defaultNow().notNull(),
+  lockedUntil: timestamp("lockedUntil").notNull(),
+  heartbeatAt: timestamp("heartbeatAt").defaultNow().notNull(),
+});
+
+export type JobLock = typeof jobLocks.$inferSelect;
+export type InsertJobLock = typeof jobLocks.$inferInsert;
+
+// ============================================
+// Sync Runs - Track sync job execution history
+// ============================================
+export const syncRuns = mysqlTable("sync_runs", {
+  id: varchar("id", { length: 64 }).primaryKey(), // UUID
+  jobName: varchar("jobName", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["running", "success", "failed", "cancelled"]).notNull(),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  finishedAt: timestamp("finishedAt"),
+  durationMs: int("durationMs"),
+  errorSummary: text("errorSummary"),
+  metrics: json("metrics"), // { agentsUpdated, policiesUpdated, etc. }
+  artifactsPath: varchar("artifactsPath", { length: 512 }), // Path to screenshots/logs
+  triggeredBy: varchar("triggeredBy", { length: 64 }), // "cron", "manual", "api"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  jobNameIdx: index("idx_sync_runs_job_name").on(table.jobName),
+  statusIdx: index("idx_sync_runs_status").on(table.status),
+  startedAtIdx: index("idx_sync_runs_started_at").on(table.startedAt),
+}));
+
+export type SyncRun = typeof syncRuns.$inferSelect;
+export type InsertSyncRun = typeof syncRuns.$inferInsert;

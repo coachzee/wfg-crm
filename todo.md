@@ -1544,3 +1544,39 @@
   - App chunks: 200 KB limit, Vendor chunks: 450 KB limit
   - Added pnpm check:bundle and pnpm ci scripts
   - Color-coded output with suggestions for oversized chunks
+
+
+## Comprehensive Audit Work Order - Release-Grade Hardening
+
+### Phase A: Release Blockers (MUST DO FIRST)
+- [x] A1: Remove ALL plaintext secret fallbacks - VERIFIED: No hardcoded secrets found
+- [ ] A2: Add secret scanning (gitleaks) + block merges - Deferred to CI setup
+- [x] A3: Add strict env validation with Zod (fail fast in prod) - Already implemented in env.schema.ts
+- [x] A4: Fix encryption to use AES-256-GCM (remove default key) - Already implemented in encryption.ts
+- [x] A5: Fix open redirect in click-tracking endpoint - Already implemented with ALLOWED_REDIRECT_DOMAINS
+
+### Phase B: Automation Hardening
+- [x] B1: Add job locking to prevent overlapping sync runs - Created server/lib/jobLock.ts with withJobLock()
+- [x] B2: Add retries + backoff around external portal operations - Created server/lib/retry.ts with PORTAL_RETRY_OPTIONS
+- [x] B3: Artifact capture on failure (screenshots + HTML dump) - Created server/lib/artifacts.ts
+- [x] B4: Health checks (/healthz and /readyz endpoints) - Created server/lib/health.ts, added to server
+- [x] B5: Monitoring + alerting for stale or failed sync - Created syncRuns table and repository
+
+### Phase C: Cron Endpoint Hardening
+- [x] C1: Deprecate GET cron secret (prefer POST + header) - Created server/lib/cronAuth.ts with warning for query param usage
+- [x] C2: Add request ID middleware for tracing - Created server/lib/requestId.ts
+
+### Phase D: Cleanup
+- [x] D1: Consolidate scripts into job modules - Already done with server/jobs/ directory
+- [x] D2: Move test automation to proper test directories - Tests already organized in server/*.test.ts
+- [x] D3: Add .manus/, .sessions/, artifacts/ to .gitignore
+- [ ] D3: Remove repo artifacts from production (.manus/, .sessions/)
+
+### Phase E: Architecture Improvements
+- [x] E1: Split god files (routers/services/repositories)
+  - routers.ts: 65 lines (main), 1562 lines total across 14 router modules
+  - db.ts: 784 lines (down from 1943), with 2302 lines in 9 repository modules
+  - Dashboard.tsx: 281 lines (down from 2318), with 16 dashboard component modules
+  - server/lib/: 6 utility modules (retry, jobLock, artifacts, health, requestId, cronAuth)
+  - server/jobs/: 3 job modules for reusable sync logic
+- [ ] E2: Standardize DB return values (no query builders)
