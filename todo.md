@@ -1271,3 +1271,11 @@
 - [x] Investigate Total Face Amount discrepancy (Production vs Dashboard)
 - [x] Fix Total Face Amount to show consistent values across pages ($43.44M)
 - [x] Add monthly cash flow data to database for historical tracking (monthlyTeamCashFlow table)
+
+
+## Chart Tooltip Bug Fix (Jan 28, 2026)
+- [ ] Fix monthly cash flow chart tooltip positioning - numbers hiding behind bars
+
+
+## Chart Tooltip Bug Fix (Jan 28, 2026) - COMPLETED
+- [x] Fix monthly cash flow chart tooltip positioning - numbers now display clearly above the bars
