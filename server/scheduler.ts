@@ -131,11 +131,16 @@ export function startScheduler() {
   // Transamerica alerts sync - every 6 hours (21600000 ms)
   const SIX_HOURS = 6 * 60 * 60 * 1000;
   
-  // Run immediately on startup (with a small delay to let the server initialize)
-  setTimeout(async () => {
-    logger.info("[Scheduler] Running initial Transamerica alerts sync...");
-    await syncTransamericaAlerts();
-  }, 30000); // 30 second delay after server start
+  // Skip immediate sync on startup in development to prevent blocking the server
+  // In production, the cron endpoint can be used to trigger syncs
+  if (process.env.NODE_ENV === 'production') {
+    setTimeout(async () => {
+      logger.info("[Scheduler] Running initial Transamerica alerts sync...");
+      await syncTransamericaAlerts();
+    }, 60000); // 60 second delay after server start in production
+  } else {
+    logger.info("[Scheduler] Skipping initial sync in development mode");
+  }
   
   // Then run every 6 hours
   const transamericaInterval = setInterval(async () => {

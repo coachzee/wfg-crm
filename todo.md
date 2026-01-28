@@ -1580,3 +1580,11 @@
   - server/lib/: 6 utility modules (retry, jobLock, artifacts, health, requestId, cronAuth)
   - server/jobs/: 3 job modules for reusable sync logic
 - [ ] E2: Standardize DB return values (no query builders)
+
+
+## GitHub Push and Preview Fix
+- [ ] Push codebase to GitHub repository (use Settings → GitHub in Management UI)
+- [x] Fix preview portal to display correctly
+  - Fixed requestCorrelationMiddleware() call (was missing parentheses)
+  - Disabled immediate Transamerica sync on startup in development mode
+  - Server now responds correctly to health checks

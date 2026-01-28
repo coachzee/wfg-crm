@@ -33,7 +33,7 @@ async function startServer() {
   const server = createServer(app);
   
   // Request correlation middleware - adds request ID to all requests
-  app.use(requestCorrelationMiddleware);
+  app.use(requestCorrelationMiddleware());
   
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
