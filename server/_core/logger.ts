@@ -49,7 +49,9 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 
 // Get log level from environment, default to 'info'
 const currentLogLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
+const logFormat = process.env.LOG_FORMAT || 'pretty';
 const isProduction = process.env.NODE_ENV === 'production';
+const useJsonFormat = logFormat === 'json' || isProduction;
 
 /**
  * Generate a unique request ID
@@ -96,7 +98,7 @@ export function getRequestId(): string | undefined {
  * Format log entry for output
  */
 function formatLogEntry(entry: LogEntry): string {
-  if (isProduction) {
+  if (useJsonFormat) {
     // JSON format for production (easier to parse in log aggregators)
     return JSON.stringify(entry);
   }

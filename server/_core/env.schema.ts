@@ -21,6 +21,12 @@ const requiredInProd = (name: string) =>
 const strictlyRequired = (name: string) =>
   z.string().min(1, `${name} is required and cannot be empty`);
 
+// Logging configuration
+const loggingSchema = z.object({
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  LOG_FORMAT: z.enum(["json", "pretty"]).default("pretty"),
+});
+
 // Core app configuration
 const coreSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -90,6 +96,7 @@ const syncSchema = z.object({
 
 // Combined schema
 export const envSchema = coreSchema
+  .merge(loggingSchema)
   .merge(mywfgSchema)
   .merge(transamericaSchema)
   .merge(encryptionSchema)

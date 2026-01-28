@@ -1346,3 +1346,42 @@
 - [x] Create key rotation migration script (scripts/rotate-encryption-key.mjs)
 - [x] Add support for multiple encryption keys during rotation
 - [x] Document key rotation procedure in script comments
+
+
+## Phase 2 Continued - Repository Split & Logger Integration (Jan 28, 2026)
+### 2B: Split db.ts into repositories
+- [ ] Create server/repositories/ directory structure
+- [ ] Extract agent queries to repositories/agents.ts
+- [ ] Extract client queries to repositories/clients.ts
+- [ ] Extract task queries to repositories/tasks.ts
+- [ ] Extract dashboard queries to repositories/dashboard.ts
+- [ ] Update db.ts to re-export from repository files
+
+### 2E: Integrate logger middleware
+- [ ] Add requestCorrelationMiddleware to Express server
+- [ ] Update existing console.log calls to use structured logger
+- [ ] Add request ID to tRPC context
+
+### 2F: Log aggregation setup
+- [ ] Add LOG_LEVEL to env.schema.ts
+- [ ] Document log levels in .env.example
+- [ ] Add log rotation/aggregation recommendations
+
+
+## Phase 2 Continued - Repositories & Logging (Jan 28, 2026) - COMPLETED
+### 2B: Split db.ts into repositories
+- [x] Create server/repositories/ directory structure
+- [x] Extract agents repository to repositories/agents.ts
+- [x] Extract clients repository to repositories/clients.ts
+- [x] Extract tasks repository to repositories/tasks.ts
+- [x] Extract dashboard repository to repositories/dashboard.ts
+
+### 2C: Integrate logger middleware
+- [x] Add requestCorrelationMiddleware to Express server
+- [x] Add request logging for all HTTP requests
+- [x] Test request ID propagation
+
+### 2D: Set up log aggregation
+- [x] Add LOG_LEVEL environment variable to env.schema.ts
+- [x] Add LOG_FORMAT environment variable for json/pretty output
+- [x] Create logging documentation (docs/LOGGING.md)
