@@ -53,6 +53,7 @@ import {
   getTopAgentsByCommission,
   getPolicyAnniversaries,
   getAnniversarySummary,
+  getMonthlyTeamCashFlow,
   type Agent,
   type Client,
   type WorkflowTask,
@@ -359,10 +360,16 @@ export const appRouter = router({
       };
     }),
     
-    // Get monthly cash flow data for charts
+    // Get monthly cash flow data for charts (from database)
     monthlyCashFlow: protectedProcedure.query(async () => {
-      const { getMonthlyCashFlowData } = await import("./mywfg-sync-data");
-      return getMonthlyCashFlowData();
+      const records = await getMonthlyTeamCashFlow("73DXR");
+      return records.map(r => ({
+        monthYear: r.monthYear,
+        month: r.month,
+        year: r.year,
+        superTeamCashFlow: parseFloat(String(r.superTeamCashFlow)),
+        personalCashFlow: parseFloat(String(r.personalCashFlow)),
+      }));
     }),
     
     // Get recent sync logs

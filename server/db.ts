@@ -1,6 +1,6 @@
 import { eq, desc, sql, count, sum, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, agentCashFlowHistory, syncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory, InsertSyncLog, SyncLog, inforcePolicies, InsertInforcePolicy, InforcePolicy } from "../drizzle/schema";
+import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, agentCashFlowHistory, syncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory, InsertSyncLog, SyncLog, inforcePolicies, InsertInforcePolicy, InforcePolicy, monthlyTeamCashFlow, InsertMonthlyTeamCashFlow, MonthlyTeamCashFlow } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -367,7 +367,7 @@ export async function getDashboardMetrics() {
   // NOTE: activeAssociates and licensedAgents are now fetched dynamically from database
   const mywfgData = {
     superTeamCashFlow: 319570.24, // Super Team Total Cash Flow (Feb 2025 - Jan 2026)
-    personalCashFlow: 189931.39, // Personal Total Cash Flow (Jan-Dec 2025)
+    personalCashFlow: 210864.80, // Personal Total Cash Flow (Feb 2025 - Jan 2026)
     familiesProtected: 77, // Unique policies from Commissions Summary
     totalPolicies: 77, // Total policies written in 2025
     securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
@@ -394,12 +394,24 @@ export async function getDashboardMetrics() {
     console.log(`[Dashboard Metrics] Active: ${activeAssociates}, Licensed: ${licensedAgents}, Inactive: ${agentCounts[0]?.inactive || 0}, Total in DB: ${agentCounts[0]?.total || 0}`);
   }
   
-  // Transamerica Life Access data - Zaid Shopeju's Writing Agent Book of Business
-  // Extracted on Jan 4, 2026 from Transamerica Life Access portal
-  // 52 policies total with Writing agent role filter
+  // Transamerica Life Access data - now fetched dynamically from inforcePolicies table
+  // Face amount is calculated from all policies in the database
+  let transamericaTotalFaceAmount = 0;
+  let transamericaTotalPolicies = 0;
+  
+  if (db) {
+    const inforceSummary = await db.select({
+      totalFaceAmount: sql<string>`COALESCE(SUM(${inforcePolicies.faceAmount}), 0)`,
+      totalPolicies: sql<number>`COUNT(*)`,
+    }).from(inforcePolicies);
+    
+    transamericaTotalFaceAmount = parseFloat(inforceSummary[0]?.totalFaceAmount || '0');
+    transamericaTotalPolicies = Number(inforceSummary[0]?.totalPolicies || 0);
+  }
+  
   const transamericaData = {
-    totalFaceAmount: 26025000, // $26,025,000 total face amount from 52 policies
-    totalPolicies: 52, // Writing agent policies (Zaid Shopeju: 73DXR)
+    totalFaceAmount: transamericaTotalFaceAmount,
+    totalPolicies: transamericaTotalPolicies,
   };
   
   // Transamerica Policy Alerts - Unread Notifications (as of Jan 4, 2026)
@@ -1867,4 +1879,65 @@ export async function recordAnniversaryGreetingSent(policyNumber: string, year: 
   } catch (error) {
     console.error('[recordAnniversaryGreetingSent] Error:', error);
   }
+}
+
+
+// ============================================
+// Monthly Team Cash Flow - For Dashboard Chart
+// ============================================
+
+// Get all monthly cash flow records
+export async function getMonthlyTeamCashFlow(agentCode: string = "73DXR") {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(monthlyTeamCashFlow)
+    .where(eq(monthlyTeamCashFlow.agentCode, agentCode))
+    .orderBy(monthlyTeamCashFlow.year, monthlyTeamCashFlow.month);
+}
+
+// Upsert monthly cash flow record
+export async function upsertMonthlyTeamCashFlow(data: InsertMonthlyTeamCashFlow) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return db.insert(monthlyTeamCashFlow).values(data).onDuplicateKeyUpdate({
+    set: {
+      superTeamCashFlow: data.superTeamCashFlow,
+      personalCashFlow: data.personalCashFlow,
+      syncedAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+}
+
+// Bulk upsert monthly cash flow records
+export async function bulkUpsertMonthlyTeamCashFlow(records: InsertMonthlyTeamCashFlow[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let upserted = 0;
+  for (const record of records) {
+    await upsertMonthlyTeamCashFlow(record);
+    upserted++;
+  }
+  
+  return { upserted };
+}
+
+// Get cash flow totals for a period
+export async function getCashFlowTotals(agentCode: string = "73DXR") {
+  const db = await getDb();
+  if (!db) return { superTeamTotal: 0, personalTotal: 0 };
+  
+  const result = await db.select({
+    superTeamTotal: sql<string>`COALESCE(SUM(${monthlyTeamCashFlow.superTeamCashFlow}), 0)`,
+    personalTotal: sql<string>`COALESCE(SUM(${monthlyTeamCashFlow.personalCashFlow}), 0)`,
+  }).from(monthlyTeamCashFlow).where(eq(monthlyTeamCashFlow.agentCode, agentCode));
+  
+  return {
+    superTeamTotal: parseFloat(result[0]?.superTeamTotal || '0'),
+    personalTotal: parseFloat(result[0]?.personalTotal || '0'),
+  };
 }

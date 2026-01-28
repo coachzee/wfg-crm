@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, json, boolean, date } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, json, boolean, date, uniqueIndex } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 /**
@@ -822,3 +822,32 @@ export const agentExamPrep = mysqlTable("agentExamPrep", {
 
 export type AgentExamPrep = typeof agentExamPrep.$inferSelect;
 export type InsertAgentExamPrep = typeof agentExamPrep.$inferInsert;
+
+
+// Monthly Team Cash Flow - Track monthly cash flow for Super Team and Personal
+export const monthlyTeamCashFlow = mysqlTable("monthlyTeamCashFlow", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Period
+  monthYear: varchar("monthYear", { length: 10 }).notNull(), // e.g., "2/2025"
+  month: int("month").notNull(), // 1-12
+  year: int("year").notNull(), // e.g., 2025
+  
+  // Cash flow amounts
+  superTeamCashFlow: decimal("superTeamCashFlow", { precision: 15, scale: 2 }).notNull(),
+  personalCashFlow: decimal("personalCashFlow", { precision: 15, scale: 2 }).notNull(),
+  
+  // Agent info
+  agentCode: varchar("agentCode", { length: 64 }).notNull().default("73DXR"),
+  agentName: varchar("agentName", { length: 255 }).notNull().default("SHOPEJU, ZAID"),
+  
+  // Sync metadata
+  syncedAt: timestamp("syncedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  uniqueMonthYearIdx: uniqueIndex("unique_month_year_agent").on(table.monthYear, table.agentCode),
+}));
+
+export type MonthlyTeamCashFlow = typeof monthlyTeamCashFlow.$inferSelect;
+export type InsertMonthlyTeamCashFlow = typeof monthlyTeamCashFlow.$inferInsert;

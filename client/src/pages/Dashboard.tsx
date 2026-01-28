@@ -1062,6 +1062,12 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+  // Monthly cash flow data for chart
+  const { data: monthlyCashFlow } = trpc.dashboard.monthlyCashFlow.useQuery(undefined, {
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
+
   // Trigger sync mutation
   const triggerSync = trpc.dashboard.triggerSync.useMutation({
     onMutate: () => setSyncStatus('syncing'),
@@ -1257,6 +1263,95 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Monthly Cash Flow Chart */}
+      {monthlyCashFlow && monthlyCashFlow.length > 0 && (
+        <Card className="card-hover border-blue-500/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                  Monthly Cash Flow Breakdown
+                </CardTitle>
+                <CardDescription>Super Team vs Personal cash flow (Feb 2025 - Jan 2026)</CardDescription>
+              </div>
+              <div className="flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">Super Team</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="text-muted-foreground">Personal</span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyCashFlow} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis 
+                    dataKey="monthYear" 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      const [month, year] = value.split('/');
+                      const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      return `${monthNames[parseInt(month)]} '${year.slice(-2)}`;
+                    }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '']}
+                    labelFormatter={(label) => {
+                      const [month, year] = label.split('/');
+                      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                      return `${monthNames[parseInt(month)]} ${year}`;
+                    }}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="superTeamCashFlow" 
+                    name="Super Team" 
+                    fill="#3b82f6" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="personalCashFlow" 
+                    name="Personal" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-sm text-muted-foreground">Super Team Total (YTD)</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  ${monthlyCashFlow.reduce((sum, m) => sum + m.superTeamCashFlow, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-sm text-muted-foreground">Personal Total (YTD)</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  ${monthlyCashFlow.reduce((sum, m) => sum + m.personalCashFlow, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Policy Anniversaries Summary */}
       <PolicyAnniversariesSummary />
