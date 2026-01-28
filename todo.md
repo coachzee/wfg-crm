@@ -1437,3 +1437,15 @@
 - [x] Initialize repositories on module load for test compatibility
 - [x] All 195 tests passing after refactoring
 - [x] Dashboard.tsx components extracted to client/src/components/dashboard/
+
+
+## Senior Dev Review - Remaining Items
+- [x] Create server/jobs/ directory with reusable job modules
+  - [x] mywfgSync.ts - MyWFG sync job with processAgents/processProductionRecords helpers
+  - [x] transamericaSync.ts - Transamerica sync job wrapper
+  - [x] index.ts - Job module exports
+- [x] Extract additional Dashboard components:
+  - [x] WeeklySyncSummary.tsx (95 lines)
+  - [x] PolicyAnniversariesSummary.tsx (105 lines)
+- [ ] Refactor sync scripts to be thin wrappers calling job modules (deferred - scripts work as-is)
+- [ ] Extract more Dashboard components to reduce Dashboard.tsx below 500 lines (partial - major sections extracted)
