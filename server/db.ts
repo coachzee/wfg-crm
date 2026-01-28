@@ -1,14 +1,65 @@
-import { eq, desc, sql, count, sum, and } from "drizzle-orm";
+/**
+ * Database Access Layer
+ * 
+ * This file provides the core database connection and re-exports
+ * domain-specific functions from repository modules for backward compatibility.
+ * 
+ * Architecture:
+ * - Core utilities (getDb, user functions) are defined here
+ * - Domain-specific functions are delegated to server/repositories/*.ts
+ * - All exports maintain backward compatibility with existing imports
+ */
+
+import { eq, and, desc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, agents, clients, workflowTasks, productionRecords, credentials, mywfgSyncLogs, agentCashFlowHistory, syncLogs, InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory, InsertSyncLog, SyncLog, inforcePolicies, InsertInforcePolicy, InforcePolicy, monthlyTeamCashFlow, InsertMonthlyTeamCashFlow, MonthlyTeamCashFlow } from "../drizzle/schema";
+import { 
+  InsertUser, users, agents, clients, workflowTasks, productionRecords, 
+  credentials, mywfgSyncLogs, inforcePolicies, pendingPolicies, pendingRequirements,
+  InsertAgent, InsertClient, InsertWorkflowTask, InsertProductionRecord, 
+  InsertCredential, InsertMywfgSyncLog, InsertAgentCashFlowHistory,
+  InsertPendingPolicy, InsertPendingRequirement, InsertInforcePolicy,
+  InsertMonthlyTeamCashFlow, agentCashFlowHistory, incomeHistory, InsertIncomeHistory
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
+// Import and initialize repositories
+import {
+  initAgentsRepository,
+  initClientsRepository,
+  initTasksRepository,
+  initDashboardRepository,
+  initSyncLogsRepository,
+  initPoliciesRepository,
+  initIncomeRepository,
+} from './repositories';
+
+// Re-export types for use in procedures
+export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog, AgentCashFlowHistory, SyncLog, InforcePolicy } from "../drizzle/schema";
+
 let _db: ReturnType<typeof drizzle> | null = null;
+let _repositoriesInitialized = false;
 
-// Export types for use in procedures
-export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog, AgentCashFlowHistory, SyncLog } from "../drizzle/schema";
+// ============================================
+// Core Database Connection
+// ============================================
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+// Initialize repositories immediately so they can be used even before getDb is called
+function initializeRepositories() {
+  if (_repositoriesInitialized) return;
+  _repositoriesInitialized = true;
+  
+  initAgentsRepository(getDb);
+  initClientsRepository(getDb);
+  initTasksRepository(getDb);
+  initDashboardRepository(getDb);
+  initSyncLogsRepository(getDb);
+  initPoliciesRepository(getDb);
+  initIncomeRepository(getDb, getDashboardMetrics);
+}
+
+// Initialize repositories on module load
+initializeRepositories();
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -20,6 +71,10 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ============================================
+// User Functions (Core - kept in db.ts)
+// ============================================
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -33,9 +88,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
+    const values: InsertUser = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
 
     const textFields = ["name", "email", "loginMethod"] as const;
@@ -71,9 +124,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -86,9 +137,7 @@ export async function getUserByOpenId(openId: string) {
     console.warn("[Database] Cannot get user: database not available");
     return undefined;
   }
-
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -98,120 +147,97 @@ export async function getAllUsers() {
   return db.select().from(users);
 }
 
-// Agent queries
-export async function getAgents(filters?: { stage?: string; isActive?: boolean }) {
-  const db = await getDb();
-  if (!db) return [];
+// ============================================
+// Re-exports from Repository Modules
+// ============================================
 
-  let query: any = db.select().from(agents);
-  if (filters?.stage) {
-    query = query.where(eq(agents.currentStage, filters.stage as any));
-  }
-  if (filters?.isActive !== undefined) {
-    query = query.where(eq(agents.isActive, filters.isActive));
-  }
-  return query;
-}
+// Agent functions
+export {
+  getAgents,
+  getAgentById,
+  createAgent,
+  updateAgent,
+  getAgentCashFlowHistory,
+  getAllCashFlowRecords,
+  getNetLicensedAgents,
+  upsertCashFlowRecord,
+  bulkUpsertCashFlowRecords,
+  clearAllCashFlowRecords,
+  getAgentContactInfo,
+} from './repositories/agents';
 
-export async function getAgentById(id: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
-  return result[0] || null;
-}
+// Client functions
+export {
+  getClients,
+  getClientById,
+  createClient,
+  updateClient,
+  getClientEmailByName,
+} from './repositories/clients';
 
-export async function createAgent(data: InsertAgent) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Insert the agent
-  const insertResult = await db.insert(agents).values(data);
-  
-  // Get the inserted ID from the result
-  const insertId = (insertResult as any)[0]?.insertId;
-  
-  if (!insertId) {
-    throw new Error("Failed to get inserted agent ID");
-  }
-  
-  // Fetch and return the created agent
-  const created = await db.select().from(agents).where(eq(agents.id, insertId)).limit(1);
-  return created[0];
-}
+// Task functions
+export {
+  getWorkflowTasks,
+  createWorkflowTask,
+  updateWorkflowTask,
+  getTaskById,
+  completeTask,
+  getTaskStats,
+} from './repositories/tasks';
 
-export async function updateAgent(id: number, data: Partial<InsertAgent>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.update(agents).set(data).where(eq(agents.id, id));
-  
-  // Return the updated agent
-  const updated = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
-  return updated[0];
-}
+// Sync log functions
+export {
+  createScheduledSyncLog,
+  updateScheduledSyncLog,
+  getRecentScheduledSyncLogs,
+  getScheduledSyncLogsByPeriod,
+  getWeeklySyncSummary,
+  getScheduledSyncLogs,
+  getLatestScheduledSyncLog,
+  getTodaySyncLogs,
+} from './repositories/syncLogs';
 
-// Client queries
-export async function getClients(agentId?: number) {
-  const db = await getDb();
-  if (!db) return [];
-  let query: any = db.select().from(clients);
-  if (agentId) {
-    query = query.where(eq(clients.agentId, agentId));
-  }
-  return query;
-}
+// Policy functions
+export {
+  getPendingPolicies,
+  getPendingPolicyByNumber,
+  upsertPendingPolicy,
+  getPendingRequirementsByPolicyId,
+  clearPendingRequirements,
+  insertPendingRequirement,
+  bulkInsertPendingRequirements,
+  getPendingPoliciesWithRequirements,
+  getPendingPolicySummary,
+  getInforcePolicies,
+  getInforcePolicyByNumber,
+  upsertInforcePolicy,
+  getProductionSummary,
+  getTopProducersByPremium,
+  getProductionByWritingAgent,
+  getTopAgentsByCommission,
+} from './repositories/policies';
 
-export async function getClientById(id: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
-  return result[0];
-}
+// Dashboard functions
+export {
+  getAgentStats,
+  getProductionStats,
+  getMonthlyTeamCashFlow,
+  upsertMonthlyTeamCashFlow,
+  bulkUpsertMonthlyTeamCashFlow,
+  getCashFlowTotals,
+} from './repositories/dashboard';
 
-export async function createClient(data: InsertClient) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(clients).values(data);
-}
+// Income functions
+export {
+  saveIncomeSnapshot,
+  updateActualIncome,
+  getIncomeHistory,
+  getIncomeAccuracyStats,
+} from './repositories/income';
 
-export async function updateClient(id: number, data: Partial<InsertClient>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(clients).set(data).where(eq(clients.id, id));
-}
-
-// Workflow task queries
-export async function getWorkflowTasks(filters?: { agentId?: number; clientId?: number; completed?: boolean }) {
-  const db = await getDb();
-  if (!db) return [];
-  let query: any = db.select().from(workflowTasks);
-  if (filters?.agentId) {
-    query = query.where(eq(workflowTasks.agentId, filters.agentId));
-  }
-  if (filters?.clientId) {
-    query = query.where(eq(workflowTasks.clientId, filters.clientId));
-  }
-  if (filters?.completed !== undefined) {
-    if (filters.completed) {
-      query = query.where(sql`${workflowTasks.completedAt} IS NOT NULL`);
-    } else {
-      query = query.where(sql`${workflowTasks.completedAt} IS NULL`);
-    }
-  }
-  return query;
-}
-
-export async function createWorkflowTask(data: InsertWorkflowTask) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(workflowTasks).values(data);
-}
-
-export async function updateWorkflowTask(id: number, data: Partial<InsertWorkflowTask>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.update(workflowTasks).set(data).where(eq(workflowTasks.id, id));
-}
+// ============================================
+// Legacy Functions (kept for compatibility)
+// ============================================
 
 // Production record queries
 export async function getProductionRecords(agentId: number) {
@@ -224,6 +250,12 @@ export async function createProductionRecord(data: InsertProductionRecord) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.insert(productionRecords).values(data);
+}
+
+export async function getAllProductionRecords() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(productionRecords).orderBy(desc(productionRecords.issueDate));
 }
 
 // Credential queries
@@ -248,7 +280,7 @@ export async function createOrUpdateCredential(data: InsertCredential) {
   });
 }
 
-// MyWFG sync log queries
+// MyWFG sync log queries (legacy - different from scheduled sync logs)
 export async function createSyncLog(data: InsertMywfgSyncLog) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -262,24 +294,22 @@ export async function getLatestSyncLog() {
   return result[0] || null;
 }
 
+// ============================================
+// Dashboard Metrics (Complex - kept in db.ts)
+// ============================================
+
 // Calculate projected income based on pending policies and inforce policies
-// Uses the WFG commission formula: Target Premium x 125% (Transamerica constant) x Agent Level (65% for SMD)
 async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
-  const SMD_AGENT_LEVEL = 0.65; // 65% for SMD and above
-  const TRANSAMERICA_CONSTANT = 1.25; // 125%
+  const SMD_AGENT_LEVEL = 0.65;
+  const TRANSAMERICA_CONSTANT = 1.25;
   
-  // Default values if no database
   const defaultResult = {
     fromPendingPolicies: 0,
     fromInforcePolicies: 0,
     totalProjected: 0,
     pendingPoliciesCount: 0,
     inforcePoliciesCount: 0,
-    breakdown: {
-      pendingIssued: 0,
-      pendingUnderwriting: 0,
-      inforceActive: 0,
-    },
+    breakdown: { pendingIssued: 0, pendingUnderwriting: 0, inforceActive: 0 },
     agentLevel: SMD_AGENT_LEVEL,
     transamericaConstant: TRANSAMERICA_CONSTANT,
   };
@@ -287,33 +317,22 @@ async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
   if (!db) return defaultResult;
   
   try {
-    // Import pending policies table (already imported at bottom of file)
-    const { pendingPolicies } = await import("../drizzle/schema");
-    
-    // Get pending policies with target premium
     const pending = await db.select().from(pendingPolicies);
-    
-    // Get inforce policies
     const inforce = await db.select().from(inforcePolicies);
     
-    // Calculate projected income from pending policies
-    // Only count policies that are likely to result in commission (Issued, Pending, Post Approval Processing)
     const pendingIssued = pending.filter(p => p.status === 'Issued');
     const pendingUnderwriting = pending.filter(p => ['Pending', 'Post Approval Processing'].includes(p.status));
     
-    // For pending policies, estimate based on target premium if available, otherwise use face amount / 1000 as rough estimate
     let pendingIssuedIncome = 0;
     let pendingUnderwritingIncome = 0;
     
     pendingIssued.forEach(p => {
-      // Use premium field (targetPremium is not in schema, premium is the available field)
       const targetPremium = parseFloat(p.premium?.toString() || '0');
       if (targetPremium > 0) {
         pendingIssuedIncome += targetPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL;
       } else {
-        // Estimate from face amount (rough approximation: $10 per $1000 face amount for term life)
         const faceAmount = parseFloat(p.faceAmount?.toString() || '0');
-        const estimatedPremium = faceAmount / 1000 * 10; // $10 per $1000
+        const estimatedPremium = faceAmount / 1000 * 10;
         pendingIssuedIncome += estimatedPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL;
       }
     });
@@ -321,7 +340,7 @@ async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
     pendingUnderwriting.forEach(p => {
       const targetPremium = parseFloat(p.premium?.toString() || '0');
       if (targetPremium > 0) {
-        pendingUnderwritingIncome += targetPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL * 0.7; // 70% probability factor
+        pendingUnderwritingIncome += targetPremium * TRANSAMERICA_CONSTANT * SMD_AGENT_LEVEL * 0.7;
       } else {
         const faceAmount = parseFloat(p.faceAmount?.toString() || '0');
         const estimatedPremium = faceAmount / 1000 * 10;
@@ -329,7 +348,6 @@ async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
       }
     });
     
-    // Calculate actual commission from inforce policies (already calculated in DB)
     const inforceActive = inforce.filter(p => p.status === 'Active');
     const inforceCommission = inforceActive.reduce((sum, p) => {
       return sum + parseFloat(p.calculatedCommission?.toString() || '0');
@@ -357,30 +375,22 @@ async function calculateProjectedIncome(db: ReturnType<typeof drizzle> | null) {
   }
 }
 
-// Dashboard metrics for face amount and families protected
-// Note: Some values are pulled from MyWFG data exploration (Jan 2025 - Dec 2025)
+// Main dashboard metrics function
 export async function getDashboardMetrics() {
   const db = await getDb();
   
-  // MyWFG extracted data (from Total Cash Flow, Commissions Summary, and MY BUSINESS reports)
-  // These are the actual values from the MyWFG account as of Jan 27, 2026
-  // NOTE: activeAssociates and licensedAgents are now fetched dynamically from database
   const mywfgData = {
-    superTeamCashFlow: 319570.24, // Super Team Total Cash Flow (Feb 2025 - Jan 2026)
-    personalCashFlow: 210864.80, // Personal Total Cash Flow (Feb 2025 - Jan 2026)
-    familiesProtected: 77, // Unique policies from Commissions Summary
-    totalPolicies: 77, // Total policies written in 2025
-    securitiesLicensed: 0, // Securities Licensed Associates (as of 12/30/25)
+    superTeamCashFlow: 319570.24,
+    personalCashFlow: 210864.80,
+    familiesProtected: 77,
+    totalPolicies: 77,
+    securitiesLicensed: 0,
   };
   
-  // Dynamically count agents from database (synced from MyWFG Downline Status report)
-  // Filters: Type=Active, Team=SMD Base, Title Level=TA/A/SA/MD
   let activeAssociates = 0;
   let licensedAgents = 0;
   
   if (db) {
-    // Count only ACTIVE agents (isActive = true)
-    // This ensures the count matches the MyWFG Active report
     const agentCounts = await db.select({
       total: sql<number>`COUNT(*)`,
       active: sql<number>`SUM(CASE WHEN ${agents.isActive} = true THEN 1 ELSE 0 END)`,
@@ -388,14 +398,10 @@ export async function getDashboardMetrics() {
       inactive: sql<number>`SUM(CASE WHEN ${agents.isActive} = false THEN 1 ELSE 0 END)`,
     }).from(agents);
     
-    // Use active count for dashboard (matches MyWFG Active report)
     activeAssociates = Number(agentCounts[0]?.active || 0);
     licensedAgents = Number(agentCounts[0]?.licensed || 0);
-    console.log(`[Dashboard Metrics] Active: ${activeAssociates}, Licensed: ${licensedAgents}, Inactive: ${agentCounts[0]?.inactive || 0}, Total in DB: ${agentCounts[0]?.total || 0}`);
   }
   
-  // Transamerica Life Access data - now fetched dynamically from inforcePolicies table
-  // Face amount is calculated from all policies in the database
   let transamericaTotalFaceAmount = 0;
   let transamericaTotalPolicies = 0;
   
@@ -409,14 +415,8 @@ export async function getDashboardMetrics() {
     transamericaTotalPolicies = Number(inforceSummary[0]?.totalPolicies || 0);
   }
   
-  const transamericaData = {
-    totalFaceAmount: transamericaTotalFaceAmount,
-    totalPolicies: transamericaTotalPolicies,
-  };
+  const transamericaData = { totalFaceAmount: transamericaTotalFaceAmount, totalPolicies: transamericaTotalPolicies };
   
-  // Transamerica Policy Alerts - Unread Notifications (as of Jan 4, 2026)
-  // Source: Transamerica Life Access portal - Policy Alerts section
-  // These are critical alerts requiring immediate attention
   const transamericaAlerts = {
     totalUnreadAlerts: 39,
     reversedPremiumPayments: [
@@ -431,19 +431,14 @@ export async function getDashboardMetrics() {
     lastSyncDate: '2026-01-04T23:58:00Z',
   };
   
-  // Net Licensed data - fetched dynamically from database
-  // Net Licensed = Agent with $1,000+ total cash flow AND title level TA or A
-  // Excludes Senior Associate (SA) and above
-  // Data is synced from MyWFG Custom Reports - Personal Cash Flow YTD
+  const { getNetLicensedAgents } = await import('./repositories/agents');
   const netLicensedData = await getNetLicensedAgents();
   
-  // Compliance data from MyWFG reports (as of Jan 4, 2026)
-  // Source: Missing Licenses, Platform Fee Recurring, First Notice, Final Notice reports
   const complianceData = {
-    missingLicenses: 11, // Missing Licenses and Appointments report (11 state jurisdictions)
-    notEnrolledRecurring: 15, // Platform Fee Recurring Enrollment (Recurring = No)
-    complianceFirstNotice: 3, // Platform Fee First Notice (Stanley Ejime, Joy Ejime, Bukola Kolawole - $30 each)
-    complianceFinalNotice: 3, // Platform Fee Final Notice - Commissions On Hold (Stephen Monye $45, Esther Aikens $45, Ese Moses $30.58)
+    missingLicenses: 11,
+    notEnrolledRecurring: 15,
+    complianceFirstNotice: 3,
+    complianceFinalNotice: 3,
     commissionsOnHold: [
       { agentCode: 'C8U78', name: 'STEPHEN MONYE', balance: 45.00, email: 'STEVEN.MONYE@GMAIL.COM' },
       { agentCode: 'D3Y01', name: 'Esther Aikens', balance: 45.00, email: 'estherunba111@gmail.com' },
@@ -463,40 +458,31 @@ export async function getDashboardMetrics() {
     totalClients: 0,
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
-    activeAssociates: activeAssociates,
-    licensedAgents: licensedAgents,
-    // Compliance metrics
+    activeAssociates,
+    licensedAgents,
     missingLicenses: complianceData.missingLicenses,
     notEnrolledRecurring: complianceData.notEnrolledRecurring,
     complianceFirstNotice: complianceData.complianceFirstNotice,
     complianceFinalNotice: complianceData.complianceFinalNotice,
     commissionsOnHold: complianceData.commissionsOnHold,
     firstNoticeAgents: complianceData.firstNoticeAgents,
-    // Transamerica alerts
-    transamericaAlerts: transamericaAlerts,
-    // Net Licensed data
-    netLicensedData: netLicensedData,
-    // Projected income placeholder (will be calculated below)
+    transamericaAlerts,
+    netLicensedData,
     projectedIncome: null as any,
   };
 
-  // Get total face amount from production records (manual entries)
   const faceAmountResult = await db.select({
     totalFaceAmount: sql<string>`COALESCE(SUM(${productionRecords.faceAmount}), 0)`,
     dbPolicies: sql<number>`COUNT(*)`,
   }).from(productionRecords);
 
-  // Get unique families (households) protected from clients table
   const familiesResult = await db.select({
     dbFamilies: sql<number>`COUNT(DISTINCT CASE WHEN ${clients.householdId} IS NOT NULL THEN ${clients.householdId} ELSE ${clients.id} END)`,
     totalClients: sql<number>`COUNT(*)`,
   }).from(clients);
 
-  // Use MyWFG data for families/policies, but allow DB to add more
   const dbPolicies = Number(faceAmountResult[0]?.dbPolicies || 0);
   const dbFamilies = Number(familiesResult[0]?.dbFamilies || 0);
-  
-  // Combine Transamerica face amount with any DB entries
   const dbFaceAmount = parseFloat(faceAmountResult[0]?.totalFaceAmount || '0');
   
   return {
@@ -506,1013 +492,36 @@ export async function getDashboardMetrics() {
     totalClients: Number(familiesResult[0]?.totalClients || 0),
     superTeamCashFlow: mywfgData.superTeamCashFlow,
     personalCashFlow: mywfgData.personalCashFlow,
-    activeAssociates: activeAssociates,
-    licensedAgents: licensedAgents,
-    // Compliance metrics
+    activeAssociates,
+    licensedAgents,
     missingLicenses: complianceData.missingLicenses,
     notEnrolledRecurring: complianceData.notEnrolledRecurring,
     complianceFirstNotice: complianceData.complianceFirstNotice,
     complianceFinalNotice: complianceData.complianceFinalNotice,
     commissionsOnHold: complianceData.commissionsOnHold,
     firstNoticeAgents: complianceData.firstNoticeAgents,
-    // Transamerica alerts
-    transamericaAlerts: transamericaAlerts,
-    // Net Licensed data
-    netLicensedData: netLicensedData,
-    // Projected income (calculated from pending policies and inforce data)
+    transamericaAlerts,
+    netLicensedData,
     projectedIncome: await calculateProjectedIncome(db),
   };
 }
 
-// Get all production records with face amount
-export async function getAllProductionRecords() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(productionRecords).orderBy(desc(productionRecords.issueDate));
-}
-
-
 // ============================================
-// Agent Cash Flow History - For Net Licensed Tracking
+// Policy Anniversary Functions
 // ============================================
 
-// Get all cash flow records for an agent
-export async function getAgentCashFlowHistory(agentCode: string) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select()
-    .from(agentCashFlowHistory)
-    .where(eq(agentCashFlowHistory.agentCode, agentCode))
-    .orderBy(desc(agentCashFlowHistory.syncedAt));
-}
-
-// Get all cash flow records (for Net Licensed calculation)
-export async function getAllCashFlowRecords() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(agentCashFlowHistory).orderBy(desc(agentCashFlowHistory.cumulativeCashFlow));
-}
-
-// Get Net Licensed agents (cumulative cash flow >= $1,000 and title TA or A)
-export async function getNetLicensedAgents() {
-  const db = await getDb();
-  if (!db) return { netLicensedAgents: [], notNetLicensedAgents: [], totalNetLicensed: 0 };
-  
-  // Get all cash flow records
-  const allRecords = await db.select().from(agentCashFlowHistory).orderBy(desc(agentCashFlowHistory.cumulativeCashFlow));
-  
-  // Filter for Net Licensed (>= $1,000 and TA/A only)
-  const netLicensedAgents = allRecords.filter(r => {
-    const cashFlow = parseFloat(r.cumulativeCashFlow?.toString() || '0');
-    const title = r.titleLevel?.toUpperCase() || '';
-    // Only TA (Training Associate) and A (Associate) qualify
-    // Exclude SA (Senior Associate), MD, SMD, EMD, etc.
-    return cashFlow >= 1000 && (title === 'TA' || title === 'A');
-  }).map((r, index) => ({
-    rank: index + 1,
-    name: r.agentName,
-    code: r.agentCode,
-    titleLevel: r.titleLevel || 'TA',
-    totalCashFlow: parseFloat(r.cumulativeCashFlow?.toString() || '0'),
-    uplineSMD: r.uplineSMD || 'Unknown',
-    netLicensedDate: r.netLicensedDate,
-  }));
-  
-  // Filter for agents working toward Net Licensed (< $1,000 and TA/A only)
-  const notNetLicensedAgents = allRecords.filter(r => {
-    const cashFlow = parseFloat(r.cumulativeCashFlow?.toString() || '0');
-    const title = r.titleLevel?.toUpperCase() || '';
-    return cashFlow < 1000 && cashFlow > 0 && (title === 'TA' || title === 'A');
-  }).map(r => ({
-    name: r.agentName,
-    code: r.agentCode,
-    titleLevel: r.titleLevel || 'TA',
-    totalCashFlow: parseFloat(r.cumulativeCashFlow?.toString() || '0'),
-    uplineSMD: r.uplineSMD || 'Unknown',
-    amountToNetLicensed: 1000 - parseFloat(r.cumulativeCashFlow?.toString() || '0'),
-  })).slice(0, 10); // Limit to top 10 closest to Net Licensed
-  
-  return {
-    netLicensedAgents,
-    notNetLicensedAgents,
-    totalNetLicensed: netLicensedAgents.length,
-    reportPeriod: allRecords[0]?.reportPeriod || 'N/A',
-    lastSyncDate: allRecords[0]?.syncedAt?.toISOString() || new Date().toISOString(),
-  };
-}
-
-// Upsert cash flow record (update if exists, insert if not)
-export async function upsertCashFlowRecord(data: InsertAgentCashFlowHistory) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Check if record exists for this agent code
-  const existing = await db.select()
-    .from(agentCashFlowHistory)
-    .where(eq(agentCashFlowHistory.agentCode, data.agentCode))
-    .limit(1);
-  
-  if (existing.length > 0) {
-    // Update existing record
-    return db.update(agentCashFlowHistory)
-      .set({
-        agentName: data.agentName,
-        titleLevel: data.titleLevel,
-        uplineSMD: data.uplineSMD,
-        cashFlowAmount: data.cashFlowAmount,
-        cumulativeCashFlow: data.cumulativeCashFlow,
-        paymentDate: data.paymentDate,
-        paymentCycle: data.paymentCycle,
-        isNetLicensed: parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000,
-        netLicensedDate: parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000 
-          ? (existing[0].netLicensedDate || data.paymentDate) 
-          : null,
-        reportPeriod: data.reportPeriod,
-        syncedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(agentCashFlowHistory.agentCode, data.agentCode));
-  } else {
-    // Insert new record
-    const isNetLicensed = parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000;
-    return db.insert(agentCashFlowHistory).values({
-      ...data,
-      isNetLicensed,
-      netLicensedDate: isNetLicensed ? data.paymentDate : null,
-      syncedAt: new Date(),
-    });
-  }
-}
-
-// Simple cash flow record input type (for seeding and API)
-export interface CashFlowRecordInput {
-  agentCode: string;
-  agentName: string;
-  titleLevel?: string;
-  uplineSMD?: string;
-  cashFlowAmount: string;
-  cumulativeCashFlow: string;
-  paymentDate?: string; // ISO date string
-  paymentCycle?: string;
-  reportPeriod?: string;
-}
-
-// Bulk upsert cash flow records from MyWFG sync
-export async function bulkUpsertCashFlowRecords(records: CashFlowRecordInput[]) {
-  const results = [];
-  for (const record of records) {
-    try {
-      // Convert string date to Date object if provided
-      const insertData: InsertAgentCashFlowHistory = {
-        agentCode: record.agentCode,
-        agentName: record.agentName,
-        titleLevel: record.titleLevel,
-        uplineSMD: record.uplineSMD,
-        cashFlowAmount: record.cashFlowAmount,
-        cumulativeCashFlow: record.cumulativeCashFlow,
-        paymentDate: record.paymentDate ? new Date(record.paymentDate) : undefined,
-        paymentCycle: record.paymentCycle,
-        reportPeriod: record.reportPeriod,
-      };
-      await upsertCashFlowRecord(insertData);
-      results.push({ agentCode: record.agentCode, success: true });
-    } catch (error) {
-      results.push({ agentCode: record.agentCode, success: false, error: String(error) });
-    }
-  }
-  return results;
-}
-
-// Delete all cash flow records (for full resync)
-export async function clearAllCashFlowRecords() {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.delete(agentCashFlowHistory);
-}
-
-
-// ==================== SCHEDULED SYNC LOGS ====================
-
-// Create a new scheduled sync log entry
-export async function createScheduledSyncLog(data: {
-  syncType: 'FULL_SYNC' | 'DOWNLINE_STATUS' | 'CONTACT_INFO' | 'CASH_FLOW' | 'PRODUCTION';
-  scheduledTime?: string;
-  status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'PARTIAL';
-  startedAt?: Date;
-}): Promise<SyncLog> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(syncLogs).values({
-    syncType: data.syncType,
-    scheduledTime: data.scheduledTime,
-    status: data.status || 'RUNNING',
-    startedAt: data.startedAt || new Date(),
-  });
-  
-  const insertId = Number(result[0].insertId);
-  const [syncLog] = await db.select().from(syncLogs).where(eq(syncLogs.id, insertId));
-  return syncLog;
-}
-
-// Update scheduled sync log with results
-export async function updateScheduledSyncLog(id: number, data: {
-  status: 'SUCCESS' | 'FAILED' | 'PARTIAL';
-  agentsProcessed?: number;
-  agentsUpdated?: number;
-  agentsCreated?: number;
-  contactsUpdated?: number;
-  errorsCount?: number;
-  errorMessages?: string[];
-  summary?: string;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const completedAt = new Date();
-  const startedAt = await db.select({ startedAt: syncLogs.startedAt })
-    .from(syncLogs)
-    .where(eq(syncLogs.id, id))
-    .limit(1);
-  
-  const durationSeconds = startedAt[0]?.startedAt 
-    ? Math.round((completedAt.getTime() - startedAt[0].startedAt.getTime()) / 1000)
-    : 0;
-  
-  return db.update(syncLogs)
-    .set({
-      status: data.status,
-      completedAt,
-      durationSeconds,
-      agentsProcessed: data.agentsProcessed,
-      agentsUpdated: data.agentsUpdated,
-      agentsCreated: data.agentsCreated,
-      contactsUpdated: data.contactsUpdated,
-      errorsCount: data.errorsCount,
-      errorMessages: data.errorMessages,
-      summary: data.summary,
-    })
-    .where(eq(syncLogs.id, id));
-}
-
-// Get recent scheduled sync logs
-export async function getRecentScheduledSyncLogs(limit: number = 20): Promise<SyncLog[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select()
-    .from(syncLogs)
-    .orderBy(desc(syncLogs.createdAt))
-    .limit(limit);
-}
-
-// Get scheduled sync logs for a specific time period (for weekly summary)
-export async function getScheduledSyncLogsByPeriod(startDate: Date, endDate: Date): Promise<SyncLog[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select()
-    .from(syncLogs)
-    .where(sql`${syncLogs.createdAt} >= ${startDate} AND ${syncLogs.createdAt} <= ${endDate}`)
-    .orderBy(desc(syncLogs.createdAt));
-}
-
-// Get weekly sync summary stats
-export async function getWeeklySyncSummary(): Promise<{
-  totalSyncs: number;
-  successfulSyncs: number;
-  failedSyncs: number;
-  partialSyncs: number;
-  totalAgentsProcessed: number;
-  totalAgentsUpdated: number;
-  totalContactsUpdated: number;
-  totalErrors: number;
-  averageDuration: number;
-  syncsByTime: { time: string; success: number; failed: number }[];
-  recentLogs: SyncLog[];
-}> {
-  const db = await getDb();
-  if (!db) {
-    return {
-      totalSyncs: 0,
-      successfulSyncs: 0,
-      failedSyncs: 0,
-      partialSyncs: 0,
-      totalAgentsProcessed: 0,
-      totalAgentsUpdated: 0,
-      totalContactsUpdated: 0,
-      totalErrors: 0,
-      averageDuration: 0,
-      syncsByTime: [],
-      recentLogs: [],
-    };
-  }
-  
-  // Get logs from the past 7 days
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
-  const logs = await db.select()
-    .from(syncLogs)
-    .where(sql`${syncLogs.createdAt} >= ${sevenDaysAgo}`)
-    .orderBy(desc(syncLogs.createdAt));
-  
-  const successfulSyncs = logs.filter(l => l.status === 'SUCCESS').length;
-  const failedSyncs = logs.filter(l => l.status === 'FAILED').length;
-  const partialSyncs = logs.filter(l => l.status === 'PARTIAL').length;
-  
-  const totalAgentsProcessed = logs.reduce((sum, l) => sum + (l.agentsProcessed || 0), 0);
-  const totalAgentsUpdated = logs.reduce((sum, l) => sum + (l.agentsUpdated || 0), 0);
-  const totalContactsUpdated = logs.reduce((sum, l) => sum + (l.contactsUpdated || 0), 0);
-  const totalErrors = logs.reduce((sum, l) => sum + (l.errorsCount || 0), 0);
-  
-  const completedLogs = logs.filter(l => l.durationSeconds);
-  const averageDuration = completedLogs.length > 0
-    ? Math.round(completedLogs.reduce((sum, l) => sum + (l.durationSeconds || 0), 0) / completedLogs.length)
-    : 0;
-  
-  // Group by scheduled time
-  const syncsByTime = [
-    { 
-      time: '3:30 PM', 
-      success: logs.filter(l => l.scheduledTime === '3:30 PM' && l.status === 'SUCCESS').length,
-      failed: logs.filter(l => l.scheduledTime === '3:30 PM' && l.status !== 'SUCCESS').length,
-    },
-    { 
-      time: '6:30 PM', 
-      success: logs.filter(l => l.scheduledTime === '6:30 PM' && l.status === 'SUCCESS').length,
-      failed: logs.filter(l => l.scheduledTime === '6:30 PM' && l.status !== 'SUCCESS').length,
-    },
-  ];
-  
-  return {
-    totalSyncs: logs.length,
-    successfulSyncs,
-    failedSyncs,
-    partialSyncs,
-    totalAgentsProcessed,
-    totalAgentsUpdated,
-    totalContactsUpdated,
-    totalErrors,
-    averageDuration,
-    syncsByTime,
-    recentLogs: logs.slice(0, 10),
-  };
-}
-
-// Get paginated scheduled sync logs with filtering
-export async function getScheduledSyncLogs(options: {
-  page?: number;
-  pageSize?: number;
-  status?: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'PARTIAL';
-  syncType?: 'FULL_SYNC' | 'DOWNLINE_STATUS' | 'CONTACT_INFO' | 'CASH_FLOW' | 'PRODUCTION';
-  scheduledTime?: string;
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<{
-  logs: SyncLog[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}> {
-  const db = await getDb();
-  if (!db) {
-    return { logs: [], total: 0, page: 1, pageSize: 20, totalPages: 0 };
-  }
-  
-  const page = options.page || 1;
-  const pageSize = options.pageSize || 20;
-  const offset = (page - 1) * pageSize;
-  
-  // Build conditions array
-  const conditions: any[] = [];
-  
-  if (options.status) {
-    conditions.push(eq(syncLogs.status, options.status));
-  }
-  if (options.syncType) {
-    conditions.push(eq(syncLogs.syncType, options.syncType));
-  }
-  if (options.scheduledTime) {
-    conditions.push(eq(syncLogs.scheduledTime, options.scheduledTime));
-  }
-  if (options.startDate) {
-    conditions.push(sql`${syncLogs.createdAt} >= ${options.startDate}`);
-  }
-  if (options.endDate) {
-    conditions.push(sql`${syncLogs.createdAt} <= ${options.endDate}`);
-  }
-  
-  // Build where clause
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-  
-  // Get total count
-  const countResult = await db.select({ count: sql<number>`COUNT(*)` })
-    .from(syncLogs)
-    .where(whereClause);
-  const total = Number(countResult[0]?.count || 0);
-  
-  // Get paginated logs
-  const logs = await db.select()
-    .from(syncLogs)
-    .where(whereClause)
-    .orderBy(desc(syncLogs.createdAt))
-    .limit(pageSize)
-    .offset(offset);
-  
-  return {
-    logs,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
-}
-
-// Get the latest sync log (most recent)
-export async function getLatestScheduledSyncLog(): Promise<SyncLog | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const [log] = await db.select()
-    .from(syncLogs)
-    .orderBy(desc(syncLogs.createdAt))
-    .limit(1);
-  
-  return log || null;
-}
-
-// Get sync logs for today
-export async function getTodaySyncLogs(): Promise<SyncLog[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  return db.select()
-    .from(syncLogs)
-    .where(sql`${syncLogs.createdAt} >= ${today} AND ${syncLogs.createdAt} < ${tomorrow}`)
-    .orderBy(desc(syncLogs.createdAt));
-}
-
-
-// Pending Policies queries (Transamerica Life Access)
-import { pendingPolicies, pendingRequirements, InsertPendingPolicy, InsertPendingRequirement } from "../drizzle/schema";
-
-export async function getPendingPolicies(filters?: { status?: string; agentCode?: string }) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  let query: any = db.select().from(pendingPolicies);
-  if (filters?.status) {
-    query = query.where(eq(pendingPolicies.status, filters.status as any));
-  }
-  if (filters?.agentCode) {
-    query = query.where(eq(pendingPolicies.agentCode, filters.agentCode));
-  }
-  return query.orderBy(desc(pendingPolicies.updatedAt));
-}
-
-export async function getPendingPolicyByNumber(policyNumber: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(pendingPolicies).where(eq(pendingPolicies.policyNumber, policyNumber)).limit(1);
-  return result[0] || null;
-}
-
-export async function upsertPendingPolicy(data: InsertPendingPolicy) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Check if policy exists
-  const existing = await getPendingPolicyByNumber(data.policyNumber);
-  
-  if (existing) {
-    // Update existing policy
-    await db.update(pendingPolicies)
-      .set({ ...data, lastSyncedAt: new Date() })
-      .where(eq(pendingPolicies.policyNumber, data.policyNumber));
-    return getPendingPolicyByNumber(data.policyNumber);
-  } else {
-    // Insert new policy
-    const result = await db.insert(pendingPolicies).values({ ...data, lastSyncedAt: new Date() });
-    const insertId = (result as any)[0]?.insertId;
-    if (!insertId) throw new Error("Failed to insert pending policy");
-    const created = await db.select().from(pendingPolicies).where(eq(pendingPolicies.id, insertId)).limit(1);
-    return created[0];
-  }
-}
-
-export async function getPendingRequirementsByPolicyId(policyId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(pendingRequirements).where(eq(pendingRequirements.policyId, policyId));
-}
-
-export async function clearPendingRequirements(policyId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.delete(pendingRequirements).where(eq(pendingRequirements.policyId, policyId));
-}
-
-export async function insertPendingRequirement(data: InsertPendingRequirement) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(pendingRequirements).values(data);
-}
-
-export async function bulkInsertPendingRequirements(requirements: InsertPendingRequirement[]) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  if (requirements.length === 0) return;
-  return db.insert(pendingRequirements).values(requirements);
-}
-
-export async function getPendingPoliciesWithRequirements() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const policies = await db.select().from(pendingPolicies).orderBy(desc(pendingPolicies.updatedAt));
-  
-  const policiesWithRequirements = await Promise.all(
-    policies.map(async (policy) => {
-      const requirements = await getPendingRequirementsByPolicyId(policy.id);
-      return {
-        ...policy,
-        requirements: {
-          pendingWithProducer: requirements.filter(r => r.category === "Pending with Producer"),
-          pendingWithTransamerica: requirements.filter(r => r.category === "Pending with Transamerica"),
-          completed: requirements.filter(r => r.category === "Completed"),
-        },
-      };
-    })
-  );
-  
-  return policiesWithRequirements;
-}
-
-export async function getPendingPolicySummary() {
-  const db = await getDb();
-  if (!db) return { total: 0, byStatus: {}, totalPendingRequirements: 0 };
-  
-  const policies = await db.select().from(pendingPolicies);
-  const requirements = await db.select().from(pendingRequirements);
-  
-  const byStatus: Record<string, number> = {};
-  policies.forEach(p => {
-    byStatus[p.status] = (byStatus[p.status] || 0) + 1;
-  });
-  
-  const pendingWithProducerCount = requirements.filter(r => r.category === "Pending with Producer").length;
-  const pendingWithTransamericaCount = requirements.filter(r => r.category === "Pending with Transamerica").length;
-  
-  return {
-    total: policies.length,
-    byStatus,
-    totalPendingRequirements: pendingWithProducerCount + pendingWithTransamericaCount,
-    pendingWithProducerCount,
-    pendingWithTransamericaCount,
-  };
-}
-
-
-// ============================================
-// Inforce Policies (Transamerica Production Data)
-// ============================================
-
-// Get all inforce policies
-export async function getInforcePolicies(filters?: { status?: string; agentId?: number }) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  let query: any = db.select().from(inforcePolicies);
-  if (filters?.status) {
-    query = query.where(eq(inforcePolicies.status, filters.status as any));
-  }
-  if (filters?.agentId) {
-    query = query.where(eq(inforcePolicies.agentId, filters.agentId));
-  }
-  return query.orderBy(desc(inforcePolicies.updatedAt));
-}
-
-// Get inforce policy by policy number
-export async function getInforcePolicyByNumber(policyNumber: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const result = await db.select().from(inforcePolicies).where(eq(inforcePolicies.policyNumber, policyNumber)).limit(1);
-  return result[0] || null;
-}
-
-// Upsert inforce policy
-export async function upsertInforcePolicy(data: InsertInforcePolicy) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getInforcePolicyByNumber(data.policyNumber);
-  
-  if (existing) {
-    await db.update(inforcePolicies)
-      .set({ ...data, lastSyncedAt: new Date() })
-      .where(eq(inforcePolicies.policyNumber, data.policyNumber));
-    return getInforcePolicyByNumber(data.policyNumber);
-  } else {
-    const result = await db.insert(inforcePolicies).values({ ...data, lastSyncedAt: new Date() });
-    const insertId = (result as any)[0]?.insertId;
-    if (!insertId) throw new Error("Failed to insert inforce policy");
-    const created = await db.select().from(inforcePolicies).where(eq(inforcePolicies.id, insertId)).limit(1);
-    return created[0];
-  }
-}
-
-// Get production summary (for dashboard)
-export async function getProductionSummary() {
-  const db = await getDb();
-  if (!db) return {
-    totalPolicies: 0,
-    activePolicies: 0,
-    totalPremium: 0,
-    totalCommission: 0,
-    totalFaceAmount: 0,
-    byStatus: {},
-  };
-  
-  const policies = await db.select().from(inforcePolicies);
-  
-  const activePolicies = policies.filter(p => p.status === 'Active');
-  const totalPremium = policies.reduce((sum, p) => sum + parseFloat(p.premium?.toString() || '0'), 0);
-  const totalCommission = policies.reduce((sum, p) => sum + parseFloat(p.calculatedCommission?.toString() || '0'), 0);
-  const totalFaceAmount = policies.reduce((sum, p) => sum + parseFloat(p.faceAmount?.toString() || '0'), 0);
-  
-  const byStatus: Record<string, number> = {};
-  policies.forEach(p => {
-    byStatus[p.status] = (byStatus[p.status] || 0) + 1;
-  });
-  
-  return {
-    totalPolicies: policies.length,
-    activePolicies: activePolicies.length,
-    totalPremium,
-    totalCommission,
-    totalFaceAmount,
-    byStatus,
-  };
-}
-
-// Get top producers by premium
-export async function getTopProducersByPremium(limit: number = 10) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
-  
-  // Group by owner name and sum premiums
-  const producerMap = new Map<string, { name: string; totalPremium: number; totalCommission: number; policyCount: number; totalFaceAmount: number }>();
-  
-  for (const policy of policies) {
-    const name = policy.ownerName;
-    const existing = producerMap.get(name) || { name, totalPremium: 0, totalCommission: 0, policyCount: 0, totalFaceAmount: 0 };
-    existing.totalPremium += parseFloat(policy.premium?.toString() || '0');
-    existing.totalCommission += parseFloat(policy.calculatedCommission?.toString() || '0');
-    existing.totalFaceAmount += parseFloat(policy.faceAmount?.toString() || '0');
-    existing.policyCount += 1;
-    producerMap.set(name, existing);
-  }
-  
-  // Sort by total premium and return top N
-  return Array.from(producerMap.values())
-    .sort((a, b) => b.totalPremium - a.totalPremium)
-    .slice(0, limit);
-}
-
-// Get production by writing agent (for agent-level tracking)
-export async function getProductionByWritingAgent() {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
-  
-  // Group by writing agent
-  const agentMap = new Map<string, { name: string; totalPremium: number; totalCommission: number; policyCount: number }>();
-  
-  for (const policy of policies) {
-    const name = policy.writingAgentName || 'Unknown';
-    const existing = agentMap.get(name) || { name, totalPremium: 0, totalCommission: 0, policyCount: 0 };
-    existing.totalPremium += parseFloat(policy.premium?.toString() || '0');
-    existing.totalCommission += parseFloat(policy.calculatedCommission?.toString() || '0');
-    existing.policyCount += 1;
-    agentMap.set(name, existing);
-  }
-  
-  return Array.from(agentMap.values())
-    .sort((a, b) => b.totalPremium - a.totalPremium);
-}
-
-// Get top agents by commission (includes split agent commissions)
-export async function getTopAgentsByCommission(limit: number = 10) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
-  
-  // Group by agent (both primary and secondary) and sum their commissions
-  const agentMap = new Map<string, { 
-    name: string; 
-    agentCode: string;
-    totalCommission: number; 
-    totalPremium: number;
-    policyCount: number;
-    avgCommissionLevel: number;
-    commissionLevelSum: number;
-  }>();
-  
-  for (const policy of policies) {
-    const targetPremium = parseFloat(policy.targetPremium?.toString() || policy.premium?.toString() || '0');
-    const multiplier = 1.25;
-    
-    // Primary agent
-    const primaryName = policy.writingAgentName || 'Unknown';
-    const primaryCode = policy.writingAgentCode || '';
-    const primarySplit = Number(policy.writingAgentSplit) || 100;
-    const primaryLevel = Number(policy.writingAgentLevel) || 55;
-    const primaryCommission = targetPremium * multiplier * (primaryLevel / 100) * (primarySplit / 100);
-    
-    const existingPrimary = agentMap.get(primaryName) || { 
-      name: primaryName, 
-      agentCode: primaryCode,
-      totalCommission: 0, 
-      totalPremium: 0, 
-      policyCount: 0,
-      avgCommissionLevel: 0,
-      commissionLevelSum: 0
-    };
-    existingPrimary.totalCommission += primaryCommission;
-    existingPrimary.totalPremium += targetPremium * (primarySplit / 100);
-    existingPrimary.policyCount += 1;
-    existingPrimary.commissionLevelSum += Number(primaryLevel);
-    existingPrimary.avgCommissionLevel = existingPrimary.commissionLevelSum / existingPrimary.policyCount;
-    if (!existingPrimary.agentCode && primaryCode) {
-      existingPrimary.agentCode = primaryCode;
-    }
-    agentMap.set(primaryName, existingPrimary);
-    
-    // Secondary agent (if split)
-    if (policy.secondAgentName && policy.secondAgentSplit && policy.secondAgentSplit > 0) {
-      const secondaryName = policy.secondAgentName;
-      const secondaryCode = policy.secondAgentCode || '';
-      const secondarySplit = Number(policy.secondAgentSplit);
-      const secondaryLevel = Number(policy.secondAgentLevel) || 25;
-      const secondaryCommission = targetPremium * multiplier * (secondaryLevel / 100) * (secondarySplit / 100);
-      
-      const existingSecondary = agentMap.get(secondaryName) || { 
-        name: secondaryName, 
-        agentCode: secondaryCode,
-        totalCommission: 0, 
-        totalPremium: 0, 
-        policyCount: 0,
-        avgCommissionLevel: 0,
-        commissionLevelSum: 0
-      };
-      existingSecondary.totalCommission += secondaryCommission;
-      existingSecondary.totalPremium += targetPremium * (secondarySplit / 100);
-      existingSecondary.policyCount += 1;
-      existingSecondary.commissionLevelSum += Number(secondaryLevel);
-      existingSecondary.avgCommissionLevel = existingSecondary.commissionLevelSum / existingSecondary.policyCount;
-      if (!existingSecondary.agentCode && secondaryCode) {
-        existingSecondary.agentCode = secondaryCode;
-      }
-      agentMap.set(secondaryName, existingSecondary);
-    }
-  }
-  
-  return Array.from(agentMap.values())
-    .sort((a, b) => b.totalCommission - a.totalCommission)
-    .slice(0, limit);
-}
-
-export type { InforcePolicy };
-
-
-// ============================================
-// Income History (Projected vs Actual Tracking)
-// ============================================
-
-import { incomeHistory, InsertIncomeHistory, IncomeHistory } from "../drizzle/schema";
-
-// Save a daily income snapshot (called during sync or manually)
-export async function saveIncomeSnapshot() {
-  const db = await getDb();
-  if (!db) return null;
-  
-  try {
-    // Get current projected income data
-    const metrics = await getDashboardMetrics();
-    const projectedIncome = metrics.projectedIncome;
-    
-    if (!projectedIncome) {
-      console.warn('[saveIncomeSnapshot] No projected income data available');
-      return null;
-    }
-    
-    // Check if we already have a snapshot for today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const existingSnapshot = await db.select()
-      .from(incomeHistory)
-      .where(and(
-        sql`${incomeHistory.snapshotDate} >= ${today}`,
-        sql`${incomeHistory.snapshotDate} < ${tomorrow}`
-      ))
-      .limit(1);
-    
-    const snapshotData: InsertIncomeHistory = {
-      snapshotDate: new Date(),
-      projectedTotal: projectedIncome.totalProjected.toString(),
-      projectedFromPending: projectedIncome.fromPendingPolicies.toString(),
-      projectedFromInforce: projectedIncome.fromInforcePolicies.toString(),
-      projectedPendingIssued: projectedIncome.breakdown.pendingIssued.toString(),
-      projectedPendingUnderwriting: projectedIncome.breakdown.pendingUnderwriting.toString(),
-      projectedInforceActive: projectedIncome.breakdown.inforceActive.toString(),
-      pendingPoliciesCount: projectedIncome.pendingPoliciesCount,
-      inforcePoliciesCount: projectedIncome.inforcePoliciesCount,
-      agentLevel: projectedIncome.agentLevel.toString(),
-      transamericaConstant: projectedIncome.transamericaConstant.toString(),
-    };
-    
-    if (existingSnapshot.length > 0) {
-      // Update existing snapshot for today
-      await db.update(incomeHistory)
-        .set(snapshotData)
-        .where(eq(incomeHistory.id, existingSnapshot[0].id));
-      return existingSnapshot[0].id;
-    } else {
-      // Insert new snapshot
-      const result = await db.insert(incomeHistory).values(snapshotData);
-      return (result as any)[0]?.insertId;
-    }
-  } catch (error) {
-    console.error('[saveIncomeSnapshot] Error:', error);
-    return null;
-  }
-}
-
-// Update actual income for a specific date
-export async function updateActualIncome(date: Date, actualIncome: number, source: string) {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setDate(endOfDay.getDate() + 1);
-    
-    const result = await db.update(incomeHistory)
-      .set({
-        actualIncome: actualIncome.toString(),
-        actualIncomeSource: source,
-        actualIncomeUpdatedAt: new Date(),
-      })
-      .where(and(
-        sql`${incomeHistory.snapshotDate} >= ${startOfDay}`,
-        sql`${incomeHistory.snapshotDate} < ${endOfDay}`
-      ));
-    
-    return true;
-  } catch (error) {
-    console.error('[updateActualIncome] Error:', error);
-    return false;
-  }
-}
-
-// Get income history for charting (last N days/weeks/months)
-export async function getIncomeHistory(period: 'week' | 'month' | 'quarter' | 'year' = 'month') {
-  const db = await getDb();
-  if (!db) return [];
-  
-  try {
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (period) {
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case 'quarter':
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case 'year':
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-    }
-    
-    const history = await db.select()
-      .from(incomeHistory)
-      .where(sql`${incomeHistory.snapshotDate} >= ${startDate}`)
-      .orderBy(incomeHistory.snapshotDate);
-    
-    return history.map(h => ({
-      date: h.snapshotDate,
-      projectedTotal: parseFloat(h.projectedTotal?.toString() || '0'),
-      projectedFromPending: parseFloat(h.projectedFromPending?.toString() || '0'),
-      projectedFromInforce: parseFloat(h.projectedFromInforce?.toString() || '0'),
-      actualIncome: parseFloat(h.actualIncome?.toString() || '0'),
-      pendingPoliciesCount: h.pendingPoliciesCount || 0,
-      inforcePoliciesCount: h.inforcePoliciesCount || 0,
-      accuracy: h.actualIncome && parseFloat(h.actualIncome.toString()) > 0
-        ? Math.round((parseFloat(h.actualIncome.toString()) / parseFloat(h.projectedTotal?.toString() || '1')) * 100)
-        : null,
-    }));
-  } catch (error) {
-    console.error('[getIncomeHistory] Error:', error);
-    return [];
-  }
-}
-
-// Get income accuracy statistics
-export async function getIncomeAccuracyStats() {
-  const db = await getDb();
-  if (!db) return null;
-  
-  try {
-    const history = await db.select()
-      .from(incomeHistory)
-      .where(sql`${incomeHistory.actualIncome} > 0`);
-    
-    if (history.length === 0) {
-      return {
-        totalSnapshots: 0,
-        snapshotsWithActual: 0,
-        averageAccuracy: null,
-        totalProjected: 0,
-        totalActual: 0,
-      };
-    }
-    
-    let totalProjected = 0;
-    let totalActual = 0;
-    let accuracySum = 0;
-    
-    for (const h of history) {
-      const projected = parseFloat(h.projectedTotal?.toString() || '0');
-      const actual = parseFloat(h.actualIncome?.toString() || '0');
-      totalProjected += projected;
-      totalActual += actual;
-      if (projected > 0) {
-        accuracySum += (actual / projected) * 100;
-      }
-    }
-    
-    const allSnapshots = await db.select({ count: sql<number>`COUNT(*)` }).from(incomeHistory);
-    
-    return {
-      totalSnapshots: allSnapshots[0]?.count || 0,
-      snapshotsWithActual: history.length,
-      averageAccuracy: Math.round(accuracySum / history.length),
-      totalProjected: Math.round(totalProjected * 100) / 100,
-      totalActual: Math.round(totalActual * 100) / 100,
-    };
-  } catch (error) {
-    console.error('[getIncomeAccuracyStats] Error:', error);
-    return null;
-  }
-}
-
-
-// ============================================
-// Policy Anniversaries (Client Follow-up Tracking)
-// ============================================
-
-// Get policies with upcoming anniversaries
 export async function getPolicyAnniversaries(daysAhead: number = 30) {
   const db = await getDb();
   if (!db) return [];
   
   try {
-    // Get all active inforce policies with issue dates
-    const policies = await db.select()
-      .from(inforcePolicies)
-      .where(eq(inforcePolicies.status, 'Active'));
-    
+    const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
     const today = new Date();
     const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const currentDay = today.getDate();
     
-    // Calculate anniversaries
     const anniversaries = policies
       .filter(policy => policy.issueDate)
       .map(policy => {
-        // Parse issue date (format: "MM/DD/YYYY" or "YYYY-MM-DD")
         let issueDate: Date;
         const issueDateStr = policy.issueDate as string;
         
@@ -1525,19 +534,12 @@ export async function getPolicyAnniversaries(daysAhead: number = 30) {
         
         if (isNaN(issueDate.getTime())) return null;
         
-        // Calculate this year's anniversary
         let anniversaryDate = new Date(currentYear, issueDate.getMonth(), issueDate.getDate());
-        
-        // If anniversary has passed this year, use next year
         if (anniversaryDate < today) {
           anniversaryDate = new Date(currentYear + 1, issueDate.getMonth(), issueDate.getDate());
         }
         
-        // Calculate days until anniversary
         const daysUntil = Math.ceil((anniversaryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // Calculate policy age in years (how many complete years since issue date)
-        // The upcoming anniversary marks the completion of this many years
         const policyAge = anniversaryDate.getFullYear() - issueDate.getFullYear();
         
         return {
@@ -1566,7 +568,6 @@ export async function getPolicyAnniversaries(daysAhead: number = 30) {
   }
 }
 
-// Get anniversary summary stats
 export async function getAnniversarySummary() {
   const db = await getDb();
   if (!db) return null;
@@ -1590,31 +591,22 @@ export async function getAnniversarySummary() {
   }
 }
 
-
-// Get policies with anniversaries in exactly N days (for email notifications)
 export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
   const db = await getDb();
   if (!db) return [];
   
   try {
-    // Get all active inforce policies with issue dates
-    const policies = await db.select()
-      .from(inforcePolicies)
-      .where(eq(inforcePolicies.status, 'Active'));
-    
+    const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
     const today = new Date();
     const targetDate = new Date(today);
     targetDate.setDate(targetDate.getDate() + days);
     
     const targetMonth = targetDate.getMonth();
     const targetDay = targetDate.getDate();
-    const currentYear = today.getFullYear();
     
-    // Filter policies where anniversary falls on the target date
     const matchingPolicies = policies
       .filter(policy => policy.issueDate)
       .filter(policy => {
-        // Parse issue date
         let issueDate: Date;
         const issueDateStr = policy.issueDate as string;
         
@@ -1633,12 +625,9 @@ export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
         }
         
         if (isNaN(issueDate.getTime())) return false;
-        
-        // Check if the anniversary month/day matches the target date
         return issueDate.getMonth() === targetMonth && issueDate.getDate() === targetDay;
       })
       .map(policy => {
-        // Parse issue date again for calculations
         let issueDate: Date;
         const issueDateStr = policy.issueDate as string;
         
@@ -1660,11 +649,7 @@ export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
           id: policy.id,
           policyNumber: policy.policyNumber,
           ownerName: policy.ownerName || 'Unknown',
-          anniversaryDate: targetDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-          }),
+          anniversaryDate: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           policyAge,
           faceAmount: policy.faceAmount || 0,
           premium: policy.premium || 0,
@@ -1681,28 +666,20 @@ export async function getPoliciesWithAnniversaryInDays(days: number = 7) {
   }
 }
 
-
-// Get policies with anniversaries TODAY for client greeting emails
 export async function getPoliciesWithAnniversaryToday() {
   const db = await getDb();
   if (!db) return [];
   
   try {
-    // Get all active inforce policies with issue dates
-    const policies = await db.select()
-      .from(inforcePolicies)
-      .where(eq(inforcePolicies.status, 'Active'));
-    
+    const policies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
     const today = new Date();
     const todayMonth = today.getMonth();
     const todayDay = today.getDate();
     const currentYear = today.getFullYear();
     
-    // Filter policies where anniversary is TODAY
     const todayAnniversaries = policies
       .filter(policy => policy.issueDate)
       .filter(policy => {
-        // Parse issue date
         let issueDate: Date;
         const issueDateStr = policy.issueDate as string;
         
@@ -1721,12 +698,9 @@ export async function getPoliciesWithAnniversaryToday() {
         }
         
         if (isNaN(issueDate.getTime())) return false;
-        
-        // Check if the anniversary month/day matches today
         return issueDate.getMonth() === todayMonth && issueDate.getDate() === todayDay;
       })
       .map(policy => {
-        // Parse issue date again for calculations
         let issueDate: Date;
         const issueDateStr = policy.issueDate as string;
         
@@ -1755,7 +729,6 @@ export async function getPoliciesWithAnniversaryToday() {
           writingAgentCode: policy.writingAgentCode,
         };
       })
-      // Filter out policies that are brand new (age 0 - issued today, not anniversary)
       .filter(policy => policy.policyAge > 0);
     
     return todayAnniversaries;
@@ -1765,85 +738,12 @@ export async function getPoliciesWithAnniversaryToday() {
   }
 }
 
-// Look up client email by name from the clients table
-export async function getClientEmailByName(firstName: string, lastName: string): Promise<string | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  try {
-    // Try exact match first
-    const exactMatch = await db.select()
-      .from(clients)
-      .where(
-        and(
-          eq(clients.firstName, firstName),
-          eq(clients.lastName, lastName)
-        )
-      )
-      .limit(1);
-    
-    if (exactMatch.length > 0 && exactMatch[0].email) {
-      return exactMatch[0].email;
-    }
-    
-    // Try case-insensitive match
-    const caseInsensitiveMatch = await db.select()
-      .from(clients)
-      .where(
-        sql`LOWER(${clients.firstName}) = LOWER(${firstName}) AND LOWER(${clients.lastName}) = LOWER(${lastName})`
-      )
-      .limit(1);
-    
-    if (caseInsensitiveMatch.length > 0 && caseInsensitiveMatch[0].email) {
-      return caseInsensitiveMatch[0].email;
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('[getClientEmailByName] Error:', error);
-    return null;
-  }
-}
-
-// Get agent contact info by agent code
-export async function getAgentContactInfo(agentCode: string): Promise<{
-  name: string;
-  email: string | null;
-  phone: string | null;
-} | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  try {
-    const agent = await db.select()
-      .from(agents)
-      .where(eq(agents.agentCode, agentCode))
-      .limit(1);
-    
-    if (agent.length > 0) {
-      const fullName = `${agent[0].firstName} ${agent[0].lastName}`.trim();
-      return {
-        name: fullName || 'Your Financial Professional',
-        email: agent[0].email,
-        phone: agent[0].phone,
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('[getAgentContactInfo] Error:', error);
-    return null;
-  }
-}
-
-// Track sent anniversary greetings to avoid duplicates
+// Anniversary greeting tracking
 export async function hasAnniversaryGreetingBeenSent(policyNumber: string, year: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   
   try {
-    // Check if we have a record of sending this greeting
-    // We'll use the workflowTasks table with a specific type and description
     const existingTask = await db.select()
       .from(workflowTasks)
       .where(
@@ -1861,7 +761,6 @@ export async function hasAnniversaryGreetingBeenSent(policyNumber: string, year:
   }
 }
 
-// Record that an anniversary greeting was sent
 export async function recordAnniversaryGreetingSent(policyNumber: string, year: number, clientEmail: string): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -1881,63 +780,5 @@ export async function recordAnniversaryGreetingSent(policyNumber: string, year: 
   }
 }
 
-
-// ============================================
-// Monthly Team Cash Flow - For Dashboard Chart
-// ============================================
-
-// Get all monthly cash flow records
-export async function getMonthlyTeamCashFlow(agentCode: string = "73DXR") {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return db.select()
-    .from(monthlyTeamCashFlow)
-    .where(eq(monthlyTeamCashFlow.agentCode, agentCode))
-    .orderBy(monthlyTeamCashFlow.year, monthlyTeamCashFlow.month);
-}
-
-// Upsert monthly cash flow record
-export async function upsertMonthlyTeamCashFlow(data: InsertMonthlyTeamCashFlow) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  return db.insert(monthlyTeamCashFlow).values(data).onDuplicateKeyUpdate({
-    set: {
-      superTeamCashFlow: data.superTeamCashFlow,
-      personalCashFlow: data.personalCashFlow,
-      syncedAt: new Date(),
-      updatedAt: new Date(),
-    },
-  });
-}
-
-// Bulk upsert monthly cash flow records
-export async function bulkUpsertMonthlyTeamCashFlow(records: InsertMonthlyTeamCashFlow[]) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  let upserted = 0;
-  for (const record of records) {
-    await upsertMonthlyTeamCashFlow(record);
-    upserted++;
-  }
-  
-  return { upserted };
-}
-
-// Get cash flow totals for a period
-export async function getCashFlowTotals(agentCode: string = "73DXR") {
-  const db = await getDb();
-  if (!db) return { superTeamTotal: 0, personalTotal: 0 };
-  
-  const result = await db.select({
-    superTeamTotal: sql<string>`COALESCE(SUM(${monthlyTeamCashFlow.superTeamCashFlow}), 0)`,
-    personalTotal: sql<string>`COALESCE(SUM(${monthlyTeamCashFlow.personalCashFlow}), 0)`,
-  }).from(monthlyTeamCashFlow).where(eq(monthlyTeamCashFlow.agentCode, agentCode));
-  
-  return {
-    superTeamTotal: parseFloat(result[0]?.superTeamTotal || '0'),
-    personalTotal: parseFloat(result[0]?.personalTotal || '0'),
-  };
-}
+// Re-export CashFlowRecordInput type for compatibility
+export type { CashFlowRecordInput } from './repositories/agents';

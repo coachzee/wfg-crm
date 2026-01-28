@@ -48,7 +48,6 @@ export type { WorkflowTask } from './tasks';
 // Dashboard repository
 export {
   initDashboardRepository,
-  getDashboardMetrics,
   getAgentStats,
   getProductionStats,
   getMonthlyTeamCashFlow,
@@ -56,3 +55,48 @@ export {
   bulkUpsertMonthlyTeamCashFlow,
   getCashFlowTotals,
 } from './dashboard';
+
+// Sync logs repository
+export {
+  initSyncLogsRepository,
+  createScheduledSyncLog,
+  updateScheduledSyncLog,
+  getRecentScheduledSyncLogs,
+  getScheduledSyncLogsByPeriod,
+  getWeeklySyncSummary,
+  getScheduledSyncLogs,
+  getLatestScheduledSyncLog,
+  getTodaySyncLogs,
+} from './syncLogs';
+export type { SyncLog } from './syncLogs';
+
+// Policies repository
+export {
+  initPoliciesRepository,
+  getPendingPolicies,
+  getPendingPolicyByNumber,
+  upsertPendingPolicy,
+  getPendingRequirementsByPolicyId,
+  clearPendingRequirements,
+  insertPendingRequirement,
+  bulkInsertPendingRequirements,
+  getPendingPoliciesWithRequirements,
+  getPendingPolicySummary,
+  getInforcePolicies,
+  getInforcePolicyByNumber,
+  upsertInforcePolicy,
+  getProductionSummary,
+  getTopProducersByPremium,
+  getProductionByWritingAgent,
+  getTopAgentsByCommission,
+} from './policies';
+export type { InforcePolicy, PendingPolicy, PendingRequirement } from './policies';
+
+// Income repository
+export {
+  initIncomeRepository,
+  saveIncomeSnapshot,
+  updateActualIncome,
+  getIncomeHistory,
+  getIncomeAccuracyStats,
+} from './income';

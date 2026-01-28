@@ -5,6 +5,7 @@
  * - CRUD operations
  * - Agent filtering and search
  * - Cash flow history
+ * - Net Licensed tracking
  */
 
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -97,51 +98,88 @@ export async function getAllCashFlowRecords() {
   logger.debug("Fetching all cash flow records");
   return db.select()
     .from(agentCashFlowHistory)
-    .orderBy(desc(agentCashFlowHistory.syncedAt));
+    .orderBy(desc(agentCashFlowHistory.cumulativeCashFlow));
 }
 
-export async function getNetLicensedAgents() {
+// Get Net Licensed agents (cumulative cash flow >= $1,000 and title TA or A)
+export async function getNetLicensedAgents(): Promise<{
+  netLicensedAgents: Array<{
+    rank: number;
+    name: string;
+    code: string;
+    titleLevel: string;
+    totalCashFlow: number;
+    uplineSMD: string;
+    netLicensedDate: Date | null;
+  }>;
+  notNetLicensedAgents: Array<{
+    name: string;
+    code: string;
+    titleLevel: string;
+    totalCashFlow: number;
+    uplineSMD: string;
+    amountToNetLicensed: number;
+  }>;
+  totalNetLicensed: number;
+  reportPeriod: string;
+  lastSyncDate: string;
+}> {
   const db = await _getDb();
-  if (!db) return [];
+  if (!db) {
+    return { 
+      netLicensedAgents: [], 
+      notNetLicensedAgents: [], 
+      totalNetLicensed: 0,
+      reportPeriod: 'N/A',
+      lastSyncDate: new Date().toISOString(),
+    };
+  }
   
   logger.debug("Fetching net licensed agents");
   
-  // Get all agents with their latest cash flow data
-  const allAgents = await db.select().from(agents).where(eq(agents.isActive, true));
-  
   // Get all cash flow records
-  const cashFlowRecords = await db.select().from(agentCashFlowHistory);
+  const allRecords = await db.select()
+    .from(agentCashFlowHistory)
+    .orderBy(desc(agentCashFlowHistory.cumulativeCashFlow));
   
-  // Create a map of agent code to their latest cumulative cash flow
-  const cashFlowMap = new Map<string, number>();
-  for (const record of cashFlowRecords) {
-    const current = cashFlowMap.get(record.agentCode) || 0;
-    const recordValue = parseFloat(String(record.cumulativeCashFlow || 0));
-    if (recordValue > current) {
-      cashFlowMap.set(record.agentCode, recordValue);
-    }
-  }
+  // Filter for Net Licensed (>= $1,000 and TA/A only)
+  const netLicensedAgents = allRecords.filter(r => {
+    const cashFlow = parseFloat(r.cumulativeCashFlow?.toString() || '0');
+    const title = r.titleLevel?.toUpperCase() || '';
+    // Only TA (Training Associate) and A (Associate) qualify
+    // Exclude SA (Senior Associate), MD, SMD, EMD, etc.
+    return cashFlow >= 1000 && (title === 'TA' || title === 'A');
+  }).map((r, index) => ({
+    rank: index + 1,
+    name: r.agentName,
+    code: r.agentCode,
+    titleLevel: r.titleLevel || 'TA',
+    totalCashFlow: parseFloat(r.cumulativeCashFlow?.toString() || '0'),
+    uplineSMD: r.uplineSMD || 'Unknown',
+    netLicensedDate: r.netLicensedDate || null,
+  }));
   
-  // Filter agents who are net licensed (cumulative cash flow >= $1000 and not SMD)
-  const netLicensed = allAgents.filter(agent => {
-    if (!agent.agentCode) return false;
-    const cashFlow = cashFlowMap.get(agent.agentCode) || 0;
-    const titleLevel = agent.currentRank || '';
-    // SMD and above are not counted as net licensed (they're already established)
-    if (['SMD', 'EMD', 'CEO'].includes(titleLevel)) return false;
-    return cashFlow >= 1000;
-  });
+  // Filter for agents working toward Net Licensed (< $1,000 and TA/A only)
+  const notNetLicensedAgents = allRecords.filter(r => {
+    const cashFlow = parseFloat(r.cumulativeCashFlow?.toString() || '0');
+    const title = r.titleLevel?.toUpperCase() || '';
+    return cashFlow < 1000 && cashFlow > 0 && (title === 'TA' || title === 'A');
+  }).map(r => ({
+    name: r.agentName,
+    code: r.agentCode,
+    titleLevel: r.titleLevel || 'TA',
+    totalCashFlow: parseFloat(r.cumulativeCashFlow?.toString() || '0'),
+    uplineSMD: r.uplineSMD || 'Unknown',
+    amountToNetLicensed: 1000 - parseFloat(r.cumulativeCashFlow?.toString() || '0'),
+  })).slice(0, 10); // Limit to top 10 closest to Net Licensed
   
-  return netLicensed;
-}
-
-interface CashFlowRecordInput {
-  agentCode: string;
-  agentName: string;
-  titleLevel: string;
-  cashFlowAmount: string;
-  cumulativeCashFlow: string;
-  paymentDate?: Date | null;
+  return {
+    netLicensedAgents,
+    notNetLicensedAgents,
+    totalNetLicensed: netLicensedAgents.length,
+    reportPeriod: allRecords[0]?.reportPeriod || 'N/A',
+    lastSyncDate: allRecords[0]?.syncedAt?.toISOString() || new Date().toISOString(),
+  };
 }
 
 export async function upsertCashFlowRecord(data: InsertAgentCashFlowHistory) {
@@ -162,21 +200,37 @@ export async function upsertCashFlowRecord(data: InsertAgentCashFlowHistory) {
       .set({
         agentName: data.agentName,
         titleLevel: data.titleLevel,
-        cumulativeCashFlow: data.cumulativeCashFlow,
+        uplineSMD: data.uplineSMD,
         cashFlowAmount: data.cashFlowAmount,
+        cumulativeCashFlow: data.cumulativeCashFlow,
+        paymentDate: data.paymentDate,
+        paymentCycle: data.paymentCycle,
+        isNetLicensed: parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000,
+        netLicensedDate: parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000 
+          ? (existing[0].netLicensedDate || data.paymentDate) 
+          : null,
+        reportPeriod: data.reportPeriod,
+        syncedAt: new Date(),
+        updatedAt: new Date(),
       })
-      .where(eq(agentCashFlowHistory.id, existing[0].id));
+      .where(eq(agentCashFlowHistory.agentCode, data.agentCode));
     
     const updated = await db.select()
       .from(agentCashFlowHistory)
-      .where(eq(agentCashFlowHistory.id, existing[0].id))
+      .where(eq(agentCashFlowHistory.agentCode, data.agentCode))
       .limit(1);
     return updated[0];
   } else {
     // Insert new record
-    const insertResult = await db.insert(agentCashFlowHistory).values(data);
-    const insertId = (insertResult as any)[0]?.insertId;
+    const isNetLicensed = parseFloat(data.cumulativeCashFlow?.toString() || '0') >= 1000;
+    const insertResult = await db.insert(agentCashFlowHistory).values({
+      ...data,
+      isNetLicensed,
+      netLicensedDate: isNetLicensed ? data.paymentDate : null,
+      syncedAt: new Date(),
+    });
     
+    const insertId = (insertResult as any)[0]?.insertId;
     if (!insertId) {
       throw new Error("Failed to get inserted cash flow record ID");
     }
@@ -189,6 +243,19 @@ export async function upsertCashFlowRecord(data: InsertAgentCashFlowHistory) {
   }
 }
 
+// Input type for bulk operations - allows optional fields
+export interface CashFlowRecordInput {
+  agentCode: string;
+  agentName: string;
+  titleLevel?: string;
+  uplineSMD?: string;
+  cashFlowAmount: string;
+  cumulativeCashFlow: string;
+  paymentDate?: string;
+  paymentCycle?: string;
+  reportPeriod?: string;
+}
+
 export async function bulkUpsertCashFlowRecords(records: CashFlowRecordInput[]) {
   const db = await _getDb();
   if (!db) throw new Error("Database not available");
@@ -197,15 +264,23 @@ export async function bulkUpsertCashFlowRecords(records: CashFlowRecordInput[]) 
   
   const results = [];
   for (const record of records) {
-    const result = await upsertCashFlowRecord({
-      agentCode: record.agentCode,
-      agentName: record.agentName,
-      titleLevel: record.titleLevel,
-      cashFlowAmount: record.cashFlowAmount,
-      cumulativeCashFlow: record.cumulativeCashFlow,
-      paymentDate: record.paymentDate || null,
-    });
-    results.push(result);
+    try {
+      const insertData: InsertAgentCashFlowHistory = {
+        agentCode: record.agentCode,
+        agentName: record.agentName,
+        titleLevel: record.titleLevel,
+        uplineSMD: record.uplineSMD,
+        cashFlowAmount: record.cashFlowAmount,
+        cumulativeCashFlow: record.cumulativeCashFlow,
+        paymentDate: record.paymentDate ? new Date(record.paymentDate) : undefined,
+        paymentCycle: record.paymentCycle,
+        reportPeriod: record.reportPeriod,
+      };
+      await upsertCashFlowRecord(insertData);
+      results.push({ agentCode: record.agentCode, success: true });
+    } catch (error) {
+      results.push({ agentCode: record.agentCode, success: false, error: String(error) });
+    }
   }
   
   return results;
@@ -222,8 +297,8 @@ export async function clearAllCashFlowRecords() {
 
 export async function getAgentContactInfo(agentCode: string): Promise<{
   name: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
 } | null> {
   const db = await _getDb();
   if (!db) return null;
@@ -245,7 +320,7 @@ export async function getAgentContactInfo(agentCode: string): Promise<{
   const agent = result[0];
   return {
     name: `${agent.firstName} ${agent.lastName}`,
-    phone: agent.phone || '',
-    email: agent.email || '',
+    phone: agent.phone,
+    email: agent.email,
   };
 }
