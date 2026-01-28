@@ -25,6 +25,7 @@ import {
   credentialsRouter,
   productionRouter,
   teamRouter,
+  alertsRouter,
 } from "./routers/index";
 
 // Auth router (kept inline as it's tightly coupled with cookie handling)
@@ -58,6 +59,7 @@ export const appRouter = router({
   syncLogs: syncLogsRouter,
   pendingPolicies: pendingPoliciesRouter,
   inforcePolicies: inforcePoliciesRouter,
+  alerts: alertsRouter,
 });
 
 export type AppRouter = typeof appRouter;

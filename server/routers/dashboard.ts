@@ -461,6 +461,48 @@ export const dashboardRouter = router({
     const { getQueryMetrics } = await import("../db-logger");
     return getQueryMetrics();
   }),
+
+  // Query metrics history endpoints
+  getMetricsHistory: protectedProcedure
+    .input(z.object({
+      periodType: z.enum(["HOURLY", "DAILY", "WEEKLY"]).optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      limit: z.number().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      logger.info("Fetching query metrics history");
+      const { getMetricsHistory } = await import("../repositories/queryMetrics");
+      return getMetricsHistory({
+        ...input,
+        startDate: input?.startDate ? new Date(input.startDate) : undefined,
+        endDate: input?.endDate ? new Date(input.endDate) : undefined,
+      });
+    }),
+
+  saveMetricsSnapshot: protectedProcedure
+    .input(z.object({
+      periodType: z.enum(["HOURLY", "DAILY", "WEEKLY"]).optional(),
+    }).optional())
+    .mutation(async ({ input }) => {
+      logger.info("Saving query metrics snapshot");
+      const { saveMetricsSnapshot } = await import("../repositories/queryMetrics");
+      return saveMetricsSnapshot(input?.periodType || "HOURLY");
+    }),
+
+  getAggregatedMetrics: protectedProcedure
+    .input(z.object({
+      startDate: z.string(),
+      endDate: z.string(),
+    }))
+    .query(async ({ input }) => {
+      logger.info("Fetching aggregated query metrics");
+      const { getAggregatedMetrics } = await import("../repositories/queryMetrics");
+      return getAggregatedMetrics(
+        new Date(input.startDate),
+        new Date(input.endDate)
+      );
+    }),
 });
 
 export default dashboardRouter;

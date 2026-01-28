@@ -169,6 +169,13 @@
       "when": 1769612089299,
       "tag": "0023_rich_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1769613974016,
+      "tag": "0024_graceful_green_goblin",
+      "breakpoints": true
     }
   ]
 }

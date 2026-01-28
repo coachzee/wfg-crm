@@ -10,7 +10,10 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "check:bundle:strict": "node scripts/check-bundle-size.mjs --max-size=150",
+    "ci": "pnpm check && pnpm test && pnpm build && pnpm check:bundle"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

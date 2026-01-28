@@ -1526,3 +1526,21 @@
   - Split date-fns into vendor-date chunk (23 KB)
   - Main index.js reduced from 625 KB to 152 KB (76% reduction)
   - Better parallel loading of vendor chunks
+
+
+## Follow-up Improvements Round 3
+- [x] Add alert dismissal tracking for chargeback alerts
+  - Created dismissedAlerts table in schema
+  - Created alerts repository with dismiss/restore/filter functions
+  - Created alerts router with CRUD endpoints
+  - Alerts can be dismissed to prevent repeated notifications
+- [x] Implement query metrics history with snapshots
+  - Created queryMetricsHistory table in schema
+  - Created queryMetrics repository with snapshot/history functions
+  - Added hourly snapshot scheduling to scheduler.ts
+  - Added getMetricsHistory, saveMetricsSnapshot, getAggregatedMetrics endpoints
+- [x] Add bundle size monitoring CI check
+  - Created scripts/check-bundle-size.mjs with configurable limits
+  - App chunks: 200 KB limit, Vendor chunks: 450 KB limit
+  - Added pnpm check:bundle and pnpm ci scripts
+  - Color-coded output with suggestions for oversized chunks

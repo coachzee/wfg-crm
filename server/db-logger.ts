@@ -224,3 +224,12 @@ export function getQueryMetrics(): QueryMetricsResponse {
     slowQueries: getSlowQueries(20),
   };
 }
+
+/**
+ * Reset query metrics (alias for resetStats)
+ */
+export function resetQueryMetrics(): void {
+  resetStats();
+}
+
+export type { QueryMetric, QueryStats };

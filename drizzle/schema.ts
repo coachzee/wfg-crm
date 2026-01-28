@@ -871,3 +871,88 @@ export const monthlyTeamCashFlow = mysqlTable("monthlyTeamCashFlow", {
 
 export type MonthlyTeamCashFlow = typeof monthlyTeamCashFlow.$inferSelect;
 export type InsertMonthlyTeamCashFlow = typeof monthlyTeamCashFlow.$inferInsert;
+
+
+// Dismissed Alerts - Track acknowledged chargeback alerts to prevent repeated notifications
+export const dismissedAlerts = mysqlTable("dismissedAlerts", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Alert identification
+  alertType: mysqlEnum("alertType", [
+    "REVERSED_PREMIUM_PAYMENT",
+    "EFT_REMOVAL",
+    "CHARGEBACK",
+    "OTHER",
+  ]).notNull(),
+  policyNumber: varchar("policyNumber", { length: 50 }).notNull(),
+  ownerName: varchar("ownerName", { length: 255 }),
+  alertDate: varchar("alertDate", { length: 50 }), // Original alert date from Transamerica
+  
+  // Dismissal info
+  dismissedBy: int("dismissedBy").references(() => users.id),
+  dismissedAt: timestamp("dismissedAt").defaultNow().notNull(),
+  dismissReason: text("dismissReason"), // Optional reason for dismissal
+  
+  // Metadata
+  originalAlertData: json("originalAlertData"), // Store full alert data for reference
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  policyAlertIdx: uniqueIndex("unique_policy_alert").on(table.policyNumber, table.alertType, table.alertDate),
+  alertTypeIdx: index("idx_dismissed_alerts_type").on(table.alertType),
+  dismissedAtIdx: index("idx_dismissed_alerts_dismissed_at").on(table.dismissedAt),
+}));
+
+export type DismissedAlert = typeof dismissedAlerts.$inferSelect;
+export type InsertDismissedAlert = typeof dismissedAlerts.$inferInsert;
+
+export const dismissedAlertsRelations = relations(dismissedAlerts, ({ one }) => ({
+  dismissedByUser: one(users, {
+    fields: [dismissedAlerts.dismissedBy],
+    references: [users.id],
+  }),
+}));
+
+
+// Query Metrics History - Store periodic snapshots of database performance metrics
+export const queryMetricsHistory = mysqlTable("queryMetricsHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Snapshot timestamp
+  snapshotAt: timestamp("snapshotAt").defaultNow().notNull(),
+  
+  // Aggregate metrics
+  totalQueries: int("totalQueries").default(0).notNull(),
+  totalDurationMs: decimal("totalDurationMs", { precision: 15, scale: 2 }).default("0").notNull(),
+  avgDurationMs: decimal("avgDurationMs", { precision: 10, scale: 2 }).default("0").notNull(),
+  maxDurationMs: decimal("maxDurationMs", { precision: 10, scale: 2 }).default("0").notNull(),
+  minDurationMs: decimal("minDurationMs", { precision: 10, scale: 2 }).default("0").notNull(),
+  
+  // Query counts by type
+  selectCount: int("selectCount").default(0).notNull(),
+  insertCount: int("insertCount").default(0).notNull(),
+  updateCount: int("updateCount").default(0).notNull(),
+  deleteCount: int("deleteCount").default(0).notNull(),
+  otherCount: int("otherCount").default(0).notNull(),
+  
+  // Performance indicators
+  slowQueryCount: int("slowQueryCount").default(0).notNull(), // Queries > 1000ms
+  failedQueryCount: int("failedQueryCount").default(0).notNull(),
+  
+  // Slow query details (top 5 slowest)
+  slowQueries: json("slowQueries"), // Array of { query, duration, timestamp }
+  
+  // Period info (for aggregation)
+  periodType: mysqlEnum("periodType", ["HOURLY", "DAILY", "WEEKLY"]).default("HOURLY").notNull(),
+  periodStart: timestamp("periodStart").notNull(),
+  periodEnd: timestamp("periodEnd").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  snapshotAtIdx: index("idx_query_metrics_snapshot_at").on(table.snapshotAt),
+  periodTypeIdx: index("idx_query_metrics_period_type").on(table.periodType),
+}));
+
+export type QueryMetricsHistory = typeof queryMetricsHistory.$inferSelect;
+export type InsertQueryMetricsHistory = typeof queryMetricsHistory.$inferInsert;
