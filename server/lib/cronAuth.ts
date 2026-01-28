@@ -6,6 +6,7 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
+import { ENV } from "../_core/env";
 import { getEnv } from "../_core/env.schema";
 
 const SYNC_SECRET_HEADER = "x-sync-secret";
@@ -31,9 +32,17 @@ export function requireCronSecret(req: Request): void {
     return; // Valid header secret
   }
 
-  // Check query parameter (deprecated, log warning)
+  // Check query parameter (deprecated).
+  // In production, disallow query-string secrets unless explicitly enabled to avoid leakage in logs/metrics.
   const querySecret = req.query[SYNC_SECRET_QUERY] as string | undefined;
   if (querySecret === syncSecret) {
+    if (ENV.isProduction && !ENV.enableCronGetSecret) {
+      throw Object.assign(
+        new Error("Query-string cron secret is disabled in production. Use POST with x-sync-secret header."),
+        { statusCode: 401 }
+      );
+    }
+
     // Log warning about deprecated method, but scrub the secret
     console.warn(
       `[Cron Auth] DEPRECATED: Using query parameter for sync secret. ` +

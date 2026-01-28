@@ -1644,3 +1644,15 @@
 - [x] Add stale sync detection (alert if >24h since last sync)
 - [x] Implement alert mechanism via notifyOwner
 - [x] Add /api/monitoring/sync endpoint
+
+
+## Final Hardening Patches (Work Order) - COMPLETED
+- [x] Apply env.schema.ts strictness (ENCRYPTION_KEY, SYNC_SECRET required)
+- [x] Update env.ts with nodeEnv, isProduction, enableCronGetSecret exports
+- [x] Harden cronAuth.ts to block query-string secrets in production
+- [x] Update scheduler.ts with runScheduledJob helper and proper locking
+- [x] Update index.ts to conditionally enable GET cron endpoints
+- [x] Initialize syncRuns repository in db.ts
+- [x] Update cron-sync.mjs documentation
+- [x] Add E2E test gating with RUN_E2E flag
+- [x] Run verification checklist (typecheck passes, server healthy)

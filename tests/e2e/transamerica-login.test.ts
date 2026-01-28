@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import puppeteer, { Browser, Page } from 'puppeteer';
 
-describe('Transamerica Login', () => {
+// E2E tests are gated by RUN_E2E environment variable
+// These tests require real credentials and network access
+const runE2E = process.env.RUN_E2E === '1' || process.env.RUN_E2E === 'true';
+
+const describeOrSkip = runE2E ? describe : describe.skip;
+
+describeOrSkip('Transamerica Login', () => {
   let browser: Browser;
   let page: Page;
 

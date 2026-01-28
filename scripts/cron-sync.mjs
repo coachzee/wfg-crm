@@ -20,7 +20,7 @@
  *   3. Command: cd /path/to/your/app && node scripts/cron-sync.mjs
  * 
  * Alternative: Use the HTTP endpoint directly with curl:
- *   curl -X GET "https://your-domain.com/api/cron/sync?secret=YOUR_SYNC_SECRET"
+ *   curl -X POST "https://your-domain.com/api/cron/sync" -H "x-sync-secret: YOUR_SYNC_SECRET"
  */
 
 import https from 'https';

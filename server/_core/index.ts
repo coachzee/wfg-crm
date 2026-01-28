@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { requestCorrelationMiddleware, logger } from "./logger";
+import { ENV } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -133,21 +134,21 @@ async function startServer() {
   });
 
   // Cron endpoint for Transamerica alerts sync (with job locking)
-  app.get("/api/cron/transamerica-alerts", async (req, res) => {
+  const handleTransamericaAlertsCron = async (req: any, res: any) => {
     try {
       const { requireCronSecret } = await import('../lib/cronAuth');
       requireCronSecret(req);
-      
+
       console.log('[Cron] Starting Transamerica alerts sync with job locking...');
-      
+
       // Use job locking for Transamerica alerts
       const { withJobLock } = await import('../lib/jobLock');
       const { syncTransamericaAlerts } = await import('../scheduler');
-      
+
       const lockResult = await withJobLock('transamerica-alerts', 20 * 60 * 1000, async () => {
         return await syncTransamericaAlerts();
       });
-      
+
       if (lockResult.success) {
         const result = lockResult.result;
         res.status(200).json({
@@ -172,45 +173,55 @@ async function startServer() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(statusCode).json({ success: false, error: errorMessage });
     }
-  });
+  };
 
-  // GET endpoint for simpler cron job configuration (some hosts only support GET)
+  // Preferred: POST with x-sync-secret header
+  app.post("/api/cron/transamerica-alerts", handleTransamericaAlertsCron);
+
+  // Optional GET for legacy hosts (disabled in production unless ENABLE_CRON_GET_SECRET=true)
+  if (!ENV.isProduction || ENV.enableCronGetSecret) {
+    app.get("/api/cron/transamerica-alerts", handleTransamericaAlertsCron);
+  }
+
+  // Optional GET endpoint for simpler cron job configuration (some hosts only support GET)
   // DEPRECATED: Use POST /api/cron/sync with x-sync-secret header instead
-  app.get("/api/cron/sync", async (req, res) => {
-    try {
-      const { requireCronSecret } = await import('../lib/cronAuth');
-      requireCronSecret(req);
-      
-      console.warn('[Cron Sync GET] DEPRECATED: Use POST /api/cron/sync with x-sync-secret header');
-      console.log('[Cron Sync GET] Starting scheduled sync with job locking...');
-      
-      // Use the fullsync job which handles locking and run history
-      const { executeFullSync } = await import('../jobs/fullsync');
-      const result = await executeFullSync('cron-get');
-      
-      if (result.success) {
-        res.status(200).json({
-          success: true,
-          timestamp: new Date().toISOString(),
-          runId: result.runId,
-          metrics: result.metrics,
-          deprecated: 'Use POST /api/cron/sync with x-sync-secret header',
-        });
-      } else {
-        const statusCode = result.error === 'Job is already running' ? 409 : 500;
-        res.status(statusCode).json({
-          success: false,
-          timestamp: new Date().toISOString(),
-          runId: result.runId,
-          error: result.error,
-        });
+  // Disabled in production unless ENABLE_CRON_GET_SECRET=true
+  if (!ENV.isProduction || ENV.enableCronGetSecret) {
+    app.get("/api/cron/sync", async (req, res) => {
+      try {
+        const { requireCronSecret } = await import('../lib/cronAuth');
+        requireCronSecret(req);
+
+        console.warn('[Cron Sync GET] DEPRECATED: Use POST /api/cron/sync with x-sync-secret header');
+        console.log('[Cron Sync GET] Starting scheduled sync with job locking...');
+
+        const { executeFullSync } = await import('../jobs/fullsync');
+        const result = await executeFullSync('cron-get');
+
+        if (result.success) {
+          res.status(200).json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            runId: result.runId,
+            metrics: result.metrics,
+            deprecated: 'Use POST /api/cron/sync with x-sync-secret header',
+          });
+        } else {
+          const statusCode = result.error === 'Job is already running' ? 409 : 500;
+          res.status(statusCode).json({
+            success: false,
+            timestamp: new Date().toISOString(),
+            runId: result.runId,
+            error: result.error,
+          });
+        }
+      } catch (error: any) {
+        const statusCode = error.statusCode ?? 500;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        res.status(statusCode).json({ success: false, error: errorMessage });
       }
-    } catch (error: any) {
-      const statusCode = error.statusCode ?? 500;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(statusCode).json({ success: false, error: errorMessage });
-    }
-  });
+    });
+  }
 
   // Email tracking endpoints for open/click tracking
   // Tracking pixel endpoint - records email opens

@@ -13,7 +13,7 @@ const baseSchema = z.object({
 
   // Core required variables
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   
   // Encryption key - required for credential storage
   ENCRYPTION_KEY: z.string().min(32, "ENCRYPTION_KEY must be at least 32 characters").optional(),
@@ -73,6 +73,15 @@ const baseSchema = z.object({
 export const envSchema = baseSchema.superRefine((env, ctx) => {
   // In production, critical security variables must be set
   if (env.NODE_ENV === "production") {
+    // JWT_SECRET must be strong in production
+    if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "JWT_SECRET must be at least 32 characters in production",
+        path: ["JWT_SECRET"],
+      });
+    }
+
     // ENCRYPTION_KEY is required for credential storage
     if (!env.ENCRYPTION_KEY || env.ENCRYPTION_KEY.length < 32) {
       ctx.addIssue({

@@ -33,6 +33,8 @@ import {
   initIncomeRepository,
 } from './repositories';
 
+import { initSyncRunsRepository } from './repositories/syncRuns';
+
 // Re-export types for use in procedures
 export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog, AgentCashFlowHistory, SyncLog, InforcePolicy } from "../drizzle/schema";
 
@@ -55,6 +57,7 @@ function initializeRepositories() {
   initSyncLogsRepository(getDb);
   initPoliciesRepository(getDb);
   initIncomeRepository(getDb, getDashboardMetrics);
+  initSyncRunsRepository(getDb);
 }
 
 // Initialize repositories on module load
