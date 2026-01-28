@@ -1,8 +1,0 @@
-{
-  "query": "SELECT \n  policyNumber, \n  ownerName, \n  premium, \n  targetPremium, \n  calculatedCommission, \n  writingAgentLevel, \n  writingAgentSplit,\n  status\nFROM inforce_policies \nWHERE status = 'Active'\nLIMIT 20;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT \n  policyNumber, \n  ownerName, \n  premium, \n  targetPremium, \n  calculatedCommission, \n  writingAgentLevel, \n  writingAgentSplit,\n  status\nFROM inforce_policies \nWHERE status = 'Active'\nLIMIT 20;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1146 (42S02) at line 1: Table 'iweifgelgtjbcvjtzgrjir.inforce_policies' doesn't exist"
-  ]
-}

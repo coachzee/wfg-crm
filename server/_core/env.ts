@@ -1,4 +1,4 @@
-import { validateEnv, mustGetEnv, getEnv, hasMyWFGCredentials, hasTransamericaCredentials } from "./env.schema";
+import { validateEnv, mustGetEnv, getEnv, hasMyWFGCredentials, hasTransamericaCredentials, hasSyncSecret } from "./env.schema";
 
 // Validate environment on module load
 const validatedEnv = validateEnv();
@@ -23,4 +23,4 @@ export const ENV = {
 };
 
 // Re-export helpers for use throughout the app
-export { mustGetEnv, getEnv, hasMyWFGCredentials, hasTransamericaCredentials };
+export { mustGetEnv, getEnv, hasMyWFGCredentials, hasTransamericaCredentials, hasSyncSecret };

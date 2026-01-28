@@ -1,9 +1,0 @@
-{
-  "query": "INSERT INTO mywfgSyncLogs (syncType, status, recordsProcessed, errorMessage, syncedAgentCodes, reportUrl) VALUES ('FULL', 'SUCCESS', 52, NULL, '[\"73DXR\"]', NULL);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute INSERT INTO mywfgSyncLogs (syncType, status, recordsProcessed, errorMessage, syncedAgentCodes, reportUrl) VALUES ('FULL', 'SUCCESS', 52, NULL, '[\"73DXR\"]', NULL);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 67
-}

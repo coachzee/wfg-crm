@@ -1605,3 +1605,42 @@
 - [x] Configure local git settings (push.default, pull.rebase)
 - [x] Verify push/pull access works without manual intervention
 - [x] GitHub token stored in ~/.config/gh/hosts.yml for persistence
+
+
+## Production-Grade Patches (Completed)
+### Patch 0 - Dependencies & Scripts
+- [x] Add/confirm zod, pino dependencies
+- [x] Add typecheck, lint, test:unit, job:fullsync scripts
+
+### Patch 1 - Fail-Fast Env Validation
+- [x] Make SYNC_SECRET, ENCRYPTION_KEY, DATABASE_URL, JWT_SECRET required
+- [x] Add superRefine for production-required env vars
+- [x] Ensure server crashes on invalid env in production
+
+### Patch 2 - Job Locking & Sync Run History
+- [x] sync_runs table already exists for job history
+- [x] job_locks table already exists for atomic locking
+- [x] DB-backed lock methods already implemented (acquireLock, heartbeatLock, releaseLock)
+- [x] Wrap cron endpoint with lock + sync run logging
+- [x] Wrap scheduled sync with job lock
+
+### Patch 3 - Retry & Artifacts
+- [x] retry() utility already exists in server/lib/retry.ts
+- [x] Capture artifacts (screenshots, HTML) on sync failures
+
+### Patch 4 - Test Fixes
+- [x] Fix tests that default env to empty strings (added test-setup.ts)
+- [x] Move E2E tests out of server/ to tests/e2e/
+
+### Patch 5 - Cleanup
+- [x] .gitignore already has .manus/, .sessions/, artifacts/, *.log
+- [x] Remove committed .manus/db/*.json files from git tracking
+
+### Patch 6 - Scripts Consolidation
+- [x] Updated cron-sync.mjs to use POST with x-sync-secret header
+- [x] Created server/jobs/fullsync.ts with proper locking
+
+### Patch 7 - Monitoring & Alerts
+- [x] Add stale sync detection (alert if >24h since last sync)
+- [x] Implement alert mechanism via notifyOwner
+- [x] Add /api/monitoring/sync endpoint

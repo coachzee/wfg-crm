@@ -1,8 +1,0 @@
-{
-  "query": "SELECT ownerName, COUNT(*) as count, SUM(CAST(premium AS DECIMAL(10,2))) as totalPremium \nFROM inforce_policies \nGROUP BY ownerName \nORDER BY count DESC \nLIMIT 20;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4XhD5JGzFycvBf8.root --database iwEifGeLgtJbCVjTZgrjir --execute SELECT ownerName, COUNT(*) as count, SUM(CAST(premium AS DECIMAL(10,2))) as totalPremium \nFROM inforce_policies \nGROUP BY ownerName \nORDER BY count DESC \nLIMIT 20;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1146 (42S02) at line 1: Table 'iweifgelgtjbcvjtzgrjir.inforce_policies' doesn't exist"
-  ]
-}

@@ -9,6 +9,8 @@ import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { pendingPolicies, pendingRequirements } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { retry, PORTAL_RETRY_OPTIONS } from "./lib/retry";
+import { captureArtifacts } from "./lib/artifacts";
 
 // Helper to require environment variables
 function mustGetEnv(name: string): string {
@@ -132,6 +134,27 @@ export async function syncTransamericaPendingPolicies(): Promise<SyncResult> {
   } catch (error) {
     console.error("[Transamerica Sync] Error:", error);
     result.errors.push(String(error));
+    
+    // Capture artifacts on failure for debugging
+    if (browser) {
+      try {
+        const pages = await browser.pages();
+        const currentPage = pages[pages.length - 1];
+        if (currentPage) {
+          await captureArtifacts({
+            job: 'transamerica-sync',
+            page: currentPage as any, // Puppeteer page is compatible with Playwright page for screenshots
+            error,
+            additionalData: {
+              policiesProcessed: result.policiesProcessed,
+              errors: result.errors,
+            },
+          });
+        }
+      } catch (artifactError) {
+        console.error("[Transamerica Sync] Failed to capture artifacts:", artifactError);
+      }
+    }
   } finally {
     if (browser) {
       await browser.close();

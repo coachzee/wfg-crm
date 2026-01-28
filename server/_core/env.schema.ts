@@ -3,119 +3,140 @@ import { z } from "zod";
 /**
  * Environment variable schema with Zod validation.
  * Required variables will cause the app to fail fast at startup if missing.
- * Optional variables have sensible defaults for development.
+ * In production, additional variables are required for unattended automation.
  */
 
-const isProduction = process.env.NODE_ENV === "production";
-
-// Helper to create required env var that fails fast in production
-const requiredInProd = (name: string) => 
-  z.string().min(1, `${name} is required`).optional().transform((val) => {
-    if (isProduction && !val) {
-      throw new Error(`Missing required environment variable: ${name}`);
-    }
-    return val ?? "";
-  });
-
-// Helper to strictly require an env var (always required)
-const strictlyRequired = (name: string) =>
-  z.string().min(1, `${name} is required and cannot be empty`);
-
-// Logging configuration
-const loggingSchema = z.object({
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  LOG_FORMAT: z.enum(["json", "pretty"]).default("pretty"),
-});
-
-// Core app configuration
-const coreSchema = z.object({
+// Base schema - always validated
+const baseSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.string().optional().default("3000"),
+  PORT: z.coerce.number().int().positive().default(3000),
+
+  // Core required variables
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   
-  // Database (required)
-  DATABASE_URL: strictlyRequired("DATABASE_URL"),
+  // Encryption key - required for credential storage
+  ENCRYPTION_KEY: z.string().min(32, "ENCRYPTION_KEY must be at least 32 characters").optional(),
   
-  // Auth & Security (required)
-  JWT_SECRET: strictlyRequired("JWT_SECRET"),
-  VITE_APP_ID: strictlyRequired("VITE_APP_ID"),
-  OAUTH_SERVER_URL: strictlyRequired("OAUTH_SERVER_URL"),
+  // Sync secret - required for cron endpoint authentication
+  SYNC_SECRET: z.string().min(16, "SYNC_SECRET must be at least 16 characters").optional(),
+
+  // OAuth configuration
+  VITE_APP_ID: z.string().min(1, "VITE_APP_ID is required"),
+  OAUTH_SERVER_URL: z.string().min(1, "OAUTH_SERVER_URL is required"),
   VITE_OAUTH_PORTAL_URL: z.string().optional().default(""),
-  
+
   // Owner info
   OWNER_OPEN_ID: z.string().optional().default(""),
   OWNER_NAME: z.string().optional().default(""),
-  
-  // Forge API (required for LLM/storage features)
+
+  // Forge API
   BUILT_IN_FORGE_API_URL: z.string().optional().default(""),
   BUILT_IN_FORGE_API_KEY: z.string().optional().default(""),
   VITE_FRONTEND_FORGE_API_URL: z.string().optional().default(""),
   VITE_FRONTEND_FORGE_API_KEY: z.string().optional().default(""),
-  
+
   // App branding
   VITE_APP_TITLE: z.string().optional().default("Wealth Builders Haven CRM"),
   VITE_APP_LOGO: z.string().optional().default(""),
-  
+
   // Analytics
   VITE_ANALYTICS_ENDPOINT: z.string().optional().default(""),
   VITE_ANALYTICS_WEBSITE_ID: z.string().optional().default(""),
-});
 
-// MyWFG credentials (required for sync features)
-const mywfgSchema = z.object({
+  // Logging
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  LOG_FORMAT: z.enum(["json", "pretty"]).default("pretty"),
+
+  // MyWFG credentials (optional in dev, validated in prod for unattended sync)
   MYWFG_USERNAME: z.string().optional().default(""),
   MYWFG_PASSWORD: z.string().optional().default(""),
   MYWFG_EMAIL: z.string().optional().default(""),
   MYWFG_APP_PASSWORD: z.string().optional().default(""),
-});
 
-// Transamerica credentials (required for sync features)
-const transamericaSchema = z.object({
+  // Transamerica credentials (optional in dev, validated in prod for unattended sync)
   TRANSAMERICA_USERNAME: z.string().optional().default(""),
   TRANSAMERICA_PASSWORD: z.string().optional().default(""),
   TRANSAMERICA_EMAIL: z.string().optional().default(""),
   TRANSAMERICA_APP_PASSWORD: z.string().optional().default(""),
   TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY: z.string().optional().default(""),
   TRANSAMERICA_SECURITY_Q_PET_NAME: z.string().optional().default(""),
+
+  // Enable legacy GET method for cron endpoints (deprecated, use POST)
+  ENABLE_CRON_GET_SECRET: z
+    .string()
+    .optional()
+    .transform((v) => (v ? ["1", "true", "yes", "on"].includes(v.toLowerCase()) : false)),
 });
 
-// Encryption (required for credential storage)
-const encryptionSchema = z.object({
-  ENCRYPTION_KEY: z.string().min(16, "ENCRYPTION_KEY must be at least 16 characters").optional()
-    .transform((val) => {
-      if (isProduction && !val) {
-        throw new Error("ENCRYPTION_KEY is required in production");
-      }
-      return val;
-    }),
+// Production refinement - enforce additional requirements
+export const envSchema = baseSchema.superRefine((env, ctx) => {
+  // In production, critical security variables must be set
+  if (env.NODE_ENV === "production") {
+    // ENCRYPTION_KEY is required for credential storage
+    if (!env.ENCRYPTION_KEY || env.ENCRYPTION_KEY.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "ENCRYPTION_KEY is required in production and must be at least 32 characters",
+        path: ["ENCRYPTION_KEY"],
+      });
+    }
+
+    // SYNC_SECRET is required for cron endpoint authentication
+    if (!env.SYNC_SECRET || env.SYNC_SECRET.length < 16) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "SYNC_SECRET is required in production and must be at least 16 characters",
+        path: ["SYNC_SECRET"],
+      });
+    }
+
+    // Warn about missing portal credentials (not blocking, but logged)
+    const missingPortalCreds: string[] = [];
+    
+    // MyWFG credentials check
+    if (!env.MYWFG_USERNAME || !env.MYWFG_PASSWORD) {
+      missingPortalCreds.push("MyWFG");
+    }
+    
+    // Transamerica credentials check
+    if (!env.TRANSAMERICA_USERNAME || !env.TRANSAMERICA_PASSWORD) {
+      missingPortalCreds.push("Transamerica");
+    }
+
+    if (missingPortalCreds.length > 0) {
+      console.warn(
+        `[ENV] Warning: Missing credentials for ${missingPortalCreds.join(", ")}. ` +
+        `Unattended sync will not work for these portals.`
+      );
+    }
+  }
 });
 
-// Sync configuration
-const syncSchema = z.object({
-  SYNC_SECRET: z.string().optional().default(""),
-});
-
-// Combined schema
-export const envSchema = coreSchema
-  .merge(loggingSchema)
-  .merge(mywfgSchema)
-  .merge(transamericaSchema)
-  .merge(encryptionSchema)
-  .merge(syncSchema);
-
-export type EnvConfig = z.infer<typeof envSchema>;
+export type EnvConfig = z.infer<typeof baseSchema>;
 
 /**
  * Validate and parse environment variables.
  * Throws descriptive errors if required variables are missing.
+ * In production, exits the process on validation failure.
  */
 export function validateEnv(): EnvConfig {
+  const isProduction = process.env.NODE_ENV === "production";
+  
   try {
-    return envSchema.parse(process.env);
+    const result = envSchema.parse(process.env);
+    console.log(`[ENV] Environment validated successfully (${result.NODE_ENV} mode)`);
+    return result as EnvConfig;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const issues = error.issues.map(i => `  - ${i.path.join(".")}: ${i.message}`).join("\n");
+      const issues = error.issues
+        .map((i) => `  - ${i.path.join(".")}: ${i.message}`)
+        .join("\n");
+      
       console.error(`\n❌ Environment validation failed:\n${issues}\n`);
+      
       if (isProduction) {
+        console.error("FATAL: Cannot start in production with invalid environment configuration.");
         process.exit(1);
       }
     }
@@ -164,4 +185,11 @@ export function hasTransamericaCredentials(): boolean {
     process.env.TRANSAMERICA_EMAIL &&
     process.env.TRANSAMERICA_APP_PASSWORD
   );
+}
+
+/**
+ * Check if SYNC_SECRET is configured for cron authentication.
+ */
+export function hasSyncSecret(): boolean {
+  return !!(process.env.SYNC_SECRET && process.env.SYNC_SECRET.length >= 16);
 }

@@ -23,3 +23,11 @@ export { healthz, readyz, healthDetailed } from "./health";
 export { requestIdMiddleware, getRequestId } from "./requestId";
 
 export { requireCronSecret, cronAuthMiddleware, isCronAuthenticated } from "./cronAuth";
+
+export { 
+  checkSyncHealth, 
+  sendSyncAlert, 
+  runMonitoringCheck, 
+  getMonitoringReport 
+} from "./monitoring";
+export type { MonitoringStatus } from "./monitoring";

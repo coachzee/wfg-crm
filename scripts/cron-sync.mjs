@@ -41,14 +41,24 @@ const APP_URL = mustGetEnv('APP_URL');
 const SYNC_SECRET = mustGetEnv('SYNC_SECRET');
 
 const syncUrl = new URL('/api/cron/sync', APP_URL);
-syncUrl.searchParams.set('secret', SYNC_SECRET);
 
 console.log(`[Cron Sync] Starting sync at ${new Date().toISOString()}`);
 console.log(`[Cron Sync] Target URL: ${syncUrl.origin}${syncUrl.pathname}`);
 
 const protocol = syncUrl.protocol === 'https:' ? https : http;
 
-const req = protocol.get(syncUrl.toString(), (res) => {
+const options = {
+  method: 'POST',
+  hostname: syncUrl.hostname,
+  port: syncUrl.port || (syncUrl.protocol === 'https:' ? 443 : 80),
+  path: syncUrl.pathname,
+  headers: {
+    'x-sync-secret': SYNC_SECRET,
+    'Content-Type': 'application/json',
+  },
+};
+
+const req = protocol.request(options, (res) => {
   let data = '';
   
   res.on('data', (chunk) => {
@@ -88,3 +98,6 @@ req.setTimeout(300000, () => { // 5 minute timeout
   req.destroy();
   process.exit(1);
 });
+
+// Send the request (POST requires explicit end)
+req.end();

@@ -70,6 +70,19 @@ async function startServer() {
   app.get("/api/health", healthDetailed);
   app.get("/api/health/detailed", healthDetailed);
 
+  // Sync monitoring endpoint - checks sync health and returns status
+  app.get("/api/monitoring/sync", async (req, res) => {
+    try {
+      const { getMonitoringReport } = await import('../lib/monitoring');
+      const report = await getMonitoringReport();
+      const statusCode = report.overall.isHealthy ? 200 : 503;
+      res.status(statusCode).json(report);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
   // Start the scheduler for background tasks
   const { startScheduler } = await import('../scheduler');
   startScheduler();
@@ -77,72 +90,41 @@ async function startServer() {
   // Cron-triggered sync endpoint for Hostinger/self-hosted deployments
   // This endpoint can be called by external cron jobs to trigger data sync
   // Requires SYNC_SECRET environment variable for authentication
+  // Uses job locking to prevent overlapping runs and records sync history
   app.post("/api/cron/sync", async (req, res) => {
     try {
-      // Verify the sync secret
-      const syncSecret = process.env.SYNC_SECRET;
-      const providedSecret = req.headers['x-sync-secret'] || req.query.secret;
+      // Verify the sync secret using cronAuth utility
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
       
-      if (!syncSecret) {
-        console.log('[Cron Sync] SYNC_SECRET not configured');
-        return res.status(500).json({ 
-          success: false, 
-          error: 'SYNC_SECRET environment variable not configured' 
+      console.log('[Cron Sync] Starting scheduled sync with job locking...');
+      
+      // Use the fullsync job which handles locking and run history
+      const { executeFullSync } = await import('../jobs/fullsync');
+      const result = await executeFullSync('cron-post');
+      
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          timestamp: new Date().toISOString(),
+          runId: result.runId,
+          metrics: result.metrics,
+        });
+      } else {
+        // Job was locked or failed
+        const statusCode = result.error === 'Job is already running' ? 409 : 500;
+        res.status(statusCode).json({
+          success: false,
+          timestamp: new Date().toISOString(),
+          runId: result.runId,
+          error: result.error,
         });
       }
-      
-      if (providedSecret !== syncSecret) {
-        console.log('[Cron Sync] Invalid sync secret provided');
-        return res.status(401).json({ 
-          success: false, 
-          error: 'Invalid sync secret' 
-        });
-      }
-      
-      console.log('[Cron Sync] Starting scheduled sync...');
-      
-      // Import and run the sync service
-      const { runFullSync } = await import('../sync-service');
-      const results = await runFullSync();
-      
-      // Process scheduled emails
-      console.log('[Cron Sync] Processing scheduled emails...');
-      const { processScheduledEmails } = await import('../email-tracking');
-      const emailResults = await processScheduledEmails();
-      console.log(`[Cron Sync] Scheduled emails processed: ${emailResults.processed} (${emailResults.succeeded} succeeded, ${emailResults.failed} failed)`);
-      
-      // Sync agent licensing status from MyWFG
-      console.log('[Cron Sync] Syncing agent licensing status...');
-      let licensingSyncResult: { success: boolean; updated: number; error?: string } = { success: false, updated: 0 };
-      try {
-        const { syncAgentLicensingStatus } = await import('../agent-licensing-sync');
-        licensingSyncResult = await syncAgentLicensingStatus();
-        console.log(`[Cron Sync] Licensing sync: ${licensingSyncResult.updated} agents updated`);
-      } catch (err) {
-        licensingSyncResult.error = err instanceof Error ? err.message : 'Unknown error';
-        console.error('[Cron Sync] Licensing sync error:', licensingSyncResult.error);
-      }
-      
-      const successCount = results.filter(r => r.success).length;
-      const failureCount = results.filter(r => !r.success).length;
-      
-      console.log(`[Cron Sync] Completed - Success: ${successCount}, Failed: ${failureCount}`);
-      
-      res.status(200).json({
-        success: failureCount === 0,
-        timestamp: new Date().toISOString(),
-        results: results.map(r => ({
-          platform: r.platform,
-          success: r.success,
-          error: r.error,
-          data: r.data
-        })),
-        scheduledEmails: emailResults
-      });
-    } catch (error) {
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[Cron Sync] Error:', errorMessage);
-      res.status(500).json({ 
+      res.status(statusCode).json({ 
         success: false, 
         error: errorMessage,
         timestamp: new Date().toISOString()
@@ -150,69 +132,83 @@ async function startServer() {
     }
   });
 
-  // Cron endpoint for Transamerica alerts sync
+  // Cron endpoint for Transamerica alerts sync (with job locking)
   app.get("/api/cron/transamerica-alerts", async (req, res) => {
     try {
-      const syncSecret = process.env.SYNC_SECRET;
-      const providedSecret = req.query.secret;
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
       
-      if (!syncSecret || providedSecret !== syncSecret) {
-        return res.status(401).json({ success: false, error: 'Invalid sync secret' });
-      }
+      console.log('[Cron] Starting Transamerica alerts sync with job locking...');
       
-      console.log('[Cron] Starting Transamerica alerts sync...');
-      
+      // Use job locking for Transamerica alerts
+      const { withJobLock } = await import('../lib/jobLock');
       const { syncTransamericaAlerts } = await import('../scheduler');
-      const result = await syncTransamericaAlerts();
       
-      res.status(200).json({
-        success: result.success,
-        timestamp: new Date().toISOString(),
-        alertsCount: result.alertsCount,
-        newAlertsDetected: result.newAlertsDetected,
-        notificationSent: result.notificationSent,
-        error: result.error,
+      const lockResult = await withJobLock('transamerica-alerts', 20 * 60 * 1000, async () => {
+        return await syncTransamericaAlerts();
       });
-    } catch (error) {
+      
+      if (lockResult.success) {
+        const result = lockResult.result;
+        res.status(200).json({
+          success: result.success,
+          timestamp: new Date().toISOString(),
+          alertsCount: result.alertsCount,
+          newAlertsDetected: result.newAlertsDetected,
+          notificationSent: result.notificationSent,
+          error: result.error,
+        });
+      } else if (lockResult.reason === 'locked') {
+        res.status(409).json({
+          success: false,
+          error: 'Transamerica alerts sync is already running',
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        throw lockResult.error;
+      }
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ success: false, error: errorMessage });
+      res.status(statusCode).json({ success: false, error: errorMessage });
     }
   });
 
   // GET endpoint for simpler cron job configuration (some hosts only support GET)
+  // DEPRECATED: Use POST /api/cron/sync with x-sync-secret header instead
   app.get("/api/cron/sync", async (req, res) => {
     try {
-      const syncSecret = process.env.SYNC_SECRET;
-      const providedSecret = req.query.secret;
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
       
-      if (!syncSecret || providedSecret !== syncSecret) {
-        return res.status(401).json({ success: false, error: 'Invalid sync secret' });
+      console.warn('[Cron Sync GET] DEPRECATED: Use POST /api/cron/sync with x-sync-secret header');
+      console.log('[Cron Sync GET] Starting scheduled sync with job locking...');
+      
+      // Use the fullsync job which handles locking and run history
+      const { executeFullSync } = await import('../jobs/fullsync');
+      const result = await executeFullSync('cron-get');
+      
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          timestamp: new Date().toISOString(),
+          runId: result.runId,
+          metrics: result.metrics,
+          deprecated: 'Use POST /api/cron/sync with x-sync-secret header',
+        });
+      } else {
+        const statusCode = result.error === 'Job is already running' ? 409 : 500;
+        res.status(statusCode).json({
+          success: false,
+          timestamp: new Date().toISOString(),
+          runId: result.runId,
+          error: result.error,
+        });
       }
-      
-      console.log('[Cron Sync GET] Starting scheduled sync...');
-      
-      const { runFullSync } = await import('../sync-service');
-      const results = await runFullSync();
-      
-      // Process scheduled emails
-      console.log('[Cron Sync GET] Processing scheduled emails...');
-      const { processScheduledEmails } = await import('../email-tracking');
-      const emailResults = await processScheduledEmails();
-      console.log(`[Cron Sync GET] Scheduled emails processed: ${emailResults.processed} (${emailResults.succeeded} succeeded, ${emailResults.failed} failed)`);
-      
-      res.status(200).json({
-        success: results.every(r => r.success),
-        timestamp: new Date().toISOString(),
-        results: results.map(r => ({
-          platform: r.platform,
-          success: r.success,
-          error: r.error
-        })),
-        scheduledEmails: emailResults
-      });
-    } catch (error) {
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ success: false, error: errorMessage });
+      res.status(statusCode).json({ success: false, error: errorMessage });
     }
   });
 
