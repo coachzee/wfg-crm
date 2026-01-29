@@ -1664,3 +1664,9 @@
 - [x] Implement atomic job lock acquisition using MySQL ON DUPLICATE KEY UPDATE
 - [x] Enforce portal/OTP credentials in production env (ENABLE_PORTAL_SYNC flag)
 - [x] Run acceptance criteria verification (typecheck passes, server healthy)
+
+
+## Follow-up Tasks
+- [x] Update JWT_SECRET to 32+ characters for production
+- [ ] Test cron endpoint after deployment
+- [ ] Document Hostinger cron configuration
