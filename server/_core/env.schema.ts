@@ -67,6 +67,12 @@ const baseSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? ["1", "true", "yes", "on"].includes(v.toLowerCase()) : false)),
+
+  // Enable portal sync - when true, portal credentials are required in production
+  ENABLE_PORTAL_SYNC: z
+    .string()
+    .optional()
+    .transform((v) => (v ? ["1", "true", "yes", "on"].includes(v.toLowerCase()) : true)), // Default to true
 });
 
 // Production refinement - enforce additional requirements
@@ -100,23 +106,46 @@ export const envSchema = baseSchema.superRefine((env, ctx) => {
       });
     }
 
-    // Warn about missing portal credentials (not blocking, but logged)
-    const missingPortalCreds: string[] = [];
-    
-    // MyWFG credentials check
-    if (!env.MYWFG_USERNAME || !env.MYWFG_PASSWORD) {
-      missingPortalCreds.push("MyWFG");
-    }
-    
-    // Transamerica credentials check
-    if (!env.TRANSAMERICA_USERNAME || !env.TRANSAMERICA_PASSWORD) {
-      missingPortalCreds.push("Transamerica");
-    }
+    // When ENABLE_PORTAL_SYNC is true (default), require portal credentials for unattended automation
+    if (env.ENABLE_PORTAL_SYNC) {
+      // Transamerica credentials are required for unattended sync
+      const requiredTransamericaCreds = [
+        ["TRANSAMERICA_USERNAME", env.TRANSAMERICA_USERNAME],
+        ["TRANSAMERICA_PASSWORD", env.TRANSAMERICA_PASSWORD],
+      ] as const;
 
-    if (missingPortalCreds.length > 0) {
+      for (const [key, value] of requiredTransamericaCreds) {
+        if (!value || value === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `${key} is required in production for unattended sync (set ENABLE_PORTAL_SYNC=false to disable)`,
+            path: [key],
+          });
+        }
+      }
+
+      // Transamerica security answer - at least one is required
+      if (
+        (!env.TRANSAMERICA_SECURITY_Q_PET_NAME || env.TRANSAMERICA_SECURITY_Q_PET_NAME === "") &&
+        (!env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY || env.TRANSAMERICA_SECURITY_Q_FIRST_JOB_CITY === "")
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "At least one Transamerica security answer is required for unattended sync",
+          path: ["TRANSAMERICA_SECURITY_Q_PET_NAME"],
+        });
+      }
+
+      // MyWFG credentials check (warning only - MyWFG sync is less critical)
+      if (!env.MYWFG_USERNAME || !env.MYWFG_PASSWORD) {
+        console.warn(
+          "[ENV] Warning: MyWFG credentials not configured. MyWFG sync will be skipped."
+        );
+      }
+    } else {
       console.warn(
-        `[ENV] Warning: Missing credentials for ${missingPortalCreds.join(", ")}. ` +
-        `Unattended sync will not work for these portals.`
+        "[ENV] Warning: ENABLE_PORTAL_SYNC=false - portal credentials not validated. " +
+        "Unattended sync will not work."
       );
     }
   }

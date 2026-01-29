@@ -2,10 +2,11 @@
  * Job Locking Utility
  * 
  * Prevents overlapping sync runs by using database-based locking.
+ * Uses atomic lock acquisition to prevent race conditions.
  * Supports heartbeat to extend locks during long-running jobs.
  */
 
-import { eq, lt, and, or, sql } from "drizzle-orm";
+import { eq, lt, and, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { jobLocks } from "../../drizzle/schema";
 import crypto from "crypto";
@@ -14,7 +15,9 @@ const DEFAULT_LOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const HEARTBEAT_INTERVAL_MS = 60 * 1000; // 1 minute
 
 /**
- * Attempt to acquire a lock for a job.
+ * Atomically acquire a lock for a job using MySQL's ON DUPLICATE KEY UPDATE.
+ * This prevents race conditions when multiple processes try to acquire the same lock.
+ * 
  * Returns the lock owner ID if successful, null if lock is held by another process.
  */
 export async function acquireLock(
@@ -26,64 +29,42 @@ export async function acquireLock(
     console.error("[JobLock] Database not available");
     return null;
   }
+  
   const ownerId = crypto.randomUUID();
   const now = new Date();
   const lockedUntil = new Date(now.getTime() + durationMs);
 
   try {
-    // Try to insert new lock or update expired lock
-    const existingLock = await db
+    // Atomic lock acquisition using MySQL's INSERT ... ON DUPLICATE KEY UPDATE
+    // The lock is only acquired if:
+    // 1. No lock exists (INSERT succeeds)
+    // 2. Existing lock is expired (UPDATE with WHERE condition)
+    await db.execute(sql`
+      INSERT INTO job_locks (name, owner_id, locked_at, locked_until, heartbeat_at)
+      VALUES (${lockName}, ${ownerId}, NOW(), ${lockedUntil}, NOW())
+      ON DUPLICATE KEY UPDATE
+        owner_id = IF(locked_until < NOW(), VALUES(owner_id), owner_id),
+        locked_at = IF(locked_until < NOW(), NOW(), locked_at),
+        locked_until = IF(locked_until < NOW(), VALUES(locked_until), locked_until),
+        heartbeat_at = IF(locked_until < NOW(), NOW(), heartbeat_at)
+    `);
+
+    // Verify we actually got the lock by checking if our ownerId is set
+    const result = await db
       .select()
       .from(jobLocks)
       .where(eq(jobLocks.name, lockName))
       .limit(1);
 
-    if (existingLock.length === 0) {
-      // No lock exists, create one
-      await db.insert(jobLocks).values({
-        name: lockName,
-        ownerId,
-        lockedAt: now,
-        lockedUntil,
-        heartbeatAt: now,
-      });
+    if (result.length > 0 && result[0].ownerId === ownerId) {
+      console.log(`[JobLock] Acquired lock "${lockName}" with owner ${ownerId}`);
       return ownerId;
     }
 
-    const lock = existingLock[0];
-    
-    // Check if lock is expired
-    if (lock.lockedUntil < now) {
-      // Lock is expired, take it over
-      await db
-        .update(jobLocks)
-        .set({
-          ownerId,
-          lockedAt: now,
-          lockedUntil,
-          heartbeatAt: now,
-        })
-        .where(
-          and(
-            eq(jobLocks.name, lockName),
-            lt(jobLocks.lockedUntil, now)
-          )
-        );
-      
-      // Verify we got the lock
-      const updated = await db
-        .select()
-        .from(jobLocks)
-        .where(eq(jobLocks.name, lockName))
-        .limit(1);
-      
-      if (updated.length > 0 && updated[0].ownerId === ownerId) {
-        return ownerId;
-      }
-    }
-
     // Lock is held by another process
-    console.log(`[JobLock] Lock "${lockName}" is held by ${lock.ownerId} until ${lock.lockedUntil}`);
+    if (result.length > 0) {
+      console.log(`[JobLock] Lock "${lockName}" is held by ${result[0].ownerId} until ${result[0].lockedUntil}`);
+    }
     return null;
   } catch (error) {
     console.error(`[JobLock] Error acquiring lock "${lockName}":`, error);
@@ -102,7 +83,7 @@ export async function releaseLock(lockName: string, ownerId: string): Promise<bo
   }
   
   try {
-    const result = await db
+    await db
       .delete(jobLocks)
       .where(
         and(
@@ -111,6 +92,7 @@ export async function releaseLock(lockName: string, ownerId: string): Promise<bo
         )
       );
     
+    console.log(`[JobLock] Released lock "${lockName}" for owner ${ownerId}`);
     return true;
   } catch (error) {
     console.error(`[JobLock] Error releasing lock "${lockName}":`, error);
@@ -257,5 +239,29 @@ export async function getLockInfo(lockName: string): Promise<{
   } catch (error) {
     console.error(`[JobLock] Error getting lock info for "${lockName}":`, error);
     return null;
+  }
+}
+
+/**
+ * Force release a lock (admin function).
+ * Use with caution - only for stuck locks.
+ */
+export async function forceReleaseLock(lockName: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    console.error("[JobLock] Database not available");
+    return false;
+  }
+  
+  try {
+    await db
+      .delete(jobLocks)
+      .where(eq(jobLocks.name, lockName));
+    
+    console.log(`[JobLock] Force released lock "${lockName}"`);
+    return true;
+  } catch (error) {
+    console.error(`[JobLock] Error force releasing lock "${lockName}":`, error);
+    return false;
   }
 }
