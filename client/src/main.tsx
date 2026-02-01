@@ -1,4 +1,5 @@
-// Build timestamp: 2026-02-01T22:20:00Z - Force fresh bundle
+// Build ID: prod-fix-20260201-2250 - Force new deployment
+// This comment ensures a unique bundle hash for production deployment
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
