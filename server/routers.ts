@@ -26,6 +26,7 @@ import {
   productionRouter,
   teamRouter,
   alertsRouter,
+  notificationsRouter,
 } from "./routers/index";
 
 // Auth router (kept inline as it's tightly coupled with cookie handling)
@@ -60,6 +61,7 @@ export const appRouter = router({
   pendingPolicies: pendingPoliciesRouter,
   inforcePolicies: inforcePoliciesRouter,
   alerts: alertsRouter,
+  notifications: notificationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

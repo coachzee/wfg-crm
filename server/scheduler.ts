@@ -18,6 +18,7 @@ import crypto from "crypto";
 import { withJobLock } from "./lib/jobLock";
 import { createSyncRun, finishSyncRun } from "./repositories/syncRuns";
 import { captureArtifacts } from "./lib/artifacts";
+import { notifySyncCompleted, notifySyncFailed } from "./services/notificationService";
 
 // Track scheduled intervals for cleanup
 const scheduledIntervals: NodeJS.Timeout[] = [];
@@ -150,6 +151,13 @@ export async function saveQueryMetricsSnapshot(): Promise<{
     runId: run.runId,
   });
 
+  // Send notification for metrics snapshot
+  await notifySyncCompleted({
+    syncType: "Query Metrics",
+    duration: Date.now() - (lastSyncTimes['queryMetricsSnapshot']?.getTime() ?? Date.now()),
+    metrics: { totalQueries: snapshot.totalQueries },
+  }).catch(err => logger.warn("[Scheduler] Failed to send metrics notification", { error: String(err) }));
+
   return { success: true, snapshotId: snapshot.id };
 }
 
@@ -179,6 +187,15 @@ export async function syncTransamericaAlerts(): Promise<{
   if (!run.success) {
     const errorMessage = run.locked ? "Job is already running" : (run.error ?? "Unknown error");
     logger.error("[Scheduler] Transamerica alerts sync failed", undefined, { errorMsg: errorMessage, runId: run.runId });
+    
+    // Send failure notification (skip if just locked)
+    if (!run.locked) {
+      await notifySyncFailed({
+        syncType: "Transamerica Alerts",
+        error: errorMessage,
+      }).catch(err => logger.warn("[Scheduler] Failed to send failure notification", { error: String(err) }));
+    }
+    
     return {
       success: false,
       alertsCount: 0,
@@ -199,6 +216,13 @@ export async function syncTransamericaAlerts(): Promise<{
     newAlertsDetected: result.newAlertsDetected,
     runId: run.runId,
   });
+
+  // Send success notification
+  await notifySyncCompleted({
+    syncType: "Transamerica Alerts",
+    duration: Date.now() - (lastSyncTimes['transamericaAlerts']?.getTime() ?? Date.now()),
+    metrics: { alertsCount, newAlertsDetected: result.newAlertsDetected ? 1 : 0 },
+  }).catch(err => logger.warn("[Scheduler] Failed to send sync notification", { error: String(err) }));
 
   return {
     success: !!result.success,

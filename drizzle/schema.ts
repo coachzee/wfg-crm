@@ -995,3 +995,83 @@ export const syncRuns = mysqlTable("sync_runs", {
 
 export type SyncRun = typeof syncRuns.$inferSelect;
 export type InsertSyncRun = typeof syncRuns.$inferInsert;
+
+
+// ============================================
+// Notifications - Real-time user notifications
+// ============================================
+export const NOTIFICATION_TYPES = [
+  "SYNC_COMPLETED",       // Sync job finished successfully
+  "SYNC_FAILED",          // Sync job failed
+  "POLICY_ANNIVERSARY",   // Policy anniversary approaching
+  "AGENT_MILESTONE",      // Agent reached a milestone (net licensed, rank up)
+  "CHARGEBACK_ALERT",     // Potential chargeback detected
+  "NEW_POLICY",           // New policy issued
+  "SYSTEM_ALERT",         // System-level alerts
+  "TASK_DUE",             // Task due reminder
+  "WELCOME",              // Welcome notification for new users
+] as const;
+
+export type NotificationType = typeof NOTIFICATION_TYPES[number];
+
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Target user (null = broadcast to all)
+  userId: int("userId").references(() => users.id),
+  
+  // Notification content
+  type: mysqlEnum("type", [
+    "SYNC_COMPLETED",
+    "SYNC_FAILED",
+    "POLICY_ANNIVERSARY",
+    "AGENT_MILESTONE",
+    "CHARGEBACK_ALERT",
+    "NEW_POLICY",
+    "SYSTEM_ALERT",
+    "TASK_DUE",
+    "WELCOME",
+  ]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  
+  // Optional link to related entity
+  linkUrl: varchar("linkUrl", { length: 512 }),
+  linkLabel: varchar("linkLabel", { length: 100 }),
+  
+  // Related entity references (for filtering/grouping)
+  relatedEntityType: varchar("relatedEntityType", { length: 50 }), // "agent", "policy", "sync", etc.
+  relatedEntityId: varchar("relatedEntityId", { length: 100 }),
+  
+  // Priority and status
+  priority: mysqlEnum("priority", ["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  readAt: timestamp("readAt"),
+  
+  // Dismissal
+  isDismissed: boolean("isDismissed").default(false).notNull(),
+  dismissedAt: timestamp("dismissedAt"),
+  
+  // Metadata
+  metadata: json("metadata"), // Additional context data
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"), // Optional expiration for time-sensitive notifications
+}, (table) => ({
+  userIdIdx: index("idx_notifications_user_id").on(table.userId),
+  typeIdx: index("idx_notifications_type").on(table.type),
+  isReadIdx: index("idx_notifications_is_read").on(table.isRead),
+  createdAtIdx: index("idx_notifications_created_at").on(table.createdAt),
+  userUnreadIdx: index("idx_notifications_user_unread").on(table.userId, table.isRead, table.isDismissed),
+}));
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));

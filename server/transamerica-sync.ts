@@ -11,6 +11,7 @@ import { pendingPolicies, pendingRequirements } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { retry, PORTAL_RETRY_OPTIONS } from "./lib/retry";
 import { captureArtifacts } from "./lib/artifacts";
+import { notifySyncCompleted, notifySyncFailed, notifyNewPolicy } from "./services/notificationService";
 
 // Helper to require environment variables
 function mustGetEnv(name: string): string {
@@ -130,10 +131,23 @@ export async function syncTransamericaPendingPolicies(): Promise<SyncResult> {
 
     result.success = true;
     console.log(`[Transamerica Sync] Completed. Processed ${result.policiesProcessed} policies.`);
+    
+    // Send success notification
+    await notifySyncCompleted({
+      syncType: "Transamerica Pending Policies",
+      duration: Date.now() - result.timestamp.getTime(),
+      metrics: { policiesProcessed: result.policiesProcessed },
+    }).catch(err => console.error("[Transamerica Sync] Failed to send notification:", err));
 
   } catch (error) {
     console.error("[Transamerica Sync] Error:", error);
     result.errors.push(String(error));
+    
+    // Send failure notification
+    await notifySyncFailed({
+      syncType: "Transamerica Pending Policies",
+      error: String(error),
+    }).catch(err => console.error("[Transamerica Sync] Failed to send failure notification:", err));
     
     // Capture artifacts on failure for debugging
     if (browser) {

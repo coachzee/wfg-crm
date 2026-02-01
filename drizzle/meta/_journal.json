@@ -183,6 +183,13 @@
       "when": 1769618347357,
       "tag": "0025_handy_exodus",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1769976108232,
+      "tag": "0026_hot_red_shift",
+      "breakpoints": true
     }
   ]
 }

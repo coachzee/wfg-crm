@@ -32,6 +32,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { NotificationBell } from "./NotificationBell";
 
 // Menu configuration with icons, metadata, and section groupings
 type MenuItem = {
@@ -286,14 +287,18 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed && (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <img 
-                    src="/wbh-logo.jpg" 
-                    alt="Wealth Builders Haven" 
-                    className="h-12 max-w-[180px] object-contain"
-                  />
-                </div>
+                <>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <img 
+                      src="/wbh-logo.jpg" 
+                      alt="Wealth Builders Haven" 
+                      className="h-12 max-w-[180px] object-contain"
+                    />
+                  </div>
+                  <NotificationBell />
+                </>
               )}
+              {isCollapsed && <NotificationBell />}
             </div>
           </SidebarHeader>
 
@@ -392,6 +397,7 @@ function DashboardLayoutContent({
                 </span>
               </div>
             </div>
+            <NotificationBell />
           </div>
         )}
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>

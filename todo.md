@@ -1670,3 +1670,47 @@
 - [x] Update JWT_SECRET to 32+ characters for production
 - [x] Test cron endpoint after deployment (verified at crm.wealthbuildershaven.com)
 - [x] Document Hostinger cron configuration (updated to crm.wealthbuildershaven.com)
+
+
+## Real-Time Notification System
+- [ ] Design notification system architecture
+- [ ] Create notifications database table and repository
+- [ ] Implement notification service with tRPC procedures
+- [ ] Build notification UI components (bell icon, dropdown, toast)
+- [ ] Integrate with sync completion events
+- [ ] Integrate with policy anniversary alerts
+- [ ] Integrate with agent milestone events
+- [ ] Add real-time polling for live updates
+- [ ] Write tests for notification system
+
+
+## Real-Time Notification System - Completed (Feb 1, 2026)
+- [x] Create notifications database table (17 columns, 5 indexes)
+- [x] Create notifications repository (CRUD operations)
+- [x] Implement notification service for CRM events (10 notification types)
+- [x] Create tRPC notification procedures (list, unreadCount, markAsRead, dismiss)
+- [x] Build NotificationBell UI component with dropdown
+- [x] Integrate with sync events (scheduler, transamerica-sync)
+- [x] Add polling for real-time updates (30-second intervals)
+- [x] Write tests (14 tests passing)
+
+**Notification Types Supported:**
+- SYNC_COMPLETED - Sync job completed successfully
+- SYNC_FAILED - Sync job failed with error
+- POLICY_ANNIVERSARY - Policy anniversary approaching
+- AGENT_MILESTONE - Agent achieved milestone (net licensed, rank up, first sale)
+- CHARGEBACK_ALERT - Chargeback or premium reversal detected
+- NEW_POLICY - New policy issued
+- SYSTEM_ALERT - System-wide announcements
+- TASK_DUE - Task or follow-up due
+- WELCOME - Welcome message for new users
+- GENERAL - General notifications
+
+**Features:**
+- Bell icon with unread count badge in header
+- Dropdown showing recent notifications
+- Mark as read / dismiss functionality
+- Priority levels (LOW, MEDIUM, HIGH, URGENT)
+- Related entity linking (policy, agent, task)
+- Duplicate prevention within 5-minute window
+- Broadcast notifications for all users

@@ -18,3 +18,4 @@ export { credentialsRouter } from './credentials';
 export { productionRouter, ProductionRecordSchema } from './production';
 export { teamRouter } from './team';
 export { alertsRouter } from './alerts';
+export { notificationsRouter } from './notifications';
