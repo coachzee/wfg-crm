@@ -25,8 +25,7 @@
  *     -H "content-type: application/json" \
  *     -d '{"source":"hostinger-cron"}'
  * 
- * NOTE: GET requests with ?secret= query parameter are DISABLED in production.
- *       You must use POST with x-sync-secret header.
+ * NOTE: Always use POST with x-sync-secret header for authentication.
  */
 
 import https from 'https';

@@ -470,7 +470,7 @@ Add the following lines to run sync at **3:30 PM and 6:30 PM EST** (adjust for y
 
 **Note:** Replace `YOUR_SYNC_SECRET` with your actual SYNC_SECRET value.
 
-> **IMPORTANT:** GET requests with `?secret=` query parameter are **DISABLED in production** for security. You must use POST with the `x-sync-secret` header as shown above. If you need to enable GET with query secrets (not recommended), set `ENABLE_CRON_GET_SECRET=true` in your environment.
+> **IMPORTANT:** Always use POST requests with the `x-sync-secret` header as shown above. This is the only supported authentication method in production.
 
 ### Step 3: Alternative - Use the Sync Script
 
