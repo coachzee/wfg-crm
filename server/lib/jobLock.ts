@@ -40,13 +40,13 @@ export async function acquireLock(
     // 1. No lock exists (INSERT succeeds)
     // 2. Existing lock is expired (UPDATE with WHERE condition)
     await db.execute(sql`
-      INSERT INTO job_locks (name, owner_id, locked_at, locked_until, heartbeat_at)
+      INSERT INTO job_locks (name, ownerId, lockedAt, lockedUntil, heartbeatAt)
       VALUES (${lockName}, ${ownerId}, NOW(), ${lockedUntil}, NOW())
       ON DUPLICATE KEY UPDATE
-        owner_id = IF(locked_until < NOW(), VALUES(owner_id), owner_id),
-        locked_at = IF(locked_until < NOW(), NOW(), locked_at),
-        locked_until = IF(locked_until < NOW(), VALUES(locked_until), locked_until),
-        heartbeat_at = IF(locked_until < NOW(), NOW(), heartbeat_at)
+        ownerId     = IF(lockedUntil < NOW(), VALUES(ownerId), ownerId),
+        lockedAt    = IF(lockedUntil < NOW(), NOW(), lockedAt),
+        lockedUntil = IF(lockedUntil < NOW(), VALUES(lockedUntil), lockedUntil),
+        heartbeatAt = IF(lockedUntil < NOW(), NOW(), heartbeatAt)
     `);
 
     // Verify we actually got the lock by checking if our ownerId is set

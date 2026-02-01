@@ -1714,3 +1714,9 @@
 - Related entity linking (policy, agent, task)
 - Duplicate prevention within 5-minute window
 - Broadcast notifications for all users
+
+
+## Critical Bug Fix - jobLock.ts Column Names (Feb 1, 2026) - COMPLETED
+- [x] Fix jobLock.ts raw SQL to use camelCase column names matching Drizzle schema
+- [x] Change owner_id → ownerId, locked_at → lockedAt, locked_until → lockedUntil, heartbeat_at → heartbeatAt
+- [x] Typecheck passes - job locking will now work correctly
