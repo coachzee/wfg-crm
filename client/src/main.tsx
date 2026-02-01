@@ -1,3 +1,4 @@
+// Build timestamp: 2026-02-01T22:20:00Z - Force fresh bundle
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
