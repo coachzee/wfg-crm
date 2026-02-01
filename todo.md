@@ -1722,7 +1722,8 @@
 - [x] Typecheck passes - job locking will now work correctly
 
 
-## Remove .manus/ Artifacts from Git (Feb 1, 2026)
-- [ ] Remove .manus/ directory from Git tracking
-- [ ] Commit and push cleanup
-- [ ] Verify .gitignore prevents future commits
+## Remove .manus/ Artifacts from Git (Feb 1, 2026) - COMPLETED
+- [x] Remove .manus/ directory from Git tracking (was not tracked)
+- [x] Remove .sessions/ directory from Git tracking (contained mywfg-session.json)
+- [x] Commit and push cleanup
+- [x] Verify .gitignore prevents future commits (.manus/, .manus-logs/, .sessions/ all in .gitignore)
