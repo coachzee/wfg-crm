@@ -1720,3 +1720,9 @@
 - [x] Fix jobLock.ts raw SQL to use camelCase column names matching Drizzle schema
 - [x] Change owner_id → ownerId, locked_at → lockedAt, locked_until → lockedUntil, heartbeat_at → heartbeatAt
 - [x] Typecheck passes - job locking will now work correctly
+
+
+## Remove .manus/ Artifacts from Git (Feb 1, 2026)
+- [ ] Remove .manus/ directory from Git tracking
+- [ ] Commit and push cleanup
+- [ ] Verify .gitignore prevents future commits
