@@ -9,7 +9,7 @@
  *   node scripts/cron-sync.mjs
  * 
  * Environment Variables Required:
- *   - APP_URL: The base URL of your CRM (e.g., https://wealthbuildershaven.com)
+ *   - APP_URL: The base URL of your CRM (e.g., https://crm.wealthbuildershaven.com)
  *   - SYNC_SECRET: The secret key for authenticating sync requests
  * 
  * Hostinger Cron Job Setup:
@@ -20,7 +20,7 @@
  *   3. Command: cd /path/to/your/app && node scripts/cron-sync.mjs
  * 
  * Alternative: Use the HTTP endpoint directly with curl:
- *   curl -X POST "https://wealthbuildershaven.com/api/cron/sync" \
+ *   curl -X POST "https://crm.wealthbuildershaven.com/api/cron/sync" \
  *     -H "x-sync-secret: YOUR_SYNC_SECRET" \
  *     -H "content-type: application/json" \
  *     -d '{"source":"hostinger-cron"}'

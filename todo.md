@@ -1668,5 +1668,5 @@
 
 ## Follow-up Tasks
 - [x] Update JWT_SECRET to 32+ characters for production
-- [ ] Test cron endpoint after deployment
-- [ ] Document Hostinger cron configuration
+- [x] Test cron endpoint after deployment (verified at crm.wealthbuildershaven.com)
+- [x] Document Hostinger cron configuration (updated to crm.wealthbuildershaven.com)

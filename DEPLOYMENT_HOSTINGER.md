@@ -441,7 +441,7 @@ Add a secure sync secret to your `.env` file:
 ```env
 # Sync Authentication (generate a random 32+ character string)
 SYNC_SECRET=your_very_long_random_sync_secret_at_least_32_chars
-APP_URL=https://wealthbuildershaven.com
+APP_URL=https://crm.wealthbuildershaven.com
 ```
 
 Generate a secure secret:
@@ -462,10 +462,10 @@ Add the following lines to run sync at **3:30 PM and 6:30 PM EST** (adjust for y
 
 ```cron
 # MyWFG/Transamerica Sync - 3:30 PM EST (20:30 UTC)
-30 20 * * * curl -s -X POST "https://wealthbuildershaven.com/api/cron/sync" -H "x-sync-secret: YOUR_SYNC_SECRET" -H "content-type: application/json" -d '{"source":"hostinger-cron"}' >> /var/log/wfgcrm/sync.log 2>&1
+30 20 * * * curl -s -X POST "https://crm.wealthbuildershaven.com/api/cron/sync" -H "x-sync-secret: YOUR_SYNC_SECRET" -H "content-type: application/json" -d '{"source":"hostinger-cron"}' >> /var/log/wfgcrm/sync.log 2>&1
 
 # MyWFG/Transamerica Sync - 6:30 PM EST (23:30 UTC)
-30 23 * * * curl -s -X POST "https://wealthbuildershaven.com/api/cron/sync" -H "x-sync-secret: YOUR_SYNC_SECRET" -H "content-type: application/json" -d '{"source":"hostinger-cron"}' >> /var/log/wfgcrm/sync.log 2>&1
+30 23 * * * curl -s -X POST "https://crm.wealthbuildershaven.com/api/cron/sync" -H "x-sync-secret: YOUR_SYNC_SECRET" -H "content-type: application/json" -d '{"source":"hostinger-cron"}' >> /var/log/wfgcrm/sync.log 2>&1
 ```
 
 **Note:** Replace `YOUR_SYNC_SECRET` with your actual SYNC_SECRET value.
@@ -478,10 +478,10 @@ If you prefer using a Node.js script instead of curl:
 
 ```bash
 # 3:30 PM EST (20:30 UTC)
-30 20 * * * cd /var/www/wfgcrm && APP_URL=https://wealthbuildershaven.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
+30 20 * * * cd /var/www/wfgcrm && APP_URL=https://crm.wealthbuildershaven.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
 
 # 6:30 PM EST (23:30 UTC)
-30 23 * * * cd /var/www/wfgcrm && APP_URL=https://wealthbuildershaven.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
+30 23 * * * cd /var/www/wfgcrm && APP_URL=https://crm.wealthbuildershaven.com SYNC_SECRET=your_secret node scripts/cron-sync.mjs >> /var/log/wfgcrm/sync.log 2>&1
 ```
 
 ### Step 4: Create Log Directory
@@ -496,7 +496,7 @@ sudo chown wfgcrm:wfgcrm /var/log/wfgcrm
 Test that the sync endpoint works:
 
 ```bash
-curl -X POST "https://wealthbuildershaven.com/api/cron/sync" \
+curl -X POST "https://crm.wealthbuildershaven.com/api/cron/sync" \
   -H "x-sync-secret: YOUR_SYNC_SECRET" \
   -H "content-type: application/json" \
   -d '{"source":"manual-test"}'
