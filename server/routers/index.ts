@@ -19,3 +19,4 @@ export { productionRouter, ProductionRecordSchema } from './production';
 export { teamRouter } from './team';
 export { alertsRouter } from './alerts';
 export { notificationsRouter } from './notifications';
+export { goalsRouter } from './goals';

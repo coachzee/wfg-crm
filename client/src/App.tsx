@@ -25,6 +25,7 @@ const SyncHistory = lazy(() => import("./pages/SyncHistory"));
 const PendingPolicies = lazy(() => import("./pages/PendingPolicies"));
 const PolicyAnniversaries = lazy(() => import("./pages/PolicyAnniversaries"));
 const ExamPrep = lazy(() => import("./pages/ExamPrep"));
+const QuarterlyReport = lazy(() => import("./pages/QuarterlyReport"));
 
 // Loading fallback component for lazy-loaded routes
 function PageLoader() {
@@ -164,6 +165,15 @@ function Router() {
           <DashboardLayout>
             <Suspense fallback={<PageLoader />}>
               <ExamPrep />
+            </Suspense>
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path={"/quarterly-report"}>
+        {() => (
+          <DashboardLayout>
+            <Suspense fallback={<PageLoader />}>
+              <QuarterlyReport />
             </Suspense>
           </DashboardLayout>
         )}

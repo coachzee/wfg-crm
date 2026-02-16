@@ -22,3 +22,4 @@ export { SectionLoader } from './SectionLoader';
 export { ExportMenu } from './ExportMenu';
 export { SectionExport } from './SectionExport';
 export type { ExportColumn, SectionExportProps } from './SectionExport';
+export { GoalTracker } from './GoalTracker';

@@ -1075,3 +1075,52 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// Goals - Track monthly targets for key metrics with progress
+export const goals = mysqlTable("goals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").references(() => users.id).notNull(),
+  
+  // Goal definition
+  metricKey: varchar("metricKey", { length: 64 }).notNull(), // e.g., "new_agents", "policies_written", "cash_flow", "families_protected"
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  
+  // Target and progress
+  targetValue: decimal("targetValue", { precision: 15, scale: 2 }).notNull(),
+  currentValue: decimal("currentValue", { precision: 15, scale: 2 }).default("0").notNull(),
+  unit: varchar("unit", { length: 32 }).default("count").notNull(), // "count", "currency", "percentage"
+  
+  // Time period
+  periodType: mysqlEnum("periodType", ["MONTHLY", "QUARTERLY", "YEARLY"]).default("MONTHLY").notNull(),
+  periodMonth: int("periodMonth"), // 1-12 for monthly goals
+  periodQuarter: int("periodQuarter"), // 1-4 for quarterly goals
+  periodYear: int("periodYear").notNull(),
+  
+  // Status
+  status: mysqlEnum("status", ["ACTIVE", "COMPLETED", "MISSED", "ARCHIVED"]).default("ACTIVE").notNull(),
+  completedAt: timestamp("completedAt"),
+  
+  // Display
+  color: varchar("color", { length: 32 }).default("primary"), // Tailwind color name for progress bar
+  icon: varchar("icon", { length: 64 }), // Lucide icon name
+  sortOrder: int("sortOrder").default(0).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_goals_user_id").on(table.userId),
+  periodIdx: index("idx_goals_period").on(table.periodYear, table.periodMonth),
+  statusIdx: index("idx_goals_status").on(table.status),
+  metricKeyIdx: index("idx_goals_metric_key").on(table.metricKey),
+}));
+
+export type Goal = typeof goals.$inferSelect;
+export type InsertGoal = typeof goals.$inferInsert;
+
+export const goalsRelations = relations(goals, ({ one }) => ({
+  user: one(users, {
+    fields: [goals.userId],
+    references: [users.id],
+  }),
+}));

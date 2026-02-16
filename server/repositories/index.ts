@@ -100,3 +100,16 @@ export {
   getIncomeHistory,
   getIncomeAccuracyStats,
 } from './income';
+
+// Goals repository
+export {
+  initGoalsRepository,
+  getGoals,
+  getGoalById,
+  createGoal,
+  updateGoal,
+  updateGoalProgress,
+  deleteGoal,
+  getActiveGoals,
+  archiveExpiredGoals,
+} from './goals';

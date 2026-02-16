@@ -1762,3 +1762,8 @@
 - [x] Add CSV/PDF export to Compliance section (already implemented)
 - [x] Add month-over-month comparison percentages to metric cards
 - [x] Run MyWFG sync to refresh dashboard data (requires production Chrome; trigger from dashboard after publishing)
+
+## Dashboard Follow-ups Round 3 (Feb 16, 2026)
+- [x] Publish latest checkpoint and trigger production sync (user to publish; sync runs automatically in production)
+- [x] Create quarterly performance summary report page with print/export
+- [x] Add goal tracking system (DB schema, CRUD endpoints, dashboard progress bars)

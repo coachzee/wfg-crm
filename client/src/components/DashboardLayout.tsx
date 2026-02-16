@@ -25,7 +25,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { 
   LayoutDashboard, LogOut, PanelLeft, Users, FileText, 
   CheckCircle, Settings, BarChart3, UserCircle, Shield,
-  ChevronRight, Sparkles, ClipboardList, CalendarDays, GraduationCap
+  ChevronRight, Sparkles, ClipboardList, CalendarDays, GraduationCap, FileBarChart
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState, memo, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -75,6 +75,7 @@ const menuSections: MenuSection[] = [
     title: "Workflow",
     items: [
       { icon: CheckCircle, label: "Tasks", path: "/tasks", description: "Follow-ups & reminders" },
+      { icon: FileBarChart, label: "Quarterly Report", path: "/quarterly-report", description: "Performance summary" },
     ]
   },
   {

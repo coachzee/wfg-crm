@@ -27,6 +27,7 @@ import {
   InUnderwritingContent,
   LastUpdated,
   SectionLoader,
+  GoalTracker,
 } from "@/components/dashboard";
 import type { WorkflowStage } from "@/components/dashboard";
 import { Users, Target, Award } from "lucide-react";
@@ -205,6 +206,9 @@ export default function Dashboard() {
           } : undefined}
         />
       )}
+
+      {/* Goal Tracking */}
+      <GoalTracker />
 
       {/* Monthly Cash Flow Chart with Date Range Filter */}
       {isCashFlowLoading ? (

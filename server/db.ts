@@ -34,6 +34,7 @@ import {
 } from './repositories';
 
 import { initSyncRunsRepository } from './repositories/syncRuns';
+import { initGoalsRepository } from './repositories/goals';
 
 // Re-export types for use in procedures
 export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog, AgentCashFlowHistory, SyncLog, InforcePolicy } from "../drizzle/schema";
@@ -58,6 +59,7 @@ function initializeRepositories() {
   initPoliciesRepository(getDb);
   initIncomeRepository(getDb, getDashboardMetrics);
   initSyncRunsRepository(getDb);
+  initGoalsRepository(getDb);
 }
 
 // Initialize repositories on module load
@@ -238,6 +240,17 @@ export {
   getIncomeHistory,
   getIncomeAccuracyStats,
 } from './repositories/income';
+
+export {
+  getGoals,
+  getGoalById,
+  createGoal,
+  updateGoal,
+  updateGoalProgress,
+  deleteGoal,
+  getActiveGoals,
+  archiveExpiredGoals,
+} from './repositories/goals';
 
 // ============================================
 // Legacy Functions (kept for compatibility)
