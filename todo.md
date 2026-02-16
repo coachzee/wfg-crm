@@ -1740,3 +1740,6 @@
 - [x] Delete .manus/, .sessions/, .manus-logs/, artifacts/ directories locally
 - [x] Verify they are excluded from checkpoint packaging (.gitignore has all entries)
 - [x] Production site works correctly (redirects to Manus OAuth login as expected)
+
+## Production Blank Page Fix (Feb 12, 2026)
+- [x] Fix "Cannot access 'S' before initialization" error in vendor-charts bundle (circular dependency in production build)

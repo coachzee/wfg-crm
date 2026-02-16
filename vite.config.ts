@@ -47,7 +47,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // React core - smallest possible chunk
+          // React core - must load first
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'vendor-react';
           }
@@ -55,30 +55,28 @@ export default defineConfig({
           if (id.includes('@trpc/client') || id.includes('@trpc/react-query') || id.includes('@tanstack/react-query')) {
             return 'vendor-trpc';
           }
-          // Charts library - heavy, lazy-loaded with Dashboard
-          if (id.includes('recharts') || id.includes('d3-')) {
-            return 'vendor-charts';
-          }
           // UI components - used across many pages
           if (id.includes('@radix-ui/') || id.includes('lucide-react')) {
             return 'vendor-ui';
-          }
-          // Form handling
-          if (id.includes('react-hook-form') || id.includes('@hookform/') || id.includes('zod')) {
-            return 'vendor-forms';
           }
           // Date utilities
           if (id.includes('date-fns')) {
             return 'vendor-date';
           }
-          // Other utilities
-          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
+          // Other utilities (excluding clsx which is shared by recharts)
+          if (id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
             return 'vendor-utils';
           }
           // Wouter router
           if (id.includes('wouter')) {
             return 'vendor-router';
           }
+          // NOTE: recharts, d3-*, victory-vendor, lodash, clsx are intentionally
+          // NOT split into a separate vendor-charts chunk. Doing so causes a
+          // circular dependency where vendor-charts executes S.forwardRef()
+          // at module top-level before vendor-react (which exports S/React)
+          // has finished initializing, resulting in:
+          //   "Uncaught ReferenceError: Cannot access 'S' before initialization"
         },
       },
     },
