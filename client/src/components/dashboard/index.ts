@@ -19,3 +19,4 @@ export { DateRangeFilter } from './DateRangeFilter';
 export type { DatePreset } from './DateRangeFilter';
 export { LastUpdated } from './LastUpdated';
 export { SectionLoader } from './SectionLoader';
+export { ExportMenu } from './ExportMenu';

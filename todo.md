@@ -1749,3 +1749,9 @@
 - [x] Add 'Last Updated' timestamp showing data freshness on dashboard
 - [x] Improve loading animations with better skeleton states and section-level loading indicators
 - [x] Create reusable production debugging skill via skill-creator
+
+## Dashboard Follow-ups (Feb 16, 2026)
+- [x] Publish and verify production site loads correctly (site requires OAuth login, working as expected)
+- [x] Add calendar popover for custom date range selection on cash flow chart
+- [x] Add CSV export functionality for filtered cash flow chart data
+- [x] Add PDF export functionality for filtered cash flow chart data

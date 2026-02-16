@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { DateRangeFilter } from "./DateRangeFilter";
+import { ExportMenu } from "./ExportMenu";
 
 interface CashFlowData {
   monthYear: string;
@@ -98,6 +99,12 @@ export const CashFlowChart = memo(function CashFlowChart({ data }: CashFlowChart
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <DateRangeFilter onRangeChange={setDateRange} />
+            <ExportMenu
+              data={filteredData}
+              superTeamTotal={superTeamTotal}
+              personalTotal={personalTotal}
+              rangeLabel={rangeLabel}
+            />
             <div className="flex gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500" />
