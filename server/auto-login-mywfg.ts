@@ -92,7 +92,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
     // START OTP SESSION BEFORE TRIGGERING LOGIN
     // This ensures we only accept OTPs that arrive AFTER this point
     console.log('[MyWFG] Starting OTP session before login...');
-    const otpSessionId = await startOTPSession('mywfg', gmailCreds);
+    const otpSessionId = startOTPSession('mywfg');
     
     // Fill in username
     console.log('[MyWFG] Entering username...');
@@ -133,7 +133,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
     
     // Check if OTP is required
     const pageContent = await page.content();
-    const pageText = await page.evaluate(() => document.body ? document.body.innerText : '');
+    const pageText = await page.evaluate(() => document.body.innerText);
     
     // Check for error page
     if (pageText.includes('ERROR OCCURRED') || pageText.includes('Bad Request')) {
@@ -155,7 +155,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
       
       // Get the prefix shown on the page (for reference)
       const pagePrefix = await page.evaluate(() => {
-        const bodyText = document.body ? document.body.innerText : '';
+        const bodyText = document.body.innerText;
         const prefixMatch = bodyText.match(/(\d{4})\s*-/);
         return prefixMatch ? prefixMatch[1] : null;
       });
@@ -258,7 +258,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
     
     // Verify login success
     const currentUrl = page.url();
-    const finalPageText = await page.evaluate(() => document.body ? document.body.innerText : '');
+    const finalPageText = await page.evaluate(() => document.body.innerText);
     
     const isLoggedIn = (currentUrl.includes('mywfg.com') && 
                         !currentUrl.includes('login') && 
