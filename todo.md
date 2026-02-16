@@ -1743,3 +1743,9 @@
 
 ## Production Blank Page Fix (Feb 12, 2026)
 - [x] Fix "Cannot access 'S' before initialization" error in vendor-charts bundle (circular dependency in production build)
+
+## Dashboard Enhancements (Feb 16, 2026)
+- [x] Add date range filter for cash flow chart (preset ranges: 3M, 6M, YTD, 1Y, All)
+- [x] Add 'Last Updated' timestamp showing data freshness on dashboard
+- [x] Improve loading animations with better skeleton states and section-level loading indicators
+- [x] Create reusable production debugging skill via skill-creator

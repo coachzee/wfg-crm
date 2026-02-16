@@ -25,6 +25,8 @@ import {
   NoRecurringContent,
   PendingIssuedContent,
   InUnderwritingContent,
+  LastUpdated,
+  SectionLoader,
 } from "@/components/dashboard";
 import type { WorkflowStage } from "@/components/dashboard";
 import { Users, Target, Award } from "lucide-react";
@@ -39,12 +41,12 @@ export default function Dashboard() {
   const [showInUnderwritingModal, setShowInUnderwritingModal] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   
-  const { data: stats, isLoading, refetch, isRefetching } = trpc.dashboard.stats.useQuery(undefined, {
+  const { data: stats, isLoading, refetch, isRefetching, dataUpdatedAt } = trpc.dashboard.stats.useQuery(undefined, {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
   
-  const { data: metrics } = trpc.dashboard.metrics.useQuery(undefined, {
+  const { data: metrics, isLoading: isMetricsLoading } = trpc.dashboard.metrics.useQuery(undefined, {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
@@ -61,7 +63,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: monthlyCashFlow } = trpc.dashboard.monthlyCashFlow.useQuery(undefined, {
+  const { data: monthlyCashFlow, isLoading: isCashFlowLoading } = trpc.dashboard.monthlyCashFlow.useQuery(undefined, {
     staleTime: 60000,
     refetchOnWindowFocus: false,
   });
@@ -103,6 +105,11 @@ export default function Dashboard() {
           <p className="text-muted-foreground">
             Here's your team's performance overview for today.
           </p>
+          {/* Last Updated Timestamp */}
+          <LastUpdated
+            timestamp={dataUpdatedAt || null}
+            isRefreshing={isRefetching}
+          />
         </div>
         <div className="flex items-center gap-3">
           <Button 
@@ -123,64 +130,74 @@ export default function Dashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
-        <MetricCard
-          title="Active Associates"
-          value={metrics?.activeAssociates || 91}
-          subtitle="Team members in your organization"
-          icon={Users}
-          trend="up"
-          trendValue="MyWFG"
-          onClick={navigateToAgents}
-        />
-        <MetricCard
-          title="Licensed Agents"
-          value={metrics?.licensedAgents || 27}
-          subtitle="Life licensed associates"
-          icon={Award}
-          variant="success"
-          trend="up"
-          trendValue={`${Math.round(((metrics?.licensedAgents || 27) / (metrics?.activeAssociates || 91)) * 100)}% licensed`}
-          onClick={() => setLocation('/agents?filter=lifeLicensed')}
-        />
-        <MetricCard
-          title="Net Licensed"
-          value={metrics?.netLicensedData?.totalNetLicensed || netLicensed}
-          subtitle="$1,000+ milestone achieved (TA/A only)"
-          icon={Target}
-          variant="success"
-          trend={(metrics?.netLicensedData?.totalNetLicensed || netLicensed) > 0 ? "up" : "neutral"}
-          trendValue={conversionRate > 0 ? `${conversionRate}% rate` : ""}
-          onClick={() => setShowNetLicensedModal(true)}
-        />
-        <MetricCard
-          title="Task Completion"
-          value={`${taskCompletionRate}%`}
-          subtitle={`${stats?.taskStats?.completed || 0}/${stats?.taskStats?.total || 0} tasks done`}
-          icon={CheckCircle}
-          variant={taskCompletionRate >= 80 ? "success" : taskCompletionRate >= 50 ? "warning" : "danger"}
-          onClick={navigateToTasks}
-        />
-        <MetricCard
-          title="Last Sync"
-          value={stats?.lastSyncDate ? formatDistanceToNow(new Date(stats.lastSyncDate), { addSuffix: true }) : "Never"}
-          subtitle="MyWFG integration"
-          icon={RefreshCw}
-          variant={stats?.lastSyncDate ? "default" : "warning"}
-        />
-      </div>
+      {isMetricsLoading && !stats ? (
+        <SectionLoader variant="metrics" count={5} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
+          <MetricCard
+            title="Active Associates"
+            value={metrics?.activeAssociates || 91}
+            subtitle="Team members in your organization"
+            icon={Users}
+            trend="up"
+            trendValue="MyWFG"
+            onClick={navigateToAgents}
+          />
+          <MetricCard
+            title="Licensed Agents"
+            value={metrics?.licensedAgents || 27}
+            subtitle="Life licensed associates"
+            icon={Award}
+            variant="success"
+            trend="up"
+            trendValue={`${Math.round(((metrics?.licensedAgents || 27) / (metrics?.activeAssociates || 91)) * 100)}% licensed`}
+            onClick={() => setLocation('/agents?filter=lifeLicensed')}
+          />
+          <MetricCard
+            title="Net Licensed"
+            value={metrics?.netLicensedData?.totalNetLicensed || netLicensed}
+            subtitle="$1,000+ milestone achieved (TA/A only)"
+            icon={Target}
+            variant="success"
+            trend={(metrics?.netLicensedData?.totalNetLicensed || netLicensed) > 0 ? "up" : "neutral"}
+            trendValue={conversionRate > 0 ? `${conversionRate}% rate` : ""}
+            onClick={() => setShowNetLicensedModal(true)}
+          />
+          <MetricCard
+            title="Task Completion"
+            value={`${taskCompletionRate}%`}
+            subtitle={`${stats?.taskStats?.completed || 0}/${stats?.taskStats?.total || 0} tasks done`}
+            icon={CheckCircle}
+            variant={taskCompletionRate >= 80 ? "success" : taskCompletionRate >= 50 ? "warning" : "danger"}
+            onClick={navigateToTasks}
+          />
+          <MetricCard
+            title="Last Sync"
+            value={stats?.lastSyncDate ? formatDistanceToNow(new Date(stats.lastSyncDate), { addSuffix: true }) : "Never"}
+            subtitle="MyWFG integration"
+            icon={RefreshCw}
+            variant={stats?.lastSyncDate ? "default" : "warning"}
+          />
+        </div>
+      )}
       
       {/* Impact Metrics */}
-      <ImpactMetrics
-        totalFaceAmount={metrics?.totalFaceAmount || 0}
-        familiesProtected={metrics?.familiesProtected || 0}
-        superTeamCashFlow={metrics?.superTeamCashFlow || 0}
-      />
-
-      {/* Monthly Cash Flow Chart */}
-      {monthlyCashFlow && monthlyCashFlow.length > 0 && (
-        <CashFlowChart data={monthlyCashFlow} />
+      {isMetricsLoading ? (
+        <SectionLoader variant="metrics" count={3} />
+      ) : (
+        <ImpactMetrics
+          totalFaceAmount={metrics?.totalFaceAmount || 0}
+          familiesProtected={metrics?.familiesProtected || 0}
+          superTeamCashFlow={metrics?.superTeamCashFlow || 0}
+        />
       )}
+
+      {/* Monthly Cash Flow Chart with Date Range Filter */}
+      {isCashFlowLoading ? (
+        <SectionLoader variant="chart" />
+      ) : monthlyCashFlow && monthlyCashFlow.length > 0 ? (
+        <CashFlowChart data={monthlyCashFlow} />
+      ) : null}
 
       {/* Weekly Sync Summary */}
       <WeeklySyncSummary />

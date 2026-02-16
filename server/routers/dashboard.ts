@@ -75,6 +75,7 @@ export const dashboardRouter = router({
       agentsByStage,
       taskStats,
       lastSyncDate: latestSync?.syncDate,
+      lastUpdated: Date.now(),
     };
   }),
   
