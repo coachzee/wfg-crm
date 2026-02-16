@@ -2,7 +2,7 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { 
   startOTPSession, 
   waitForOTPWithSession, 
-  getTransamericaCredentials,
+  getMyWFGCredentials,
   clearUsedOTPs 
 } from './gmail-otp-v2';
 
@@ -74,7 +74,8 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
       return { success: false, error: 'Transamerica credentials not configured' };
     }
     
-    const gmailCreds = getTransamericaCredentials();
+    // Use MyWFG Gmail credentials for OTP - both platforms send OTPs to the same email
+    const gmailCreds = getMyWFGCredentials();
     if (!gmailCreds.email || !gmailCreds.appPassword) {
       return { success: false, error: 'Gmail credentials not configured for OTP' };
     }
@@ -96,19 +97,35 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     // Set user agent to avoid bot detection
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
-    // Navigate to Transamerica login page
+    // Navigate to Transamerica login page with retry
     console.log('[Transamerica] Navigating to login page...');
-    await page.goto('https://secure.transamerica.com/login/sign-in/login.html', { 
-      waitUntil: 'networkidle2',
-      timeout: 60000 
-    });
+    let navigationAttempts = 0;
+    const maxNavigationAttempts = 3;
+    while (navigationAttempts < maxNavigationAttempts) {
+      try {
+        navigationAttempts++;
+        await page.goto('https://secure.transamerica.com/login/sign-in/login.html', { 
+          waitUntil: 'domcontentloaded',
+          timeout: 90000 
+        });
+        // Wait a bit more for JS to load
+        await new Promise(r => setTimeout(r, 5000));
+        break;
+      } catch (navErr) {
+        console.log(`[Transamerica] Navigation attempt ${navigationAttempts}/${maxNavigationAttempts} failed: ${navErr instanceof Error ? navErr.message : navErr}`);
+        if (navigationAttempts >= maxNavigationAttempts) {
+          throw new Error(`Failed to load Transamerica login page after ${maxNavigationAttempts} attempts`);
+        }
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    }
     
     // Wait for login form
     await page.waitForSelector('input[name="username"], input[id="username"], #username', { timeout: 30000 });
     
     // START OTP SESSION BEFORE TRIGGERING LOGIN
     console.log('[Transamerica] Starting OTP session before login...');
-    const otpSessionId = startOTPSession('transamerica');
+    const otpSessionId = await startOTPSession('transamerica', gmailCreds);
     
     // Fill in username
     console.log('[Transamerica] Entering username...');
@@ -131,7 +148,7 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     
     // Check for security question
     const pageContent = await page.content();
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body ? document.body.innerText : '');
     
     if (pageText.toLowerCase().includes('security question') || 
         pageText.toLowerCase().includes('what city') ||
@@ -178,7 +195,7 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     // Check if OTP is required
     const pageUrl = page.url();
     const currentContent = await page.content();
-    const currentText = await page.evaluate(() => document.body.innerText);
+    const currentText = await page.evaluate(() => document.body ? document.body.innerText : '');
     
     const otpRequired = currentContent.toLowerCase().includes('verification') || 
                         currentContent.toLowerCase().includes('one-time') || 

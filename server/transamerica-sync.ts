@@ -297,7 +297,7 @@ async function loginToTransamerica(page: Page): Promise<boolean> {
       console.log("[Transamerica Login] Could not verify dashboard, checking page content...");
       
       // Check if we have any indication of being logged in
-      const bodyText = await page.evaluate(() => document.body.innerText);
+      const bodyText = await page.evaluate(() => document.body ? document.body.innerText : "");
       if (bodyText.includes('Welcome') || bodyText.includes('Agent Home') || bodyText.includes('Launch')) {
         console.log("[Transamerica Login] Login successful (content check)");
         return true;

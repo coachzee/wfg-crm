@@ -208,7 +208,7 @@ async function extractPolicyAgentData(page: Page, policyNumber: string): Promise
       const agents: AgentData[] = [];
       
       // Find all producer cards/sections
-      const content = document.body.innerText;
+      const content = document.body ? document.body.innerText : "";
       
       // Look for the Producers section
       const producersMatch = content.match(/Producers[\s\S]*?(?=Financial|$)/i);
@@ -278,7 +278,7 @@ async function extractPolicyAgentData(page: Page, policyNumber: string): Promise
     
     // Extract Target Premium
     const targetPremium = await page.evaluate(() => {
-      const content = document.body.innerText;
+      const content = document.body ? document.body.innerText : "";
       
       // Look for Target Premium pattern
       const targetMatch = content.match(/Target Premium[:\s]*\$?([\d,]+\.?\d*)/i);

@@ -146,11 +146,19 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     ]);
   }
   
-  await new Promise(r => setTimeout(r, 3000));
+  await new Promise(r => setTimeout(r, 5000));
   
-  // Check for OTP requirement
+  // Take debug screenshot
+  try {
+    await page.screenshot({ path: '/tmp/mywfg-after-login.png', fullPage: true });
+    console.log('[Downline Scraper] Screenshot saved to /tmp/mywfg-after-login.png');
+  } catch (e) {
+    console.log('[Downline Scraper] Could not take screenshot:', e);
+  }
+  
+  // Check for OTP requirement - with null safety
   const pageContent = await page.content();
-  const pageText = await page.evaluate(() => document.body.innerText);
+  const pageText = await page.evaluate(() => document.body ? document.body ? document.body.innerText : "" : '');
   
   // Check for error page
   if (pageText.includes('ERROR OCCURRED') || pageText.includes('Bad Request')) {
@@ -170,7 +178,7 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     
     // Get the prefix shown on the page - REQUIRED for verification
     const pagePrefix = await page.evaluate(() => {
-      const bodyText = document.body.innerText;
+      const bodyText = document.body ? document.body.innerText : "";
       const prefixMatch = bodyText.match(/(\d{4})\s*-/);
       return prefixMatch ? prefixMatch[1] : null;
     });
@@ -401,7 +409,7 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
       divTableCount: divTables.length,
       firstTableHtml,
       iframeSrcs,
-      bodyTextSample: document.body.innerText.substring(0, 500)
+      bodyTextSample: document.body ? document.body.innerText : "".substring(0, 500)
     };
   });
   
@@ -528,7 +536,7 @@ async function extractAgentsFromPage(page: Page): Promise<any[]> {
   
   // If no agents found in table, try parsing from text content
   if (reportData.length === 0) {
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body ? document.body.innerText : "");
     const lines = pageText.split('\n');
     
     for (const line of lines) {
@@ -736,7 +744,7 @@ async function extractDownlineStatus(page: Page, agentId: string, teamType: 'BAS
   
   // Extract header info
   const headerInfo = await page.evaluate(() => {
-    const headerText = document.body.innerText;
+    const headerText = document.body ? document.body.innerText : "";
     const runDateMatch = headerText.match(/Run Date and Time:\s*([^\n]+)/);
     const infoMatch = headerText.match(/Shopeju,\s*Zaid[^\n]+/);
     return {
@@ -1138,7 +1146,7 @@ export async function fetchAgentContactInfo(page: Page, agentCode: string): Prom
       let contentLoaded = false;
       for (let i = 0; i < 10; i++) {
         const hasContent = await page.evaluate(() => {
-          const text = document.body.innerText;
+          const text = document.body ? document.body.innerText : "";
           // Check if we have phone-like content or email-like content
           const hasPhone = /\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}/.test(text);
           const hasEmail = /@/.test(text) && !text.includes('wfg.com');
@@ -1171,7 +1179,7 @@ export async function fetchAgentContactInfo(page: Page, agentCode: string): Prom
         homeAddress: null
       };
       
-      const pageText = document.body.innerText;
+      const pageText = document.body ? document.body.innerText : "";
       const pageHtml = document.body.innerHTML;
       
       // Method 1: Look for labeled phone numbers
@@ -1342,7 +1350,7 @@ export async function fetchAgentAddress(page: Page, agentCode: string): Promise<
       }
       
       // Alternative: Look for address pattern in the page
-      const pageText = document.body.innerText;
+      const pageText = document.body ? document.body.innerText : "";
       const addressMatch = pageText.match(/Home Address[:\s]*([^\n]+(?:\n[^\n]+)?)/i);
       if (addressMatch) {
         return addressMatch[1].replace(/\s+/g, ' ').trim();
@@ -1513,7 +1521,7 @@ export async function fetchAgentUpline(page: Page, agentCode: string): Promise<{
     // Extract the Recruiter name from the page
     const uplineData = await page.evaluate(() => {
       // Method 1: Look for the specific page structure with label:value pairs
-      const pageText = document.body.innerText;
+      const pageText = document.body ? document.body.innerText : "";
       
       // Use regex to find "Recruiter:" followed by a name
       const recruiterMatch = pageText.match(/Recruiter:\s*([A-Z][A-Za-z\s]+)/i);

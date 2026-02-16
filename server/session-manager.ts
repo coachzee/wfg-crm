@@ -132,7 +132,7 @@ export async function validateMyWFGSession(cookies: Cookie[]): Promise<SessionVa
     });
     
     const currentUrl = page.url();
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body ? document.body.innerText : "");
     
     // Check if we're on a login page
     if (currentUrl.includes('login') || 
@@ -184,7 +184,7 @@ export async function validateTransamericaSession(cookies: Cookie[]): Promise<Se
     });
     
     const currentUrl = page.url();
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body ? document.body.innerText : "");
     
     // Check if we're on a login page
     if (currentUrl.includes('login') || 

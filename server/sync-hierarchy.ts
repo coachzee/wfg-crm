@@ -75,7 +75,7 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     
     // Check for OTP requirement
     const pageContent = await page.content();
-    const pageText = await page.evaluate(() => document.body.innerText);
+    const pageText = await page.evaluate(() => document.body ? document.body.innerText : "");
     
     // Check for error page
     if (pageText.includes('ERROR OCCURRED') || pageText.includes('Bad Request')) {
@@ -126,7 +126,7 @@ async function loginToMyWFG(page: Page): Promise<boolean> {
     
     // Verify login success
     const currentUrl = page.url();
-    const finalPageText = await page.evaluate(() => document.body.innerText);
+    const finalPageText = await page.evaluate(() => document.body ? document.body.innerText : "");
     
     const isLoggedIn = (currentUrl.includes('mywfg.com') && 
                         !currentUrl.includes('login') && 
@@ -172,7 +172,7 @@ async function extractUplineFromReport(
     // Look for the "Leader" row which contains the direct upline
     const uplineData = await page.evaluate(() => {
       // The report viewer renders content that we can search for
-      const pageText = document.body.innerText;
+      const pageText = document.body ? document.body.innerText : "";
 
       // Look for the Leader row pattern
       // Format: "Leader    Name    AgentCode    Title"

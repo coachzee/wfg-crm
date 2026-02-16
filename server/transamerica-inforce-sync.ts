@@ -309,7 +309,7 @@ async function extractPolicyDetails(page: Page, policyNumber: string): Promise<P
     await delay(2000);
     
     const details = await page.evaluate(() => {
-      const content = document.body.innerText;
+      const content = document.body ? document.body.innerText : "";
       const producers: Array<{name: string; code: string; split: number | null; role: string}> = [];
       
       // Parse producer information
