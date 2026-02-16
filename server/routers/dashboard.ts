@@ -497,6 +497,59 @@ export const dashboardRouter = router({
       return saveMetricsSnapshot(input?.periodType || "HOURLY");
     }),
 
+  platformSyncStatus: protectedProcedure.query(async () => {
+    logger.info("Fetching platform sync status");
+    const { getRecentScheduledSyncLogs } = await import("../db");
+    
+    // Get latest MyWFG sync from mywfgSyncLogs table
+    const latestMywfg = await getLatestSyncLog();
+    
+    // Get latest Transamerica syncs from syncLogs table (any TRANSAMERICA_* type)
+    const recentScheduled = await getRecentScheduledSyncLogs(50);
+    const transamericaLogs = recentScheduled.filter(
+      (l: any) => l.syncType?.startsWith('TRANSAMERICA')
+    );
+    const latestTransamerica = transamericaLogs[0] || null;
+    
+    // Get latest MyWFG scheduled sync from syncLogs table too
+    const mywfgScheduledLogs = recentScheduled.filter(
+      (l: any) => ['FULL_SYNC', 'DOWNLINE_STATUS', 'CONTACT_INFO', 'CASH_FLOW', 'PRODUCTION'].includes(l.syncType)
+    );
+    const latestMywfgScheduled = mywfgScheduledLogs[0] || null;
+    
+    // Count recent successes/failures (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentMywfg = mywfgScheduledLogs.filter(
+      (l: any) => l.createdAt && new Date(l.createdAt) >= sevenDaysAgo
+    );
+    const recentTA = transamericaLogs.filter(
+      (l: any) => l.createdAt && new Date(l.createdAt) >= sevenDaysAgo
+    );
+    
+    return {
+      mywfg: {
+        lastSyncDate: latestMywfg?.syncDate || latestMywfgScheduled?.startedAt || null,
+        lastSyncStatus: latestMywfg?.status || latestMywfgScheduled?.status || null,
+        lastSyncType: latestMywfg?.syncType || latestMywfgScheduled?.syncType || null,
+        recordsProcessed: latestMywfg?.recordsProcessed || latestMywfgScheduled?.agentsProcessed || 0,
+        summary: latestMywfg?.errorMessage || latestMywfgScheduled?.summary || null,
+        recentSuccesses: recentMywfg.filter((l: any) => l.status === 'SUCCESS').length,
+        recentFailures: recentMywfg.filter((l: any) => l.status === 'FAILED').length,
+      },
+      transamerica: {
+        lastSyncDate: latestTransamerica?.startedAt || latestTransamerica?.completedAt || null,
+        lastSyncStatus: latestTransamerica?.status || null,
+        lastSyncType: latestTransamerica?.syncType || null,
+        recordsProcessed: latestTransamerica?.agentsProcessed || 0,
+        summary: latestTransamerica?.summary || null,
+        recentSuccesses: recentTA.filter((l: any) => l.status === 'SUCCESS').length,
+        recentFailures: recentTA.filter((l: any) => l.status === 'FAILED').length,
+      },
+    };
+  }),
+
   getAggregatedMetrics: protectedProcedure
     .input(z.object({
       startDate: z.string(),

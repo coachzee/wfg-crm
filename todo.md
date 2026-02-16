@@ -1767,3 +1767,6 @@
 - [x] Publish latest checkpoint and trigger production sync (user to publish; sync runs automatically in production)
 - [x] Create quarterly performance summary report page with print/export
 - [x] Add goal tracking system (DB schema, CRUD endpoints, dashboard progress bars)
+
+## Sync Status Cards (Feb 16, 2026)
+- [x] Add Transamerica sync status card to dashboard alongside MyWFG sync card

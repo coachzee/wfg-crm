@@ -28,6 +28,7 @@ import {
   LastUpdated,
   SectionLoader,
   GoalTracker,
+  SyncStatusCards,
 } from "@/components/dashboard";
 import type { WorkflowStage } from "@/components/dashboard";
 import { Users, Target, Award } from "lucide-react";
@@ -139,7 +140,7 @@ export default function Dashboard() {
       {isMetricsLoading && !stats ? (
         <SectionLoader variant="metrics" count={5} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 stagger-children">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           <MetricCard
             title="Active Associates"
             value={metrics?.activeAssociates || 91}
@@ -173,6 +174,15 @@ export default function Dashboard() {
             trendValue={conversionRate > 0 ? `${conversionRate}% rate` : ""}
             onClick={() => setShowNetLicensedModal(true)}
           />
+        </div>
+      )}
+
+      {/* Sync Status & Task Completion */}
+      {isMetricsLoading && !stats ? (
+        <SectionLoader variant="metrics" count={3} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+          <SyncStatusCards />
           <MetricCard
             title="Task Completion"
             value={`${taskCompletionRate}%`}
@@ -180,13 +190,6 @@ export default function Dashboard() {
             icon={CheckCircle}
             variant={taskCompletionRate >= 80 ? "success" : taskCompletionRate >= 50 ? "warning" : "danger"}
             onClick={navigateToTasks}
-          />
-          <MetricCard
-            title="Last Sync"
-            value={stats?.lastSyncDate ? formatDistanceToNow(new Date(stats.lastSyncDate), { addSuffix: true }) : "Never"}
-            subtitle="MyWFG integration"
-            icon={RefreshCw}
-            variant={stats?.lastSyncDate ? "default" : "warning"}
           />
         </div>
       )}
