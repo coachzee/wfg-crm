@@ -50,6 +50,11 @@ export default function Dashboard() {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
+
+  const { data: momData } = trpc.dashboard.monthOverMonth.useQuery(undefined, {
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
   
   const sendNotification = trpc.dashboard.sendChargebackNotification.useMutation({
     onMutate: () => setNotificationStatus('sending'),
@@ -142,6 +147,8 @@ export default function Dashboard() {
             trend="up"
             trendValue="MyWFG"
             onClick={navigateToAgents}
+            mom={momData?.activeAssociates}
+            momLabel="Active Associates MoM"
           />
           <MetricCard
             title="Licensed Agents"
@@ -152,6 +159,8 @@ export default function Dashboard() {
             trend="up"
             trendValue={`${Math.round(((metrics?.licensedAgents || 27) / (metrics?.activeAssociates || 91)) * 100)}% licensed`}
             onClick={() => setLocation('/agents?filter=lifeLicensed')}
+            mom={momData?.licensedAgents}
+            momLabel="Licensed Agents MoM"
           />
           <MetricCard
             title="Net Licensed"
@@ -189,6 +198,11 @@ export default function Dashboard() {
           totalFaceAmount={metrics?.totalFaceAmount || 0}
           familiesProtected={metrics?.familiesProtected || 0}
           superTeamCashFlow={metrics?.superTeamCashFlow || 0}
+          mom={momData ? {
+            totalFaceAmount: momData.totalFaceAmount,
+            familiesProtected: momData.familiesProtected,
+            superTeamCashFlow: momData.superTeamCashFlow,
+          } : undefined}
         />
       )}
 

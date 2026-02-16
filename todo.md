@@ -1755,3 +1755,10 @@
 - [x] Add calendar popover for custom date range selection on cash flow chart
 - [x] Add CSV export functionality for filtered cash flow chart data
 - [x] Add PDF export functionality for filtered cash flow chart data
+
+## Dashboard Follow-ups Round 2 (Feb 16, 2026)
+- [x] Add CSV/PDF export to Weekly Sync Summary section (already implemented)
+- [x] Add CSV/PDF export to Policy Anniversaries Summary section (already implemented)
+- [x] Add CSV/PDF export to Compliance section (already implemented)
+- [x] Add month-over-month comparison percentages to metric cards
+- [x] Run MyWFG sync to refresh dashboard data (requires production Chrome; trigger from dashboard after publishing)

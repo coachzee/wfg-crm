@@ -1,7 +1,9 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, AlertCircle, FileWarning, CreditCard } from "lucide-react";
+import { SectionExport } from "./SectionExport";
+import type { ExportColumn } from "./SectionExport";
 
 interface ComplianceCardProps {
   metrics: {
@@ -21,6 +23,51 @@ export const ComplianceCard = memo(function ComplianceCard({
   onShowMissingLicenses, 
   onShowNoRecurring 
 }: ComplianceCardProps) {
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "name", header: "Agent Name" },
+    { key: "agentCode", header: "Agent Code" },
+    { key: "email", header: "Email" },
+    { key: "status", header: "Status" },
+    { key: "balance", header: "Balance Owed", format: (v: number) => v !== undefined ? `$${v.toFixed(2)}` : "N/A" },
+  ], []);
+
+  const exportData = useMemo(() => {
+    const rows: Record<string, any>[] = [];
+    if (metrics?.commissionsOnHold) {
+      for (const agent of metrics.commissionsOnHold) {
+        rows.push({
+          name: agent.name,
+          agentCode: agent.agentCode,
+          email: agent.email,
+          status: "Final Notice - Commission On Hold",
+          balance: agent.balance,
+        });
+      }
+    }
+    if (metrics?.firstNoticeAgents) {
+      for (const agent of metrics.firstNoticeAgents) {
+        rows.push({
+          name: agent.name,
+          agentCode: agent.agentCode,
+          email: agent.email,
+          status: "First Notice Warning",
+          balance: agent.balance,
+        });
+      }
+    }
+    return rows;
+  }, [metrics?.commissionsOnHold, metrics?.firstNoticeAgents]);
+
+  const exportSummary = useMemo(() => [{
+    label: "SUMMARY",
+    values: {
+      agentCode: `Missing Licenses: ${metrics?.missingLicenses || 11}`,
+      email: `No Recurring: ${metrics?.notEnrolledRecurring || 15}`,
+      status: `First Notice: ${metrics?.complianceFirstNotice || 3}`,
+      balance: `Final Notice: ${metrics?.complianceFinalNotice || 3}`,
+    },
+  }], [metrics]);
+
   return (
     <Card className="card-hover border-amber-500/20">
       <CardHeader className="pb-2">
@@ -32,9 +79,19 @@ export const ComplianceCard = memo(function ComplianceCard({
             </CardTitle>
             <CardDescription>Pending items requiring attention from MyWFG reports</CardDescription>
           </div>
-          <Badge variant="outline" className="font-mono text-amber-600 border-amber-500/50">
-            {(metrics?.complianceFirstNotice || 3) + (metrics?.complianceFinalNotice || 3)} pending
-          </Badge>
+          <div className="flex items-center gap-2">
+            <SectionExport
+              title="Compliance & Platform Fee Status Report"
+              subtitle="Agents with pending compliance items requiring attention"
+              columns={exportColumns}
+              data={exportData}
+              summaryRows={exportSummary}
+              accentColor="#f59e0b"
+            />
+            <Badge variant="outline" className="font-mono text-amber-600 border-amber-500/50">
+              {(metrics?.complianceFirstNotice || 3) + (metrics?.complianceFinalNotice || 3)} pending
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

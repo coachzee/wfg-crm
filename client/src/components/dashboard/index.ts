@@ -1,6 +1,6 @@
 // Dashboard component exports
 export { MetricCard } from './MetricCard';
-export type { MetricCardProps } from './MetricCard';
+export type { MetricCardProps, MoMData } from './MetricCard';
 export { DashboardSkeleton } from './DashboardSkeleton';
 export { StageBadge } from './StageBadge';
 export { CustomTooltip, CashFlowTooltip } from './ChartTooltips';
@@ -20,3 +20,5 @@ export type { DatePreset } from './DateRangeFilter';
 export { LastUpdated } from './LastUpdated';
 export { SectionLoader } from './SectionLoader';
 export { ExportMenu } from './ExportMenu';
+export { SectionExport } from './SectionExport';
+export type { ExportColumn, SectionExportProps } from './SectionExport';

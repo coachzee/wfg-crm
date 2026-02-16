@@ -228,6 +228,7 @@ export {
   upsertMonthlyTeamCashFlow,
   bulkUpsertMonthlyTeamCashFlow,
   getCashFlowTotals,
+  getMonthOverMonthComparison,
 } from './repositories/dashboard';
 
 // Income functions

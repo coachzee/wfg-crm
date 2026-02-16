@@ -106,6 +106,108 @@ export async function getDashboardMetrics() {
   };
 }
 
+export async function getMonthOverMonthComparison() {
+  const db = await _getDb();
+  if (!db) {
+    return {
+      activeAssociates: { current: 0, previous: 0, change: 0, changePercent: 0 },
+      licensedAgents: { current: 0, previous: 0, change: 0, changePercent: 0 },
+      totalPolicies: { current: 0, previous: 0, change: 0, changePercent: 0 },
+      familiesProtected: { current: 0, previous: 0, change: 0, changePercent: 0 },
+      superTeamCashFlow: { current: 0, previous: 0, change: 0, changePercent: 0 },
+      totalFaceAmount: { current: 0, previous: 0, change: 0, changePercent: 0 },
+    };
+  }
+
+  logger.debug("Calculating month-over-month comparison");
+
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
+  // Current month start/end
+  const currentMonthStart = new Date(currentYear, currentMonth - 1, 1);
+  const previousMonthStart = new Date(prevYear, prevMonth - 1, 1);
+  const previousMonthEnd = new Date(currentYear, currentMonth - 1, 0, 23, 59, 59);
+
+  // Agent counts: current active vs agents active before this month
+  const allAgents = await db.select().from(agents);
+  const currentActive = allAgents.filter(a => a.isActive).length;
+  // Agents created before current month that are still active (approximation of previous month count)
+  const previousActive = allAgents.filter(a => a.isActive && new Date(a.createdAt) < currentMonthStart).length;
+
+  // Licensed agents: compare current vs previous
+  const cashFlowRecords = await db.select().from(agentCashFlowHistory);
+  const cashFlowMap = new Map<string, number>();
+  for (const record of cashFlowRecords) {
+    const current = cashFlowMap.get(record.agentCode) || 0;
+    const recordValue = parseFloat(String(record.cumulativeCashFlow || 0));
+    if (recordValue > current) {
+      cashFlowMap.set(record.agentCode, recordValue);
+    }
+  }
+  const currentLicensed = allAgents.filter(agent => {
+    if (!agent.isActive || !agent.agentCode) return false;
+    const cf = cashFlowMap.get(agent.agentCode) || 0;
+    if (['SMD', 'EMD', 'CEO'].includes(agent.currentRank || '')) return false;
+    return cf >= 1000;
+  }).length;
+  // Approximate previous licensed: agents that were created before this month and are licensed
+  const previousLicensed = allAgents.filter(agent => {
+    if (!agent.isActive || !agent.agentCode) return false;
+    if (new Date(agent.createdAt) >= currentMonthStart) return false;
+    const cf = cashFlowMap.get(agent.agentCode) || 0;
+    if (['SMD', 'EMD', 'CEO'].includes(agent.currentRank || '')) return false;
+    return cf >= 1000;
+  }).length;
+
+  // Policy counts
+  const allPolicies = await db.select().from(inforcePolicies).where(eq(inforcePolicies.status, 'Active'));
+  const currentPolicies = allPolicies.length;
+  const previousPolicies = allPolicies.filter(p => {
+    const issueDate = p.issueDate ? new Date(p.issueDate) : null;
+    return !issueDate || issueDate < currentMonthStart;
+  }).length;
+
+  // Families protected
+  const currentFamilies = new Set(allPolicies.map(p => p.ownerName)).size;
+  const prevPolicies = allPolicies.filter(p => {
+    const issueDate = p.issueDate ? new Date(p.issueDate) : null;
+    return !issueDate || issueDate < currentMonthStart;
+  });
+  const previousFamilies = new Set(prevPolicies.map(p => p.ownerName)).size;
+
+  // Face amount
+  const currentFaceAmount = allPolicies.reduce((sum, p) => sum + parseFloat(String(p.faceAmount || 0)), 0);
+  const previousFaceAmount = prevPolicies.reduce((sum, p) => sum + parseFloat(String(p.faceAmount || 0)), 0);
+
+  // Cash flow from monthlyTeamCashFlow table
+  const cashFlowData = await db.select().from(monthlyTeamCashFlow)
+    .where(eq(monthlyTeamCashFlow.agentCode, '73DXR'));
+  
+  const currentCashFlow = cashFlowData.find(r => r.month === currentMonth && r.year === currentYear);
+  const previousCashFlow = cashFlowData.find(r => r.month === prevMonth && r.year === prevYear);
+  const currentSuperTeam = parseFloat(String(currentCashFlow?.superTeamCashFlow || 0));
+  const previousSuperTeam = parseFloat(String(previousCashFlow?.superTeamCashFlow || 0));
+
+  function calcChange(current: number, previous: number) {
+    const change = current - previous;
+    const changePercent = previous > 0 ? Math.round((change / previous) * 100) : (current > 0 ? 100 : 0);
+    return { current, previous, change, changePercent };
+  }
+
+  return {
+    activeAssociates: calcChange(currentActive, previousActive),
+    licensedAgents: calcChange(currentLicensed, previousLicensed),
+    totalPolicies: calcChange(currentPolicies, previousPolicies),
+    familiesProtected: calcChange(currentFamilies, previousFamilies),
+    superTeamCashFlow: calcChange(currentSuperTeam, previousSuperTeam),
+    totalFaceAmount: calcChange(currentFaceAmount, previousFaceAmount),
+  };
+}
+
 export async function getAgentStats() {
   const db = await _getDb();
   if (!db) {

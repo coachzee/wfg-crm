@@ -25,6 +25,7 @@ import {
   getPolicyAnniversaries,
   getAnniversarySummary,
   createWorkflowTask,
+  getMonthOverMonthComparison,
   type Agent,
   type WorkflowTask,
   type InforcePolicy,
@@ -82,6 +83,11 @@ export const dashboardRouter = router({
   metrics: protectedProcedure.query(async () => {
     logger.info("Fetching dashboard metrics");
     return getDashboardMetrics();
+  }),
+
+  monthOverMonth: protectedProcedure.query(async () => {
+    logger.info("Fetching month-over-month comparison");
+    return getMonthOverMonthComparison();
   }),
   
   allProduction: protectedProcedure.query(async () => {

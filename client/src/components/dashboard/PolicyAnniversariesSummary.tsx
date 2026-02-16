@@ -1,9 +1,11 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { useLocation } from "wouter";
+import { SectionExport } from "./SectionExport";
+import type { ExportColumn } from "./SectionExport";
 
 export const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSummary() {
   const [, setLocation] = useLocation();
@@ -13,6 +15,41 @@ export const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSumma
   const { data: anniversaries } = trpc.dashboard.getAnniversaries.useQuery({ daysAhead: 30 }, {
     staleTime: 60000,
   });
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "ownerName", header: "Client Name" },
+    { key: "policyNumber", header: "Policy Number" },
+    { key: "policyAge", header: "Anniversary Year", format: (v: number) => `${v} year` },
+    { key: "daysUntilAnniversary", header: "Days Until", format: (v: number) => `${v} days` },
+    { key: "faceAmount", header: "Face Amount", format: (v: number) => `$${(v / 1000).toFixed(0)}K` },
+    { key: "productType", header: "Product Type" },
+    { key: "writingAgentName", header: "Writing Agent" },
+  ], []);
+
+  const exportData = useMemo(() => {
+    if (!anniversaries) return [];
+    return anniversaries.map((p: any) => ({
+      ownerName: p.ownerName || "N/A",
+      policyNumber: p.policyNumber || "N/A",
+      policyAge: p.policyAge || 0,
+      daysUntilAnniversary: p.daysUntilAnniversary || 0,
+      faceAmount: p.faceAmount || 0,
+      productType: p.productType || "N/A",
+      writingAgentName: p.writingAgentName || "N/A",
+    }));
+  }, [anniversaries]);
+
+  const exportSummary = useMemo(() => {
+    if (!summary) return [];
+    return [{
+      label: "SUMMARY",
+      values: {
+        policyNumber: `This Week: ${summary.thisWeek || 0}`,
+        policyAge: `This Month: ${summary.thisMonth || 0}`,
+        daysUntilAnniversary: `Total: ${anniversaries?.length || 0}`,
+      },
+    }];
+  }, [summary, anniversaries]);
 
   if (isLoading) {
     return (
@@ -39,14 +76,24 @@ export const PolicyAnniversariesSummary = memo(function PolicyAnniversariesSumma
             <Calendar className="h-5 w-5 text-purple-600" />
             <CardTitle className="text-lg">Policy Anniversaries</CardTitle>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setLocation('/anniversaries')}
-            className="text-xs"
-          >
-            View All
-          </Button>
+          <div className="flex items-center gap-2">
+            <SectionExport
+              title="Policy Anniversaries Report"
+              subtitle={`Upcoming client review opportunities — ${urgentCount} this week, ${upcomingCount} this month`}
+              columns={exportColumns}
+              data={exportData}
+              accentColor="#9333ea"
+              summaryRows={exportSummary}
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLocation('/anniversaries')}
+              className="text-xs"
+            >
+              View All
+            </Button>
+          </div>
         </div>
         <CardDescription>Upcoming client review opportunities</CardDescription>
       </CardHeader>

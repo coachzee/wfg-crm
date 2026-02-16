@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,44 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RefreshCw, Users, CheckCircle, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
+import { SectionExport } from "./SectionExport";
+import type { ExportColumn } from "./SectionExport";
 
 export const WeeklySyncSummary = memo(function WeeklySyncSummary() {
   const { data: summary, isLoading } = trpc.syncLogs.getWeeklySummary.useQuery();
   const [, setLocation] = useLocation();
+
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "time", header: "Sync Time" },
+    { key: "success", header: "Successful" },
+    { key: "failed", header: "Failed" },
+    { key: "total", header: "Total", format: (v: number) => String(v) },
+    { key: "successRate", header: "Success Rate", format: (v: number) => `${v}%` },
+  ], []);
+
+  const exportData = useMemo(() => {
+    if (!summary?.syncsByTime) return [];
+    return summary.syncsByTime.map((ts: any) => ({
+      time: ts.time,
+      success: ts.success,
+      failed: ts.failed,
+      total: ts.success + ts.failed,
+      successRate: ts.success + ts.failed > 0 ? Math.round((ts.success / (ts.success + ts.failed)) * 100) : 0,
+    }));
+  }, [summary?.syncsByTime]);
+
+  const exportSummary = useMemo(() => {
+    if (!summary) return [];
+    return [{
+      label: "TOTAL",
+      values: {
+        success: summary.successfulSyncs,
+        failed: summary.failedSyncs,
+        total: summary.totalSyncs,
+        successRate: summary.totalSyncs > 0 ? `${Math.round((summary.successfulSyncs / summary.totalSyncs) * 100)}%` : "0%",
+      },
+    }];
+  }, [summary]);
 
   if (isLoading) {
     return (
@@ -36,14 +70,24 @@ export const WeeklySyncSummary = memo(function WeeklySyncSummary() {
             </CardTitle>
             <CardDescription>Automated MyWFG sync status (3:30 PM & 6:30 PM daily)</CardDescription>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setLocation('/sync-history')}
-            className="gap-2"
-          >
-            View Full History
-          </Button>
+          <div className="flex items-center gap-2">
+            <SectionExport
+              title="Weekly Sync Summary"
+              subtitle={`Automated MyWFG sync status — ${summary?.totalAgentsProcessed || 0} agents processed, ${summary?.totalContactsUpdated || 0} contacts updated`}
+              columns={exportColumns}
+              data={exportData}
+              summaryRows={exportSummary}
+              accentColor="#6366f1"
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLocation('/sync-history')}
+              className="gap-2"
+            >
+              View Full History
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
