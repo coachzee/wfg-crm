@@ -282,6 +282,46 @@ async function startServer() {
     }
   });
 
+  // Deploy webhook endpoint - triggers git pull, rebuild, and pm2 restart
+  // Secured by SYNC_SECRET header (same as cron endpoints)
+  app.post("/api/deploy/update", async (req, res) => {
+    try {
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
+      
+      console.log('[Deploy] Received deploy webhook, triggering update...');
+      
+      const appDir = process.env.APP_DIR || '/var/www/wfgcrm';
+      const updateScript = [
+        `cd ${appDir}`,
+        'git pull origin main',
+        'pnpm install --frozen-lockfile',
+        'pnpm build',
+        'pm2 restart wfgcrm || pm2 restart all',
+      ].join(' && ');
+      
+      // Start update in background (don't wait for it)
+      const { exec } = await import('child_process');
+      exec(updateScript, { timeout: 300000 }, (error, stdout, stderr) => {
+        if (error) {
+          console.error('[Deploy] Update failed:', error.message);
+        } else {
+          console.log('[Deploy] Update completed successfully');
+          console.log('[Deploy] Output:', stdout.substring(0, 1000));
+        }
+      });
+      
+      res.status(202).json({
+        success: true,
+        message: 'Deploy triggered. Server will restart shortly.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
+      res.status(statusCode).json({ success: false, error: error.message });
+    }
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
