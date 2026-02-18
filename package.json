@@ -19,7 +19,8 @@
     "check:bundle:strict": "node scripts/check-bundle-size.mjs --max-size=150",
     "ci": "pnpm check && pnpm test && pnpm build && pnpm check:bundle",
     "job:fullsync": "tsx server/jobs/fullsync.ts",
-    "job:transamerica": "tsx server/jobs/transamericaSync.ts"
+    "job:transamerica": "tsx server/jobs/transamericaSync.ts",
+    "postinstall": "node scripts/install-chrome.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
