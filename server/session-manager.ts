@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import puppeteer, { Browser, Page, Cookie } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 
 // Session storage directory
 const SESSION_DIR = path.join(process.cwd(), '.sessions');
@@ -117,7 +118,7 @@ export async function validateMyWFGSession(cookies: Cookie[]): Promise<SessionVa
   let browser: Browser | null = null;
   
   try {
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
@@ -169,7 +170,7 @@ export async function validateTransamericaSession(cookies: Cookie[]): Promise<Se
   let browser: Browser | null = null;
   
   try {
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });

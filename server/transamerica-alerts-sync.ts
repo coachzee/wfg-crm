@@ -10,6 +10,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { getDb } from './db';
 import { syncLogs } from '../drizzle/schema';
 import { startOTPSession, waitForOTPWithSession, getTransamericaCredentials } from './gmail-otp-v2';
@@ -469,11 +470,7 @@ export async function syncTransamericaAlerts(): Promise<AlertsSyncResult> {
     console.log('[TA Alerts] Starting alerts sync...');
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/usr/bin/chromium-browser',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    });
+    browser = await launchBrowser();
     
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });

@@ -11,6 +11,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { getDb } from './db';
 import { inforcePolicies } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
@@ -331,7 +332,7 @@ export async function extractAllPolicyAgentData(): Promise<void> {
     console.log('[Extract] Starting agent data extraction...');
     console.log(`[Extract] Credentials: ${TA_USERNAME ? 'Set' : 'Missing'}`);
     
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });

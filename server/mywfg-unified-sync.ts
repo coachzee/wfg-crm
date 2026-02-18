@@ -9,6 +9,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 import { getDb } from './db';
@@ -296,7 +297,7 @@ export async function runUnifiedMyWFGSync(): Promise<{
   try {
     // Step 1: Launch browser and login
     console.log('[Unified Sync] Step 1: Login to MyWFG');
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });

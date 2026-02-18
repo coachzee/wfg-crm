@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { 
   startOTPSession, 
   waitForOTPWithSession, 
@@ -80,7 +81,7 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     }
     
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: [
         '--no-sandbox', 

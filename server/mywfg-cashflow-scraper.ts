@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { startOTPSession, waitForOTPWithSession, getMyWFGCredentials, clearUsedOTPs } from './gmail-otp-v2';
 
 export interface AgentCashFlow {
@@ -57,7 +58,7 @@ export async function scrapeMyWFGCashFlow(): Promise<CashFlowReportResult> {
     }
     
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });

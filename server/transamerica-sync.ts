@@ -5,6 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
+import { launchBrowser } from './lib/browser';
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { pendingPolicies, pendingRequirements } from "../drizzle/schema";
@@ -92,7 +93,7 @@ export async function syncTransamericaPendingPolicies(): Promise<SyncResult> {
     console.log("[Transamerica Sync] Starting sync...");
 
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });

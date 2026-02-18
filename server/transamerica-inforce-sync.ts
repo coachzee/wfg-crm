@@ -10,6 +10,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { getDb } from './db';
 import { inforcePolicies, syncLogs, agents } from '../drizzle/schema';
 import { eq, sql } from 'drizzle-orm';
@@ -391,7 +392,7 @@ export async function syncInforcePolicies(scheduledTime?: string): Promise<SyncR
   try {
     console.log('[TA Inforce] Starting inforce policies sync...');
     
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });

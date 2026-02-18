@@ -15,6 +15,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { startOTPSession, waitForOTPWithSession, clearUsedOTPs } from './gmail-otp-v2';
 import { eq } from 'drizzle-orm';
 
@@ -911,7 +912,7 @@ export async function fetchDownlineStatus(
   try {
     console.log('[Downline Scraper] Starting downline status extraction...');
     
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
@@ -1409,7 +1410,7 @@ export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR'
   try {
     console.log('[Downline Scraper] Starting downline status extraction with addresses...');
     
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
@@ -1623,7 +1624,7 @@ export async function fetchDownlineStatusWithHierarchy(agentId: string = '73DXR'
   try {
     console.log('[Downline Scraper] Starting downline status extraction with hierarchy...');
     
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
@@ -1751,7 +1752,7 @@ export async function syncHierarchyFromMyWFG(db: any, schema: any, batchSize: nu
       
       try {
         // Launch fresh browser for this batch
-        browser = await puppeteer.launch({
+        browser = await launchBrowser({
           headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         });
@@ -1922,7 +1923,7 @@ export async function syncContactInfoFromMyWFG(db: any, schema: any, batchSize: 
       
       try {
         // Launch fresh browser for this batch
-        browser = await puppeteer.launch({
+        browser = await launchBrowser({
           headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         });

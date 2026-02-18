@@ -5,6 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
+import { launchBrowser } from './lib/browser';
 import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
@@ -341,7 +342,7 @@ export async function syncHierarchyFromTeamChart(): Promise<{
     console.log("[TeamChart] Starting Team Chart hierarchy sync...");
     
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });
@@ -425,7 +426,7 @@ export async function syncHierarchyFromDownlineStatus(): Promise<{
     console.log("[Hierarchy] Starting Downline Status hierarchy sync...");
     
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await launchBrowser({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });
