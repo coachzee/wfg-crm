@@ -15,6 +15,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { startOTPSession, waitForOTPWithSession, clearUsedOTPs } from './gmail-otp-v2';
 import { eq } from 'drizzle-orm';
 
@@ -915,17 +916,12 @@ export async function fetchDownlineStatus(
   cachedCookies?: any[]
 ): Promise<DownlineStatusResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[Downline Scraper] Starting downline status extraction...');
     
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Use cached cookies if provided, otherwise login fresh
     if (cachedCookies && cachedCookies.length > 0) {
@@ -1413,17 +1409,12 @@ export async function fetchAgentAddresses(
  */
 export async function fetchDownlineStatusWithAddresses(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[Downline Scraper] Starting downline status extraction with addresses...');
     
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login to MyWFG
     const loggedIn = await loginToMyWFG(page);
@@ -1627,17 +1618,12 @@ export async function fetchAgentUplines(
  */
 export async function fetchDownlineStatusWithHierarchy(agentId: string = '73DXR', teamType: 'BASE_SHOP' | 'SUPER_TEAM' = 'BASE_SHOP'): Promise<DownlineStatusResult & { uplines: Map<string, { uplineCode: string; uplineName: string | null }> }> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[Downline Scraper] Starting downline status extraction with hierarchy...');
     
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login to MyWFG
     const loggedIn = await loginToMyWFG(page);
@@ -1756,16 +1742,11 @@ export async function syncHierarchyFromMyWFG(db: any, schema: any, batchSize: nu
       console.log(`\n[Hierarchy Sync] ========== BATCH ${batchIndex + 1}/${batches.length} (${batch.length} agents) ==========`);
       
       let browser: Browser | null = null;
+  let page: Page;
       
       try {
         // Launch fresh browser for this batch
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        });
-        
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 });
+        ({ browser, page } = await launchBrowser());
         
         // Login to MyWFG
         console.log(`[Hierarchy Sync] Batch ${batchIndex + 1}: Logging in to MyWFG...`);
@@ -1927,16 +1908,11 @@ export async function syncContactInfoFromMyWFG(db: any, schema: any, batchSize: 
       console.log(`\n[Contact Sync] ========== BATCH ${batchIndex + 1}/${batches.length} (${batch.length} agents) ==========`);
       
       let browser: Browser | null = null;
+  let page: Page;
       
       try {
         // Launch fresh browser for this batch
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        });
-        
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 });
+        ({ browser, page } = await launchBrowser());
         
         // Login to MyWFG
         console.log(`[Contact Sync] Batch ${batchIndex + 1}: Logging in to MyWFG...`);

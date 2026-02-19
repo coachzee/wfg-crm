@@ -11,6 +11,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { getDb } from './db';
 import { inforcePolicies } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
@@ -326,18 +327,13 @@ export async function extractAllPolicyAgentData(): Promise<void> {
   }
   
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[Extract] Starting agent data extraction...');
     console.log(`[Extract] Credentials: ${TA_USERNAME ? 'Set' : 'Missing'}`);
     
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login
     const loginSuccess = await loginToTransamerica(page);

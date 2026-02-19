@@ -117,3 +117,6 @@ artifacts/
 # Data files (should not be committed)
 data/
 *.csv
+.github/workflows/cd.yml
+.github/workflows/ci.yml
+.github/workflows/

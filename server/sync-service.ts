@@ -2,6 +2,7 @@ import { loginToMyWFGWithCache } from './auto-login-mywfg';
 import { loginToTransamericaWithCache, navigateToLifeAccess, fetchPolicyAlerts } from './auto-login-transamerica';
 import { notifyOwner } from './_core/notification';
 import puppeteer from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { fetchDownlineStatus, syncAgentsFromDownlineStatus, fetchDownlineStatusWithAddresses, syncHierarchyFromMyWFG } from './mywfg-downline-scraper';
 import { runUnifiedMyWFGSync } from './mywfg-unified-sync';
 import { syncExamPrepFromEmail } from './xcel-exam-scraper';
@@ -83,7 +84,8 @@ export async function syncTransamericaData(): Promise<SyncResult> {
   const timestamp = new Date();
   console.log(`[Sync] Starting Transamerica sync at ${timestamp.toISOString()}`);
   
-  let browser;
+  let browser: any;
+  let page: any;
   try {
     const loginResult = await loginToTransamericaWithCache();
     
@@ -97,12 +99,7 @@ export async function syncTransamericaData(): Promise<SyncResult> {
     }
     
     // If we have cookies but no browser, create one with the cookies
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
+    ({ browser, page } = await launchBrowser());
     
     // Set cookies from login
     if (loginResult.sessionCookies) {

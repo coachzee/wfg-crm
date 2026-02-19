@@ -5,6 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
+import { launchBrowser } from './lib/browser';
 import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
@@ -336,18 +337,13 @@ export async function syncHierarchyFromTeamChart(): Promise<{
   error?: string;
 }> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log("[TeamChart] Starting Team Chart hierarchy sync...");
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login to MyWFG
     const loginSuccess = await loginToMyWFG(page);
@@ -420,18 +416,13 @@ export async function syncHierarchyFromDownlineStatus(): Promise<{
   error?: string;
 }> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log("[Hierarchy] Starting Downline Status hierarchy sync...");
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login to MyWFG
     const loginSuccess = await loginToMyWFG(page);

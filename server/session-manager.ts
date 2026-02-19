@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import puppeteer, { Browser, Page, Cookie } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 
 // Session storage directory
 const SESSION_DIR = path.join(process.cwd(), '.sessions');
@@ -115,14 +116,10 @@ export function clearSession(platform: string): void {
  */
 export async function validateMyWFGSession(cookies: Cookie[]): Promise<SessionValidationResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
+    ({ browser, page } = await launchBrowser());
     await page.setCookie(...cookies);
     
     // Try to access the dashboard - if redirected to login, session is invalid
@@ -167,14 +164,10 @@ export async function validateMyWFGSession(cookies: Cookie[]): Promise<SessionVa
  */
 export async function validateTransamericaSession(cookies: Cookie[]): Promise<SessionValidationResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    const page = await browser.newPage();
+    ({ browser, page } = await launchBrowser());
     await page.setCookie(...cookies);
     
     // Try to access Life Access

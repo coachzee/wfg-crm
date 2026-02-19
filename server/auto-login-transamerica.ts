@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { 
   startOTPSession, 
   waitForOTPWithSession, 
@@ -56,6 +57,7 @@ function getSecurityAnswers() {
  */
 export async function loginToTransamerica(keepBrowserOpen: boolean = false): Promise<LoginResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[Transamerica] Starting automated login...');
@@ -80,18 +82,7 @@ export async function loginToTransamerica(keepBrowserOpen: boolean = false): Pro
     }
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox', 
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    ({ browser, page } = await launchBrowser());
     
     // Set user agent to avoid bot detection
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');

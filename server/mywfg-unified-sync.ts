@@ -16,6 +16,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { startOTPSession, waitForOTPWithSession, clearUsedOTPs } from './gmail-otp-v2';
 import { getDb } from './db';
 import * as schema from '../drizzle/schema';
@@ -258,18 +259,12 @@ export async function runUnifiedMyWFGSync(): Promise<{
   console.log(`[Unified Sync] Starting at ${startTime}`);
   
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     // Step 1: Launch browser and login
     console.log('[Unified Sync] Step 1: Login to MyWFG');
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    ({ browser, page } = await launchBrowser());
     
     const loginSuccess = await loginToMyWFG(page);
     if (!loginSuccess) {

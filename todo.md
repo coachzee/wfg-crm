@@ -1770,3 +1770,10 @@
 
 ## Sync Status Cards (Feb 16, 2026)
 - [x] Add Transamerica sync status card to dashboard alongside MyWFG sync card
+
+## Fix Puppeteer Chrome Not Found in Production (Feb 19, 2026)
+- [x] Fix "Could not find Chrome (ver. 143.0.7499.169)" error in production sync
+- [x] Configure Puppeteer to use system Chromium or install bundled Chrome (centralized server/lib/browser.ts)
+- [x] Updated all 13 server .ts files to use launchBrowser() instead of puppeteer.launch()
+- [x] Updated all 11 scripts .mjs files with Chrome path auto-discovery
+- [x] Test sync works after fix (browser launches successfully, 2 unit tests passing)

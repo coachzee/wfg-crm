@@ -10,6 +10,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { getDb } from './db';
 import { inforcePolicies, syncLogs, agents } from '../drizzle/schema';
 import { eq, sql } from 'drizzle-orm';
@@ -387,17 +388,12 @@ export async function syncInforcePolicies(scheduledTime?: string): Promise<SyncR
   }).$returningId();
   
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[TA Inforce] Starting inforce policies sync...');
     
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    ({ browser, page } = await launchBrowser());
     
     // Login
     const loginSuccess = await loginToTransamerica(page);

@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { startOTPSession, waitForOTPWithSession, getMyWFGCredentials, clearUsedOTPs } from './gmail-otp-v2';
 
 export interface AgentCashFlow {
@@ -44,6 +45,7 @@ function parseCurrency(value: string): number {
 // Scrape Custom Reports Cash Flow YTD data
 export async function scrapeMyWFGCashFlow(): Promise<CashFlowReportResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[MyWFG Scraper] Starting Cash Flow report extraction...');
@@ -57,13 +59,7 @@ export async function scrapeMyWFGCashFlow(): Promise<CashFlowReportResult> {
     }
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900 });
+    ({ browser, page } = await launchBrowser());
     
     // Navigate to MyWFG login page
     console.log('[MyWFG Scraper] Navigating to login page...');

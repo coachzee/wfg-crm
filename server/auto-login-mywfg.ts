@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import { 
   startOTPSession, 
   waitForOTPWithSession, 
@@ -42,6 +43,7 @@ function getMyWFGLoginCredentials(): MyWFGCredentials {
  */
 export async function loginToMyWFG(): Promise<LoginResult> {
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
     console.log('[MyWFG] Starting automated login...');
@@ -66,18 +68,7 @@ export async function loginToMyWFG(): Promise<LoginResult> {
     }
     
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-      ],
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    ({ browser, page } = await launchBrowser());
     
     // Navigate to MyWFG login page
     console.log('[MyWFG] Navigating to login page...');

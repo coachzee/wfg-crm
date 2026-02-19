@@ -5,6 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
+import { launchBrowser } from './lib/browser';
 import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { pendingPolicies, pendingRequirements } from "../drizzle/schema";
@@ -87,18 +88,13 @@ export async function syncTransamericaPendingPolicies(): Promise<SyncResult> {
   };
 
   let browser: Browser | null = null;
+  let page: Page;
 
   try {
     console.log("[Transamerica Sync] Starting sync...");
 
     // Launch browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    ({ browser, page } = await launchBrowser());
 
     // Login to Transamerica
     const loginSuccess = await loginToTransamerica(page);

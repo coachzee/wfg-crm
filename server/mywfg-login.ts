@@ -6,6 +6,7 @@
  */
 
 import puppeteer, { Browser, Page, Cookie } from 'puppeteer';
+import { launchBrowser } from './lib/browser';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
@@ -173,15 +174,10 @@ export async function loginToMyWFG(): Promise<Cookie[] | null> {
   console.log('[MyWFG] Starting login...');
   
   let browser: Browser | null = null;
+  let page: Page;
   
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    ({ browser, page } = await launchBrowser());
 
     // Navigate to MyWFG
     console.log('[MyWFG] Navigating to login page...');

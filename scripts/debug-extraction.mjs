@@ -1,7 +1,35 @@
 import puppeteer from 'puppeteer';
 
+// --- Auto Chrome Discovery ---
+import { existsSync, readdirSync } from 'fs';
+import { resolve } from 'path';
+import { homedir } from 'os';
+function findChrome() {
+  // Check Puppeteer cache directories
+  for (const base of [resolve(homedir(), '.cache/puppeteer/chrome'), '/root/.cache/puppeteer/chrome']) {
+    if (existsSync(base)) {
+      try {
+        const vers = readdirSync(base).sort().reverse();
+        for (const v of vers) {
+          const bin = resolve(base, v, 'chrome-linux64', 'chrome');
+          if (existsSync(bin)) return bin;
+        }
+      } catch {}
+    }
+  }
+  // System Chromium fallbacks
+  for (const p of ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable', '/usr/bin/google-chrome']) {
+    if (existsSync(p)) return p;
+  }
+  return undefined;
+}
+const __chromePath = findChrome();
+// --- End Auto Chrome Discovery ---
+
+
 async function debugExtraction() {
-  const browser = await puppeteer.launch({ 
+  const browser = await puppeteer.launch({
+    executablePath: __chromePath,
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
