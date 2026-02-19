@@ -1777,3 +1777,8 @@
 - [x] Updated all 13 server .ts files to use launchBrowser() instead of puppeteer.launch()
 - [x] Updated all 11 scripts .mjs files with Chrome path auto-discovery
 - [x] Test sync works after fix (browser launches successfully, 2 unit tests passing)
+
+## Fix Production Blank Page - Relative Asset Paths (Feb 19, 2026)
+- [x] Set Vite base to "./" for relative asset paths
+- [x] Add cache headers: no-store for index.html, immutable for /assets/
+- [x] Verify build output uses relative paths (./assets/index-Cagr-wMR.js confirmed)

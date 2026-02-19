@@ -29,6 +29,7 @@ if (process.env.ANALYZE === "true") {
 }
 
 export default defineConfig({
+  base: "./",
   plugins,
   resolve: {
     alias: {

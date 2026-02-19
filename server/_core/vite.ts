@@ -58,10 +58,21 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Hashed assets: cache forever (immutable)
+  app.use(
+    "/assets",
+    express.static(path.resolve(distPath, "assets"), {
+      maxAge: "1y",
+      immutable: true,
+    })
+  );
+
+  // Everything else: normal static serving
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // SPA fallback: serve index.html with no-store so browsers always get the latest
   app.use("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
