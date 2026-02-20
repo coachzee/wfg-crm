@@ -19,7 +19,9 @@
     "check:bundle:strict": "node scripts/check-bundle-size.mjs --max-size=150",
     "ci": "pnpm check && pnpm test && pnpm build && pnpm check:bundle",
     "job:fullsync": "tsx server/jobs/fullsync.ts",
-    "job:transamerica": "tsx server/jobs/transamericaSync.ts"
+    "job:transamerica": "tsx server/jobs/transamericaSync.ts",
+    "install:chrome": "node scripts/install-chrome.mjs",
+    "postinstall": "node scripts/install-chrome.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
@@ -143,9 +145,6 @@
     },
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
-    },
-    "ignoredBuiltDependencies": [
-      "puppeteer"
-    ]
+    }
   }
 }

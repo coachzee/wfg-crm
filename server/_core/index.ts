@@ -153,6 +153,74 @@ async function startServer() {
     }
   });
 
+  // Admin endpoint to install/verify Chrome for Puppeteer
+  // Requires SYNC_SECRET for authentication
+  app.post("/api/admin/install-chrome", async (req, res) => {
+    try {
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
+      
+      const { execSync } = await import('child_process');
+      const { existsSync, readdirSync } = await import('fs');
+      const { resolve } = await import('path');
+      const { homedir } = await import('os');
+      
+      // Check if Chrome is already installed
+      const findChrome = (): string | null => {
+        const cacheDirs = [
+          resolve(homedir(), '.cache/puppeteer/chrome'),
+          '/root/.cache/puppeteer/chrome',
+        ];
+        for (const dir of cacheDirs) {
+          if (existsSync(dir)) {
+            try {
+              const versions = readdirSync(dir).sort().reverse();
+              for (const ver of versions) {
+                const bin = resolve(dir, ver, 'chrome-linux64', 'chrome');
+                if (existsSync(bin)) return bin;
+              }
+            } catch {}
+          }
+        }
+        for (const p of ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable']) {
+          if (existsSync(p)) return p;
+        }
+        return null;
+      };
+      
+      const existing = findChrome();
+      if (existing) {
+        return res.status(200).json({
+          success: true,
+          message: 'Chrome already installed',
+          chromePath: existing,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      
+      // Install Chrome
+      console.log('[Admin] Installing Chrome for Puppeteer...');
+      execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300000 });
+      
+      const newPath = findChrome();
+      res.status(200).json({
+        success: true,
+        message: 'Chrome installed successfully',
+        chromePath: newPath,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Admin] Chrome install error:', errorMessage);
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Cron endpoint for Transamerica alerts sync (with job locking)
   const handleTransamericaAlertsCron = async (req: any, res: any) => {
     try {
