@@ -44,6 +44,49 @@ export default function Settings() {
     error?: string;
   } | null>(null);
 
+  // General tab state
+  const { data: sysConfig } = trpc.system.getConfig.useQuery();
+  const [showSyncSecret, setShowSyncSecret] = useState(false);
+  const installChromeMutation = trpc.system.installChrome.useMutation();
+  const [installChromeResult, setInstallChromeResult] = useState<{
+    success: boolean;
+    message: string;
+    chromePath: string | null;
+  } | null>(null);
+  const deployMutation = trpc.system.triggerDeploy.useMutation();
+  const [deployResult, setDeployResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
+  const handleInstallChrome = async () => {
+    try {
+      const result = await installChromeMutation.mutateAsync();
+      setInstallChromeResult(result);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to install Chrome");
+    }
+  };
+
+  const handleDeploy = async () => {
+    try {
+      const result = await deployMutation.mutateAsync();
+      setDeployResult(result);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Deployment failed");
+    }
+  };
+
   const handleSaveCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -528,14 +571,108 @@ export default function Settings() {
         </TabsContent>
 
         {/* General Tab */}
-        <TabsContent value="general">
+        <TabsContent value="general" className="space-y-6">
+          {/* System Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>System-wide configuration options.</CardDescription>
+              <CardTitle>System Configuration</CardTitle>
+              <CardDescription>View system settings and credentials for external integrations.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">More settings coming soon.</p>
+            <CardContent className="space-y-4">
+              {sysConfig ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium">Sync Secret</p>
+                      <p className="text-xs text-muted-foreground">Used to authenticate cron sync requests</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sysConfig.syncSecretConfigured ? (
+                        <>
+                          <code className="text-xs bg-background px-2 py-1 rounded border font-mono max-w-xs truncate">
+                            {showSyncSecret ? sysConfig.syncSecret : '••••••••••••••••'}
+                          </code>
+                          <Button variant="outline" size="sm" onClick={() => setShowSyncSecret(!showSyncSecret)}>
+                            {showSyncSecret ? 'Hide' : 'Show'}
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not configured</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Loading configuration...</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Browser / Chrome Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Browser Engine</CardTitle>
+              <CardDescription>Manage the Chrome/Chromium browser used for MyWFG automation.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                The sync engine requires a Chrome browser to automate MyWFG data extraction.
+                If syncs are failing with a "Could not find Chrome" error, click the button below to install it.
+              </p>
+              <Button
+                onClick={handleInstallChrome}
+                disabled={installChromeMutation.isPending}
+                variant="outline"
+              >
+                {installChromeMutation.isPending ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Installing Chrome...</>
+                ) : (
+                  <><Download className="h-4 w-4 mr-2" /> Install / Verify Chrome</>
+                )}
+              </Button>
+              {installChromeResult && (
+                <Alert variant={installChromeResult.success ? 'default' : 'destructive'}>
+                  {installChromeResult.success ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  <AlertDescription>
+                    {installChromeResult.message}
+                    {installChromeResult.chromePath && (
+                      <span className="block text-xs mt-1 font-mono">{installChromeResult.chromePath}</span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Deployment */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Deployment</CardTitle>
+              <CardDescription>Pull the latest code from GitHub and rebuild the application.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                This will run <code className="font-mono text-xs">git pull</code>, <code className="font-mono text-xs">pnpm install</code>,
+                and <code className="font-mono text-xs">pnpm build</code> on the server, then restart the application.
+                The page will become temporarily unavailable during the restart.
+              </p>
+              <Button
+                onClick={handleDeploy}
+                disabled={deployMutation.isPending}
+                variant="outline"
+              >
+                {deployMutation.isPending ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Deploying...</>
+                ) : (
+                  <><Database className="h-4 w-4 mr-2" /> Deploy Latest Update</>
+                )}
+              </Button>
+              {deployResult && (
+                <Alert variant={deployResult.success ? 'default' : 'destructive'}>
+                  {deployResult.success ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  <AlertDescription>{deployResult.message}</AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
