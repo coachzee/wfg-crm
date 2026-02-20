@@ -221,6 +221,59 @@ async function startServer() {
     }
   });
 
+  // Admin endpoint to trigger git pull + rebuild + restart for production deployments
+  // Requires SYNC_SECRET for authentication
+  app.post("/api/admin/deploy", async (req, res) => {
+    try {
+      const { requireCronSecret } = await import('../lib/cronAuth');
+      requireCronSecret(req);
+      
+      const { execSync } = await import('child_process');
+      const { existsSync } = await import('fs');
+      
+      // Detect app directory
+      const appDir = process.cwd();
+      console.log(`[Deploy] Starting deployment from ${appDir}`);
+      
+      // Send immediate response before long-running operations
+      res.status(202).json({
+        success: true,
+        message: 'Deployment started',
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Run deployment asynchronously
+      setImmediate(async () => {
+        try {
+          console.log('[Deploy] Pulling latest code from GitHub...');
+          execSync('git pull origin main', { cwd: appDir, stdio: 'pipe', timeout: 60000 });
+          
+          console.log('[Deploy] Installing dependencies...');
+          execSync('pnpm install --frozen-lockfile', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+          
+          console.log('[Deploy] Building application...');
+          execSync('pnpm build', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+          
+          console.log('[Deploy] Restarting application with PM2...');
+          execSync('pm2 restart wfgcrm || pm2 restart all', { stdio: 'pipe', timeout: 30000 });
+          
+          console.log('[Deploy] Deployment completed successfully');
+        } catch (err: any) {
+          console.error('[Deploy] Deployment failed:', err.message);
+        }
+      });
+    } catch (error: any) {
+      const statusCode = error.statusCode ?? 500;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Deploy] Error:', errorMessage);
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Cron endpoint for Transamerica alerts sync (with job locking)
   const handleTransamericaAlertsCron = async (req: any, res: any) => {
     try {
