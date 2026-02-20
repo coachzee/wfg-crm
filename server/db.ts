@@ -12,6 +12,7 @@
 
 import { eq, and, desc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2";
 import { 
   InsertUser, users, agents, clients, workflowTasks, productionRecords, 
   credentials, mywfgSyncLogs, inforcePolicies, pendingPolicies, pendingRequirements,
@@ -40,6 +41,7 @@ import { initGoalsRepository } from './repositories/goals';
 export type { Agent, Client, WorkflowTask, ProductionRecord, Credential, MywfgSyncLog, AgentCashFlowHistory, SyncLog, InforcePolicy } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: mysql.Pool | null = null;
 let _repositoriesInitialized = false;
 
 // ============================================
@@ -66,15 +68,35 @@ function initializeRepositories() {
 initializeRepositories();
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
+  if (_db) return _db;
+
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    if (ENV.isProduction) {
+      throw new Error("DATABASE_URL is required in production");
     }
+    console.warn("[Database] DATABASE_URL not set — DB unavailable");
+    return null;
   }
-  return _db;
+
+  try {
+    _pool = mysql.createPool(url);  // mysql2 (non-promise) pool — matches drizzle-orm types
+    _db = drizzle(_pool);
+    return _db;
+  } catch (error) {
+    console.error("[Database] Failed to create pool:", error);
+    if (ENV.isProduction) {
+      throw error; // fail-fast in production
+    }
+    return null;
+  }
+}
+
+/** Graceful shutdown hook for the DB connection pool */
+export async function closeDb() {
+  await _pool?.end();
+  _pool = null;
+  _db = null;
 }
 
 // ============================================

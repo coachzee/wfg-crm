@@ -3,6 +3,8 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -32,13 +34,31 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Trust proxy (1 hop) — makes req.ip, req.secure, req.protocol correct
+  app.set("trust proxy", 1);
   
   // Request correlation middleware - adds request ID to all requests
   app.use(requestCorrelationMiddleware());
+
+  // Security hardening headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // CSP managed by Vite/app
+  }));
   
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Safer body size defaults (2MB). Increase only on specific upload endpoints.
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ limit: "2mb", extended: true }));
+
+  // Rate limit sensitive endpoints
+  const sensitiveLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use("/api/cron", sensitiveLimiter);
+  app.use("/api/track", sensitiveLimiter);
   
   // Request logging middleware
   app.use((req, res, next) => {
@@ -229,7 +249,8 @@ async function startServer() {
     try {
       const { trackingId } = req.params;
       const userAgent = req.headers['user-agent'] || '';
-      const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '';
+      // With trust proxy enabled, req.ip is correct
+      const ipAddress = req.ip ?? '';
       
       // Import and record the open event
       const { recordEmailOpen } = await import('../email-tracking');
@@ -257,7 +278,8 @@ async function startServer() {
       const { trackingId } = req.params;
       const { url } = req.query;
       const userAgent = req.headers['user-agent'] || '';
-      const ipAddress = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.ip || '';
+      // With trust proxy enabled, req.ip is correct
+      const ipAddress = req.ip ?? '';
       
       // Import and record the click event, get validated redirect URL
       const { recordEmailClick, getValidatedRedirectUrl } = await import('../email-tracking');

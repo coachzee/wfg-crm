@@ -1789,3 +1789,12 @@
 - [x] Debug build verified - relative paths confirmed (./assets/index-1-NGvR8d.js)
 - [x] Removed manualChunks entirely - root cause of 'Cannot access S before initialization'
 - [x] Build succeeds, single index chunk (814KB) with all React deps together
+
+## Production Safety Refactor (Feb 20, 2026)
+- [x] PR1: Fix JWT session verification (allow empty name), add iss/aud, fix cookie SameSite, trust proxy
+- [x] PR2: Fix Drizzle mysql2 pool initialization (mysql2 createPool), DB fail-fast, closeDb() shutdown hook
+- [x] PR3: HTTP hardening — helmet, trust proxy, body limit 2MB, rate limiting on /api/cron and /api/track, req.ip fix
+- [x] PR4: Client useAuth fix — moved localStorage.setItem from useMemo to useEffect
+- [x] PR5: Redirect validation — block non-HTTP schemes (javascript:, data:)
+- [x] PR6: Dead code cleanup — removed temp files, cleaned /tmp
+- [x] Verify build and tests pass — 0 TS errors, build OK, 17/21 tests pass (4 fail due to no local DB)

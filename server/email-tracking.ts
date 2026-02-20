@@ -148,6 +148,13 @@ export async function getValidatedRedirectUrl(
   
   try {
     const url = new URL(providedUrl);
+
+    // Only allow http/https schemes — block javascript:, data:, etc.
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      console.warn(`[Click Tracking] Blocked non-HTTP scheme: ${url.protocol}`);
+      return null;
+    }
+
     const hostname = url.hostname.toLowerCase();
     
     // Check if the hostname matches any allowed domain (including subdomains)

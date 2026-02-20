@@ -14,14 +14,18 @@ import type {
   GetUserInfoWithJwtRequest,
   GetUserInfoWithJwtResponse,
 } from "./types/manusTypes";
-// Utility function
+// Utility functions
+const isString = (value: unknown): value is string => typeof value === "string";
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
 export type SessionPayload = {
   openId: string;
   appId: string;
-  name: string;
+  name?: string; // optional — tokens can be minted with name: ""
+  v?: number;    // token version for future-proofing
+  iss?: string;
+  aud?: string;
 };
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
@@ -178,6 +182,14 @@ class SDKServer {
     );
   }
 
+  private getIssuer() {
+    return "wfg-crm";
+  }
+
+  private getAudience() {
+    return ENV.appId;
+  }
+
   async signSession(
     payload: SessionPayload,
     options: { expiresInMs?: number } = {}
@@ -190,9 +202,12 @@ class SDKServer {
     return new SignJWT({
       openId: payload.openId,
       appId: payload.appId,
-      name: payload.name,
+      name: payload.name ?? "",
+      v: 1,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuer(this.getIssuer())
+      .setAudience(this.getAudience())
       .setExpirationTime(expirationSeconds)
       .sign(secretKey);
   }
@@ -209,22 +224,21 @@ class SDKServer {
       const secretKey = this.getSessionSecret();
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
+        // Accept tokens with or without iss/aud for backward compatibility
+        // New tokens will include these claims
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
+      if (!isNonEmptyString(openId) || !isNonEmptyString(appId)) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
+      // name is optional — allow empty string or missing
       return {
         openId,
         appId,
-        name,
+        name: isString(name) ? name : "",
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
