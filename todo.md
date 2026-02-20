@@ -1782,3 +1782,10 @@
 - [x] Set Vite base to "./" for relative asset paths
 - [x] Add cache headers: no-store for index.html, immutable for /assets/
 - [x] Verify build output uses relative paths (./assets/index-Cagr-wMR.js confirmed)
+
+## Fix Production TDZ Error - Cannot access 'S' before initialization (Feb 19, 2026)
+- [x] Identify circular barrel imports in dashboard/component files (none found)
+- [x] No circular imports to fix - barrel is clean
+- [x] Debug build verified - relative paths confirmed (./assets/index-1-NGvR8d.js)
+- [x] Removed manualChunks entirely - root cause of 'Cannot access S before initialization'
+- [x] Build succeeds, single index chunk (814KB) with all React deps together
