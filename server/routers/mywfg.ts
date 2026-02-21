@@ -129,6 +129,59 @@ export const mywfgRouter = router({
     return getExamPrepRecords();
   }),
   
+  // Trigger git pull + rebuild + restart for production deployments
+  triggerDeploy: protectedProcedure.mutation(async () => {
+    const { execSync } = await import('child_process');
+    const appDir = process.cwd();
+    try {
+      execSync('git pull origin main', { cwd: appDir, stdio: 'pipe', timeout: 60000 });
+      execSync('pnpm install --frozen-lockfile', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+      execSync('pnpm build', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+      setImmediate(() => {
+        try { execSync('pm2 restart wfgcrm || pm2 restart all', { stdio: 'pipe', timeout: 30000 }); } catch {}
+      });
+      return { success: true, message: 'Deploy triggered successfully' };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Deploy failed' };
+    }
+  }),
+
+  // Install Chrome for Puppeteer (fixes 'Could not find Chrome' error on production)
+  installChrome: protectedProcedure.mutation(async () => {
+    const { execSync } = await import('child_process');
+    const { existsSync, readdirSync } = await import('fs');
+    const { resolve } = await import('path');
+    const { homedir } = await import('os');
+    const findChrome = (): string | null => {
+      for (const base of [resolve(homedir(), '.cache/puppeteer/chrome'), '/root/.cache/puppeteer/chrome']) {
+        if (existsSync(base)) {
+          try {
+            const vers = readdirSync(base).sort().reverse();
+            for (const v of vers) {
+              const bin = resolve(base, v, 'chrome-linux64', 'chrome');
+              if (existsSync(bin)) return bin;
+            }
+          } catch {}
+        }
+      }
+      for (const p of ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable']) {
+        if (existsSync(p)) return p;
+      }
+      return null;
+    };
+    const existing = findChrome();
+    if (existing) {
+      return { success: true, message: 'Chrome already installed', chromePath: existing };
+    }
+    try {
+      execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300000 });
+      const newPath = findChrome();
+      return { success: true, message: 'Chrome installed successfully', chromePath: newPath };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to install Chrome', chromePath: null };
+    }
+  }),
+
   // Sync contact info for agents with missing data
   syncContactInfo: protectedProcedure.mutation(async () => {
     const { syncContactInfoFromMyWFG } = await import("../mywfg-downline-scraper");
