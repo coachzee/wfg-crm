@@ -104,6 +104,37 @@ async function startServer() {
     }
   });
 
+  // GitHub webhook endpoint for automatic deployment on push to main
+  // No auth required - GitHub sends the push event directly
+  app.post("/api/webhook/github", async (req, res) => {
+    try {
+      const payload = req.body;
+      const event = req.headers['x-github-event'];
+      if (event !== 'push' || payload?.ref !== 'refs/heads/main') {
+        return res.status(200).json({ ok: true, skipped: true });
+      }
+      res.status(200).json({ ok: true, message: 'Deploy triggered' });
+      setImmediate(async () => {
+        try {
+          const { execSync } = await import('child_process');
+          const appDir = process.cwd();
+          console.log('[Webhook] Pulling latest code...');
+          execSync('git pull origin main', { cwd: appDir, stdio: 'pipe', timeout: 60000 });
+          execSync('pnpm install --frozen-lockfile', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+          execSync('pnpm build', { cwd: appDir, stdio: 'pipe', timeout: 300000 });
+          setTimeout(() => {
+            try { execSync('pm2 restart wfgcrm || pm2 restart all', { stdio: 'pipe', timeout: 30000 }); } catch {}
+          }, 1000);
+          console.log('[Webhook] Deploy completed');
+        } catch (err: any) {
+          console.error('[Webhook] Deploy error:', err.message);
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Webhook failed' });
+    }
+  });
+
   // Start the scheduler for background tasks
   const { startScheduler } = await import('../scheduler');
   startScheduler();
