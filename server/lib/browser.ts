@@ -91,12 +91,30 @@ export interface LaunchBrowserOptions {
 }
 
 /**
+ * Install Chrome for Puppeteer if not already present.
+ * Runs `npx puppeteer browsers install chrome` silently.
+ */
+async function ensureChrome(): Promise<void> {
+  if (resolveChromePath()) return; // already installed
+  console.log('[browser] Chrome not found — auto-installing via puppeteer browsers install chrome...');
+  try {
+    const { execSync } = await import('child_process');
+    execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300_000 });
+    console.log('[browser] Chrome auto-installation complete');
+  } catch (err: any) {
+    console.warn('[browser] Chrome auto-install failed:', err?.message ?? err);
+  }
+}
+
+/**
  * Launch a headless Chromium browser with automatic Chrome discovery.
+ * If Chrome is not found, it will be installed automatically before launch.
  *
  * Returns `{ browser, page }` with a ready-to-use first page that already
  * has the viewport and user-agent configured.
  */
 export async function launchBrowser(opts: LaunchBrowserOptions = {}) {
+  await ensureChrome();
   const executablePath = resolveChromePath();
 
   const launchOpts: LaunchOptions = {
