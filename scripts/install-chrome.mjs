@@ -9,7 +9,7 @@
  *   node scripts/install-chrome.mjs
  */
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import { homedir } from 'os';
 
@@ -23,10 +23,7 @@ function findExistingChrome() {
   for (const dir of CHROME_CACHE_DIRS) {
     if (existsSync(dir)) {
       try {
-        const { readdirSync } = await import('fs');
-        // Use sync version
-        const fs = await import('fs');
-        const versions = fs.readdirSync(dir).sort().reverse();
+        const versions = readdirSync(dir).sort().reverse();
         for (const ver of versions) {
           const bin = resolve(dir, ver, 'chrome-linux64', 'chrome');
           if (existsSync(bin)) return bin;
@@ -49,9 +46,11 @@ if (existing) {
 
 console.log('Installing Chrome for Puppeteer...');
 try {
-  execSync('npx puppeteer browsers install chrome', { stdio: 'inherit' });
+  execSync('npx puppeteer browsers install chrome', { stdio: 'inherit', timeout: 300000 });
   console.log('✓ Chrome installed successfully');
 } catch (err) {
-  console.error('✗ Failed to install Chrome:', err.message);
-  process.exit(1);
+  console.warn('⚠ Chrome installation failed (non-fatal):', err.message);
+  console.warn('  Chrome will be auto-installed on first sync attempt via launchBrowser()');
+  // Exit with 0 to not block pnpm install
+  process.exit(0);
 }
