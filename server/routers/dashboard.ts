@@ -138,6 +138,24 @@ export const dashboardRouter = router({
   
   triggerSync: protectedProcedure.mutation(async () => {
     logger.info("Triggering full sync");
+    // Ensure Chrome is installed before running sync (fixes checkpoint restore issue)
+    try {
+      const { resolveChromePath } = await import("../lib/browser");
+      if (!resolveChromePath()) {
+        logger.info("Chrome not found, attempting auto-install before sync...");
+        const { execSync } = await import("child_process");
+        const { resolve } = await import("path");
+        const cacheDir = resolve(process.cwd(), '.chrome-cache');
+        execSync(`npx puppeteer browsers install chrome`, {
+          stdio: 'pipe',
+          timeout: 300_000,
+          env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir },
+        });
+        logger.info("Chrome auto-installed successfully");
+      }
+    } catch (chromeErr: any) {
+      logger.warn("Chrome pre-install attempt failed (sync will try again)", { error: chromeErr?.message });
+    }
     const { runFullSync, getLastSyncTime } = await import("../sync-service");
     const results = await runFullSync();
     return {
