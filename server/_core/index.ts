@@ -229,15 +229,22 @@ async function startServer() {
         });
       }
       
-      // Install Chrome
+      // Install Chrome with explicit cache dir for root user
       console.log('[Admin] Installing Chrome for Puppeteer...');
-      execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300000 });
+      const isRoot = process.getuid && process.getuid() === 0;
+      const cacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
+      console.log(`[Admin] Using cache dir: ${cacheDir} (isRoot: ${isRoot})`);
+      execSync(
+        `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
+        { stdio: 'pipe', timeout: 300000, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
+      );
       
       const newPath = findChrome();
       res.status(200).json({
         success: true,
         message: 'Chrome installed successfully',
         chromePath: newPath,
+        cacheDir,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {

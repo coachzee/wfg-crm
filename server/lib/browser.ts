@@ -8,7 +8,6 @@
  * Every file that needs a headless browser MUST use `launchBrowser()` instead
  * of calling `puppeteer.launch()` directly.
  */
-
 import puppeteer, { type Browser, type LaunchOptions } from 'puppeteer';
 import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
@@ -25,6 +24,8 @@ const CANDIDATE_PATHS = [
   resolve(homedir(), '.cache/puppeteer/chrome'),
   // Puppeteer cache under root (production)
   '/root/.cache/puppeteer/chrome',
+  // Puppeteer cache under ubuntu user
+  '/home/ubuntu/.cache/puppeteer/chrome',
   // System Chromium (Ubuntu/Debian)
   '/usr/bin/chromium-browser',
   '/usr/bin/chromium',
@@ -96,15 +97,13 @@ export interface LaunchBrowserOptions {
 
 /**
  * Install Chrome for Puppeteer if not already present.
- * Uses the project-local .chrome-cache directory via PUPPETEER_CACHE_DIR
- * so Chrome persists across Manus checkpoint restores.
+ * Installs to project-local .chrome-cache directory first, then falls back
+ * to the user's default cache directory.
  */
 async function ensureChrome(): Promise<void> {
   if (resolveChromePath()) return; // already installed
-
   const cacheDir = resolve(PROJECT_ROOT, '.chrome-cache');
   console.log(`[browser] Chrome not found — auto-installing to ${cacheDir}...`);
-
   try {
     const { execSync } = await import('child_process');
     // Install Chrome into the project-local cache directory
@@ -116,11 +115,18 @@ async function ensureChrome(): Promise<void> {
     console.log('[browser] Chrome auto-installation complete');
   } catch (err: any) {
     console.warn('[browser] Chrome auto-install failed:', err?.message ?? err);
-    // Fallback: try installing to default location
+    // Fallback: try installing to root cache dir (for production servers running as root)
     try {
       const { execSync } = await import('child_process');
-      execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300_000 });
-      console.log('[browser] Chrome auto-installation complete (default location)');
+      const isRoot = process.getuid && process.getuid() === 0;
+      const fallbackCacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
+      console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
+      execSync('npx puppeteer browsers install chrome', {
+        stdio: 'pipe',
+        timeout: 300_000,
+        env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir },
+      });
+      console.log('[browser] Chrome auto-installation complete (fallback location)');
     } catch (err2: any) {
       console.error('[browser] Chrome auto-install fallback also failed:', err2?.message ?? err2);
     }
@@ -137,23 +143,18 @@ async function ensureChrome(): Promise<void> {
 export async function launchBrowser(opts: LaunchBrowserOptions = {}) {
   await ensureChrome();
   const executablePath = resolveChromePath();
-
   const launchOpts: LaunchOptions = {
     headless: true,
     args: [...DEFAULT_ARGS, ...(opts.extraArgs ?? [])],
     ...(executablePath ? { executablePath } : {}),
     ...(opts.puppeteerOptions ?? {}),
   };
-
   console.log(`[browser] Launching Chrome from: ${executablePath ?? '(puppeteer default)'}`);
-
   const browser: Browser = await puppeteer.launch(launchOpts);
   const page = await browser.newPage();
-
   const vp = opts.viewport ?? { width: 1280, height: 800 };
   await page.setViewport(vp);
   await page.setUserAgent(opts.userAgent ?? DEFAULT_USER_AGENT);
-
   return { browser, page };
 }
 

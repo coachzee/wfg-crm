@@ -174,7 +174,13 @@ export const mywfgRouter = router({
       return { success: true, message: 'Chrome already installed', chromePath: existing };
     }
     try {
-      execSync('npx puppeteer browsers install chrome', { stdio: 'pipe', timeout: 300000 });
+      // Use explicit cache dir for root user in production
+      const isRoot = process.getuid && process.getuid() === 0;
+      const cacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
+      execSync(
+        `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
+        { stdio: 'pipe', timeout: 300000, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
+      );
       const newPath = findChrome();
       return { success: true, message: 'Chrome installed successfully', chromePath: newPath };
     } catch (err: any) {
