@@ -114,6 +114,9 @@ temp/
 # Job artifacts (screenshots, HTML dumps on failure)
 artifacts/
 
+# Puppeteer Chrome cache (installed at runtime)
+.chrome-cache/
+
 # Data files (should not be committed)
 data/
 *.csv

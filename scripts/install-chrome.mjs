@@ -3,6 +3,9 @@
  * Chrome Installation Script for Production Server
  * 
  * Installs Chrome/Chromium for Puppeteer on the production server.
+ * Uses the project-local .chrome-cache directory so Chrome persists
+ * across Manus checkpoint restores (the default ~/.cache/puppeteer
+ * location gets cleared on checkpoint restore).
  * Run this script after deployment to ensure Chrome is available.
  * 
  * Usage:
@@ -10,10 +13,16 @@
  */
 import { execSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = resolve(__dirname, '..');
+const LOCAL_CACHE = resolve(PROJECT_ROOT, '.chrome-cache');
+
 const CHROME_CACHE_DIRS = [
+  resolve(LOCAL_CACHE, 'chrome'),
   resolve(homedir(), '.cache/puppeteer/chrome'),
   '/root/.cache/puppeteer/chrome',
 ];
@@ -44,9 +53,13 @@ if (existing) {
   process.exit(0);
 }
 
-console.log('Installing Chrome for Puppeteer...');
+console.log(`Installing Chrome for Puppeteer into ${LOCAL_CACHE}...`);
 try {
-  execSync('npx puppeteer browsers install chrome', { stdio: 'inherit', timeout: 300000 });
+  execSync('npx puppeteer browsers install chrome', {
+    stdio: 'inherit',
+    timeout: 300000,
+    env: { ...process.env, PUPPETEER_CACHE_DIR: LOCAL_CACHE },
+  });
   console.log('✓ Chrome installed successfully');
 } catch (err) {
   console.warn('⚠ Chrome installation failed (non-fatal):', err.message);
