@@ -97,40 +97,94 @@ export interface LaunchBrowserOptions {
 
 /**
  * Install Chrome for Puppeteer if not already present.
- * Installs to project-local .chrome-cache directory first, then falls back
- * to the user's default cache directory.
+ * Tries multiple strategies:
+ * 1. npx puppeteer browsers install chrome (project-local cache)
+ * 2. npx puppeteer browsers install chrome (user/root cache)
+ * 3. apt-get install chromium-browser (system package)
+ * 4. Direct download of Chrome for Testing
  */
 async function ensureChrome(): Promise<void> {
   if (resolveChromePath()) return; // already installed
+  const { execSync } = await import('child_process');
+  
+  // Strategy 1: Install to project-local cache
   const cacheDir = resolve(PROJECT_ROOT, '.chrome-cache');
   console.log(`[browser] Chrome not found — auto-installing to ${cacheDir}...`);
   try {
-    const { execSync } = await import('child_process');
-    // Install Chrome into the project-local cache directory
     execSync('npx puppeteer browsers install chrome', {
       stdio: 'pipe',
       timeout: 300_000,
       env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir },
     });
-    console.log('[browser] Chrome auto-installation complete');
+    console.log('[browser] Chrome auto-installation complete (project cache)');
+    if (resolveChromePath()) return;
   } catch (err: any) {
-    console.warn('[browser] Chrome auto-install failed:', err?.message ?? err);
-    // Fallback: try installing to root cache dir (for production servers running as root)
-    try {
-      const { execSync } = await import('child_process');
-      const isRoot = process.getuid && process.getuid() === 0;
-      const fallbackCacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
-      console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
-      execSync('npx puppeteer browsers install chrome', {
-        stdio: 'pipe',
-        timeout: 300_000,
-        env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir },
-      });
-      console.log('[browser] Chrome auto-installation complete (fallback location)');
-    } catch (err2: any) {
-      console.error('[browser] Chrome auto-install fallback also failed:', err2?.message ?? err2);
-    }
+    console.warn('[browser] Strategy 1 (project cache) failed:', err?.message ?? err);
   }
+
+  // Strategy 2: Install to user/root cache
+  try {
+    const isRoot = process.getuid && process.getuid() === 0;
+    const fallbackCacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
+    console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
+    execSync('npx puppeteer browsers install chrome', {
+      stdio: 'pipe',
+      timeout: 300_000,
+      env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir },
+    });
+    console.log('[browser] Chrome auto-installation complete (fallback cache)');
+    if (resolveChromePath()) return;
+  } catch (err2: any) {
+    console.warn('[browser] Strategy 2 (fallback cache) failed:', err2?.message ?? err2);
+  }
+
+  // Strategy 3: Try apt-get install chromium-browser (works on Debian/Ubuntu)
+  try {
+    console.log('[browser] Trying apt-get install chromium-browser...');
+    execSync('apt-get update -qq && apt-get install -y -qq chromium-browser 2>/dev/null || apt-get install -y -qq chromium 2>/dev/null', {
+      stdio: 'pipe',
+      timeout: 300_000,
+    });
+    console.log('[browser] chromium-browser installed via apt-get');
+    if (resolveChromePath()) return;
+  } catch (err3: any) {
+    console.warn('[browser] Strategy 3 (apt-get) failed:', err3?.message ?? err3);
+  }
+
+  // Strategy 4: Direct download of Chrome for Testing
+  try {
+    console.log('[browser] Trying direct Chrome for Testing download...');
+    const downloadDir = resolve(cacheDir, 'chrome-direct');
+    execSync(`mkdir -p ${downloadDir}`, { stdio: 'pipe' });
+    // Use the Chrome for Testing API to get the latest stable URL
+    const result = execSync(
+      'curl -sS "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"',
+      { stdio: 'pipe', timeout: 30_000 }
+    ).toString();
+    const data = JSON.parse(result);
+    const stableDownloads = data?.channels?.Stable?.downloads?.chrome;
+    const linuxDownload = stableDownloads?.find((d: any) => d.platform === 'linux64');
+    if (linuxDownload?.url) {
+      console.log(`[browser] Downloading Chrome from ${linuxDownload.url}...`);
+      execSync(
+        `cd ${downloadDir} && curl -sSL "${linuxDownload.url}" -o chrome.zip && unzip -q -o chrome.zip && rm chrome.zip`,
+        { stdio: 'pipe', timeout: 300_000 }
+      );
+      // Find the chrome binary in the extracted directory
+      const extractedBin = resolve(downloadDir, 'chrome-linux64', 'chrome');
+      if (existsSync(extractedBin)) {
+        execSync(`chmod +x ${extractedBin}`, { stdio: 'pipe' });
+        console.log(`[browser] Chrome for Testing installed at ${extractedBin}`);
+        // Add to candidate paths dynamically
+        CANDIDATE_PATHS.unshift(extractedBin);
+        return;
+      }
+    }
+  } catch (err4: any) {
+    console.warn('[browser] Strategy 4 (direct download) failed:', err4?.message ?? err4);
+  }
+
+  console.error('[browser] All Chrome installation strategies failed. Sync will likely fail.');
 }
 
 /**
