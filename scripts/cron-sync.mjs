@@ -48,9 +48,25 @@ async function autoUpdate() {
     
     console.log(`[Cron Sync] New code available (${localHash.substring(0,7)} -> ${remoteHash.substring(0,7)}), updating...`);
     
-    // Pull the latest code
-    execSync('git pull origin main --ff-only 2>&1', { cwd: appDir, timeout: 60000 });
-    console.log('[Cron Sync] Git pull completed');
+    // Force-overwrite any locally-modified tracked files (e.g. dist/index.js)
+    // This prevents git pull from failing due to local changes
+    try {
+      execSync('git checkout origin/main -- dist/index.js 2>&1', { cwd: appDir, timeout: 30000 });
+      console.log('[Cron Sync] Force-updated dist/index.js from origin/main');
+    } catch (e) {
+      console.warn('[Cron Sync] git checkout dist/index.js failed (non-fatal):', e.message.substring(0, 100));
+    }
+    
+    // Pull the latest code (use reset --hard to handle any other conflicts)
+    try {
+      execSync('git pull origin main --ff-only 2>&1', { cwd: appDir, timeout: 60000 });
+      console.log('[Cron Sync] Git pull completed');
+    } catch (e) {
+      // If ff-only fails, try reset --hard
+      console.warn('[Cron Sync] git pull --ff-only failed, trying reset --hard...');
+      execSync('git fetch origin main 2>&1 && git reset --hard origin/main 2>&1', { cwd: appDir, timeout: 60000 });
+      console.log('[Cron Sync] Git reset --hard completed');
+    }
     
     // Install dependencies if package.json changed
     try {
