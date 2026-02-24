@@ -273,4 +273,9 @@ export const mywfgRouter = router({
       agentsUpdated: syncResult.updated,
     };
   }),
+
+  // Test procedure to check if server is running in tsx mode
+  testMode: protectedProcedure.query(async () => {
+    return { mode: 'tsx-live-v1', timestamp: new Date().toISOString() };
+  }),
 });
