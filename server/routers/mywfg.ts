@@ -61,11 +61,69 @@ export const mywfgRouter = router({
     return runMyWFGSync(ctx.user.id, input.validationCode);
   }),
 
+  // Self-deploy: git pull + pnpm install + pnpm build + pm2 restart
+  // Allows updating the production server to the latest code without SSH access
+  selfDeploy: protectedProcedure.mutation(async () => {
+    const { execSync } = await import('child_process');
+    const appDir = process.cwd();
+    console.log('[SelfDeploy] Starting self-deploy from', appDir);
+    try {
+      const pull = execSync('git pull origin main 2>&1', { cwd: appDir, timeout: 60000 }).toString();
+      console.log('[SelfDeploy] git pull:', pull.trim());
+      execSync('pnpm install --frozen-lockfile 2>&1', { cwd: appDir, timeout: 300000 });
+      console.log('[SelfDeploy] pnpm install done');
+      execSync('pnpm build 2>&1', { cwd: appDir, timeout: 300000 });
+      console.log('[SelfDeploy] pnpm build done');
+      setImmediate(() => {
+        try { execSync('pm2 restart wfgcrm 2>&1 || pm2 restart all 2>&1', { timeout: 30000 }); } catch {}
+      });
+      return { success: true, message: 'Self-deploy complete, restarting...', pull: pull.trim() };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Self-deploy failed' };
+    }
+  }),
+
   // Sync agents from MyWFG Downline Status report
   syncDownlineStatus: protectedProcedure.mutation(async () => {
     const { fetchDownlineStatus, syncAgentsFromDownlineStatus } = await import("../mywfg-downline-scraper");
     const { getDb } = await import("../db");
     const schema = await import("../../drizzle/schema");
+
+    // Pre-install Chrome if missing (fixes 'Could not find Chrome' on production)
+    try {
+      const { execSync } = await import('child_process');
+      const { existsSync, readdirSync } = await import('fs');
+      const { resolve } = await import('path');
+      const { homedir } = await import('os');
+      const findChrome = () => {
+        for (const base of [resolve(homedir(), '.cache/puppeteer/chrome'), '/root/.cache/puppeteer/chrome']) {
+          if (existsSync(base)) {
+            try {
+              const vers = readdirSync(base).sort().reverse();
+              for (const v of vers) {
+                const bin = resolve(base, v, 'chrome-linux64', 'chrome');
+                if (existsSync(bin)) return bin;
+              }
+            } catch {}
+          }
+        }
+        for (const p of ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable']) {
+          if (existsSync(p)) return p;
+        }
+        return null;
+      };
+      if (!findChrome()) {
+        console.log('[Manual Sync] Chrome not found, installing...');
+        const isRoot = process.getuid && process.getuid() === 0;
+        const cacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
+        execSync(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
+          stdio: 'pipe', timeout: 300000, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir },
+        });
+        console.log('[Manual Sync] Chrome installed to', cacheDir);
+      }
+    } catch (chromeErr: any) {
+      console.warn('[Manual Sync] Chrome pre-install failed (will try anyway):', chromeErr?.message);
+    }
     
     console.log("[Manual Sync] Starting Downline Status sync...");
     
