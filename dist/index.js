@@ -4546,10 +4546,12 @@ function resolveChromePath() {
 async function ensureChrome() {
   if (resolveChromePath()) return;
   const { execSync } = await import("child_process");
+  const puppeteerBin = resolve(PROJECT_ROOT, "node_modules/.bin/puppeteer");
+  const puppeteerCmd = existsSync(puppeteerBin) ? `"${puppeteerBin}" browsers install chrome` : "npx puppeteer browsers install chrome";
   const cacheDir = resolve(PROJECT_ROOT, ".chrome-cache");
   console.log(`[browser] Chrome not found \u2014 auto-installing to ${cacheDir}...`);
   try {
-    execSync("npx puppeteer browsers install chrome", {
+    execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
       env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
@@ -4563,7 +4565,7 @@ async function ensureChrome() {
     const isRoot = process.getuid && process.getuid() === 0;
     const fallbackCacheDir = isRoot ? "/root/.cache/puppeteer" : resolve(homedir(), ".cache/puppeteer");
     console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
-    execSync("npx puppeteer browsers install chrome", {
+    execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
       env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir }

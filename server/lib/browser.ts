@@ -98,8 +98,8 @@ export interface LaunchBrowserOptions {
 /**
  * Install Chrome for Puppeteer if not already present.
  * Tries multiple strategies:
- * 1. npx puppeteer browsers install chrome (project-local cache)
- * 2. npx puppeteer browsers install chrome (user/root cache)
+ * 1. node_modules/.bin/puppeteer browsers install chrome (project-local cache)
+ * 2. node_modules/.bin/puppeteer browsers install chrome (user/root cache)
  * 3. apt-get install chromium-browser (system package)
  * 4. Direct download of Chrome for Testing
  */
@@ -107,11 +107,17 @@ async function ensureChrome(): Promise<void> {
   if (resolveChromePath()) return; // already installed
   const { execSync } = await import('child_process');
   
+  // Use node_modules/.bin/puppeteer if available (avoids npx PATH issues on production servers)
+  const puppeteerBin = resolve(PROJECT_ROOT, 'node_modules/.bin/puppeteer');
+  const puppeteerCmd = existsSync(puppeteerBin)
+    ? `"${puppeteerBin}" browsers install chrome`
+    : 'npx puppeteer browsers install chrome';
+
   // Strategy 1: Install to project-local cache
   const cacheDir = resolve(PROJECT_ROOT, '.chrome-cache');
   console.log(`[browser] Chrome not found — auto-installing to ${cacheDir}...`);
   try {
-    execSync('npx puppeteer browsers install chrome', {
+    execSync(puppeteerCmd, {
       stdio: 'pipe',
       timeout: 300_000,
       env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir },
@@ -127,7 +133,7 @@ async function ensureChrome(): Promise<void> {
     const isRoot = process.getuid && process.getuid() === 0;
     const fallbackCacheDir = isRoot ? '/root/.cache/puppeteer' : resolve(homedir(), '.cache/puppeteer');
     console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
-    execSync('npx puppeteer browsers install chrome', {
+    execSync(puppeteerCmd, {
       stdio: 'pipe',
       timeout: 300_000,
       env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir },

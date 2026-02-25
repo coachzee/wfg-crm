@@ -55,7 +55,13 @@ if (existing) {
 
 console.log(`Installing Chrome for Puppeteer into ${LOCAL_CACHE}...`);
 try {
-  execSync('npx puppeteer browsers install chrome', {
+  // Try node_modules/.bin/puppeteer first (avoids npx PATH issues on production servers)
+  const puppeteerBin = resolve(PROJECT_ROOT, 'node_modules/.bin/puppeteer');
+  const installCmd = existsSync(puppeteerBin)
+    ? `"${puppeteerBin}" browsers install chrome`
+    : 'npx puppeteer browsers install chrome';
+  console.log(`Using: ${installCmd}`);
+  execSync(installCmd, {
     stdio: 'inherit',
     timeout: 300000,
     env: { ...process.env, PUPPETEER_CACHE_DIR: LOCAL_CACHE },
