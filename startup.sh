@@ -23,9 +23,17 @@ echo "[Startup] Ensuring Chrome is installed..."
 CHROME_CACHE="$APP_DIR/.chrome-cache"
 if ! find "$CHROME_CACHE" -name "chrome" -type f 2>/dev/null | grep -q .; then
   echo "[Startup] Chrome not found in $CHROME_CACHE, installing..."
-  PUPPETEER_CACHE_DIR="$CHROME_CACHE" npx puppeteer browsers install chrome 2>/dev/null && \
-    echo "[Startup] Chrome installed successfully" || \
-    echo "[Startup] Chrome installation failed (will retry at sync time)"
+  # Use node_modules/.bin/puppeteer if available (avoids npx PATH issues)
+  PUPPETEER_BIN="$APP_DIR/node_modules/.bin/puppeteer"
+  if [ -f "$PUPPETEER_BIN" ]; then
+    PUPPETEER_CACHE_DIR="$CHROME_CACHE" "$PUPPETEER_BIN" browsers install chrome 2>/dev/null && \
+      echo "[Startup] Chrome installed successfully via node_modules/.bin/puppeteer" || \
+      echo "[Startup] Chrome installation failed (will retry at sync time)"
+  else
+    PUPPETEER_CACHE_DIR="$CHROME_CACHE" npx puppeteer browsers install chrome 2>/dev/null && \
+      echo "[Startup] Chrome installed successfully via npx" || \
+      echo "[Startup] Chrome installation failed (will retry at sync time)"
+  fi
 else
   echo "[Startup] Chrome already installed"
 fi
