@@ -1,4 +1,5 @@
-import { chromium, Browser, Page } from "playwright";
+import { type Browser, type Page } from "playwright";
+import { launchPlaywrightBrowser } from "./lib/playwright-browser";
 import { decryptCredential } from "./encryption";
 
 // Report URLs discovered from mywfg.com exploration
@@ -120,9 +121,7 @@ class MyWFGServiceV3 {
 
   async initialize(): Promise<void> {
     if (!this.browser) {
-      this.browser = await chromium.launch({
-        headless: true,
-      });
+      this.browser = await launchPlaywrightBrowser({ headless: true });
     }
   }
 

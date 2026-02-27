@@ -18,8 +18,8 @@ git pull origin main --ff-only 2>/dev/null || \
   (git reset --hard origin/main 2>/dev/null && echo "[Startup] Used git reset --hard") || \
   echo "[Startup] Git pull failed or already up to date"
 
-echo "[Startup] Ensuring Chrome is installed..."
-# Try to install Chrome if not present
+echo "[Startup] Ensuring Puppeteer Chrome is installed..."
+# Try to install Chrome for Puppeteer if not present
 CHROME_CACHE="$APP_DIR/.chrome-cache"
 if ! find "$CHROME_CACHE" -name "chrome" -type f 2>/dev/null | grep -q .; then
   echo "[Startup] Chrome not found in $CHROME_CACHE, installing..."
@@ -35,7 +35,32 @@ if ! find "$CHROME_CACHE" -name "chrome" -type f 2>/dev/null | grep -q .; then
       echo "[Startup] Chrome installation failed (will retry at sync time)"
   fi
 else
-  echo "[Startup] Chrome already installed"
+  echo "[Startup] Puppeteer Chrome already installed"
+fi
+
+echo "[Startup] Ensuring Playwright browsers are installed..."
+# Install Playwright Chromium if not present
+PLAYWRIGHT_BIN="$APP_DIR/node_modules/.bin/playwright"
+if [ -f "$PLAYWRIGHT_BIN" ]; then
+  # Check if Playwright Chromium is already installed
+  if ! "$PLAYWRIGHT_BIN" install --dry-run chromium 2>/dev/null | grep -q "already installed" && \
+     ! find /root/.cache/ms-playwright -name "chrome-headless-shell" -type f 2>/dev/null | grep -q .; then
+    echo "[Startup] Playwright Chromium not found, installing..."
+    "$PLAYWRIGHT_BIN" install chromium 2>/dev/null && \
+      echo "[Startup] Playwright Chromium installed successfully" || \
+      echo "[Startup] Playwright Chromium installation failed (will retry at sync time)"
+    # Also install system dependencies for Playwright
+    "$PLAYWRIGHT_BIN" install-deps chromium 2>/dev/null && \
+      echo "[Startup] Playwright system dependencies installed" || \
+      echo "[Startup] Playwright system deps installation failed (non-fatal)"
+  else
+    echo "[Startup] Playwright Chromium already installed"
+  fi
+else
+  echo "[Startup] Playwright binary not found, trying npx..."
+  npx playwright install chromium 2>/dev/null && \
+    echo "[Startup] Playwright Chromium installed via npx" || \
+    echo "[Startup] Playwright Chromium installation failed via npx"
 fi
 
 echo "[Startup] Starting server..."

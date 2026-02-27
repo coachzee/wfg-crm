@@ -6,7 +6,8 @@
  * to prevent timeouts and maintain stable connections.
  */
 
-import { chromium, type Page, type Browser, type BrowserContext } from "playwright";
+import { type Page, type Browser, type BrowserContext } from "playwright";
+import { launchPlaywrightBrowser } from "./lib/playwright-browser";
 import { getDb } from "./db";
 import { agents } from "../drizzle/schema";
 import { eq, isNotNull } from "drizzle-orm";
@@ -263,7 +264,7 @@ async function processBatch(
     console.log(`\n========== BATCH ${batchIndex + 1}/${totalBatches} (${batchAgents.length} agents) ==========`);
     
     // Launch fresh browser for this batch
-    browser = await chromium.launch({ headless: true });
+    browser = await launchPlaywrightBrowser({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
 
