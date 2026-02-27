@@ -4517,7 +4517,7 @@ __export(browser_exports, {
   resolveChromePath: () => resolveChromePath
 });
 import puppeteer from "puppeteer";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { homedir } from "os";
 function findChromeInCache(cacheDir) {
@@ -4534,7 +4534,7 @@ function findChromeInCache(cacheDir) {
 }
 function resolveChromePath() {
   for (const candidate of CANDIDATE_PATHS) {
-    if (candidate.endsWith("/chrome") && existsSync(candidate)) {
+    if (candidate.endsWith("/chrome") && !candidate.includes("chrome-linux64") && existsSync(candidate)) {
       const found = findChromeInCache(candidate);
       if (found) return found;
       continue;
@@ -4546,11 +4546,15 @@ function resolveChromePath() {
 async function ensureChrome() {
   if (resolveChromePath()) return;
   const { execSync } = await import("child_process");
+  console.log(`[browser] PROJECT_ROOT: ${PROJECT_ROOT}`);
+  console.log(`[browser] CWD: ${process.cwd()}`);
+  console.log(`[browser] Running as UID: ${process.getuid?.() ?? "unknown"}`);
   const puppeteerBin = resolve(PROJECT_ROOT, "node_modules/.bin/puppeteer");
   const puppeteerCmd = existsSync(puppeteerBin) ? `"${puppeteerBin}" browsers install chrome` : "npx puppeteer browsers install chrome";
   const cacheDir = resolve(PROJECT_ROOT, ".chrome-cache");
   console.log(`[browser] Chrome not found \u2014 auto-installing to ${cacheDir}...`);
   try {
+    mkdirSync(cacheDir, { recursive: true });
     execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
@@ -4559,12 +4563,15 @@ async function ensureChrome() {
     console.log("[browser] Chrome auto-installation complete (project cache)");
     if (resolveChromePath()) return;
   } catch (err) {
+    const stderr = err?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 1 (project cache) failed:", err?.message ?? err);
+    if (stderr) console.warn("[browser] Strategy 1 stderr:", stderr.substring(0, 500));
   }
   try {
     const isRoot = process.getuid && process.getuid() === 0;
     const fallbackCacheDir = isRoot ? "/root/.cache/puppeteer" : resolve(homedir(), ".cache/puppeteer");
     console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
+    mkdirSync(fallbackCacheDir, { recursive: true });
     execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
@@ -4573,7 +4580,9 @@ async function ensureChrome() {
     console.log("[browser] Chrome auto-installation complete (fallback cache)");
     if (resolveChromePath()) return;
   } catch (err2) {
+    const stderr = err2?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 2 (fallback cache) failed:", err2?.message ?? err2);
+    if (stderr) console.warn("[browser] Strategy 2 stderr:", stderr.substring(0, 500));
   }
   try {
     console.log("[browser] Trying apt-get install chromium-browser...");
@@ -4586,10 +4595,10 @@ async function ensureChrome() {
   } catch (err3) {
     console.warn("[browser] Strategy 3 (apt-get) failed:", err3?.message ?? err3);
   }
+  const downloadDir = resolve(cacheDir, "chrome-direct");
   try {
     console.log("[browser] Trying direct Chrome for Testing download...");
-    const downloadDir = resolve(cacheDir, "chrome-direct");
-    execSync(`mkdir -p ${downloadDir}`, { stdio: "pipe" });
+    mkdirSync(downloadDir, { recursive: true });
     const result = execSync(
       'curl -sS "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"',
       { stdio: "pipe", timeout: 3e4 }
@@ -4600,21 +4609,62 @@ async function ensureChrome() {
     if (linuxDownload?.url) {
       console.log(`[browser] Downloading Chrome from ${linuxDownload.url}...`);
       execSync(
-        `cd ${downloadDir} && curl -sSL "${linuxDownload.url}" -o chrome.zip && unzip -q -o chrome.zip && rm chrome.zip`,
+        `cd ${downloadDir} && curl -sSL "${linuxDownload.url}" -o chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip`,
         { stdio: "pipe", timeout: 3e5 }
       );
       const extractedBin = resolve(downloadDir, "chrome-linux64", "chrome");
       if (existsSync(extractedBin)) {
-        execSync(`chmod +x ${extractedBin}`, { stdio: "pipe" });
+        execSync(`chmod +x "${extractedBin}"`, { stdio: "pipe" });
         console.log(`[browser] Chrome for Testing installed at ${extractedBin}`);
         CANDIDATE_PATHS.unshift(extractedBin);
         return;
       }
     }
   } catch (err4) {
+    const stderr = err4?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 4 (direct download) failed:", err4?.message ?? err4);
+    if (stderr) console.warn("[browser] Strategy 4 stderr:", stderr.substring(0, 500));
+  }
+  try {
+    console.log("[browser] Trying wget-based Chrome download...");
+    mkdirSync(downloadDir, { recursive: true });
+    const versionUrl = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json";
+    const versionResult = execSync(
+      `wget -q -O - "${versionUrl}"`,
+      { stdio: "pipe", timeout: 3e4 }
+    ).toString();
+    const versionData = JSON.parse(versionResult);
+    const chromeUrl = versionData?.channels?.Stable?.downloads?.chrome?.find((d) => d.platform === "linux64")?.url;
+    if (chromeUrl) {
+      console.log(`[browser] Downloading Chrome via wget from ${chromeUrl}...`);
+      execSync(
+        `cd "${downloadDir}" && wget -q "${chromeUrl}" -O chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip`,
+        { stdio: "pipe", timeout: 3e5 }
+      );
+      const extractedBin = resolve(downloadDir, "chrome-linux64", "chrome");
+      if (existsSync(extractedBin)) {
+        execSync(`chmod +x "${extractedBin}"`, { stdio: "pipe" });
+        console.log(`[browser] Chrome for Testing installed via wget at ${extractedBin}`);
+        CANDIDATE_PATHS.unshift(extractedBin);
+        return;
+      }
+    }
+  } catch (err5) {
+    console.warn("[browser] Strategy 5 (wget) failed:", err5?.message ?? err5);
+  }
+  try {
+    console.log("[browser] Trying Google Chrome stable install via dpkg...");
+    execSync(
+      'wget -q -O /tmp/google-chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && dpkg -i /tmp/google-chrome.deb 2>/dev/null || apt-get install -f -y -qq 2>/dev/null && rm -f /tmp/google-chrome.deb',
+      { stdio: "pipe", timeout: 3e5 }
+    );
+    console.log("[browser] Google Chrome stable installed via dpkg");
+    if (resolveChromePath()) return;
+  } catch (err6) {
+    console.warn("[browser] Strategy 6 (dpkg) failed:", err6?.message ?? err6);
   }
   console.error("[browser] All Chrome installation strategies failed. Sync will likely fail.");
+  console.error("[browser] Candidate paths checked:", CANDIDATE_PATHS.join(", "));
 }
 async function launchBrowser(opts = {}) {
   await ensureChrome();
@@ -4641,6 +4691,8 @@ var init_browser = __esm({
     CANDIDATE_PATHS = [
       // Project-local Puppeteer cache (persists across Manus checkpoint restores)
       resolve(PROJECT_ROOT, ".chrome-cache", "chrome"),
+      // Project-local direct download
+      resolve(PROJECT_ROOT, ".chrome-cache", "chrome-direct", "chrome-linux64", "chrome"),
       // Puppeteer cache under current user
       resolve(homedir(), ".cache/puppeteer/chrome"),
       // Puppeteer cache under root (production)
