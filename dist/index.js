@@ -3798,7 +3798,7 @@ async function sendBulkClientAnniversaryGreetings(clients2) {
     } else {
       failed++;
     }
-    await new Promise((resolve3) => setTimeout(resolve3, 500));
+    await new Promise((resolve2) => setTimeout(resolve2, 500));
   }
   return { sent, failed, skipped };
 }
@@ -4517,7 +4517,7 @@ __export(browser_exports, {
   resolveChromePath: () => resolveChromePath
 });
 import puppeteer from "puppeteer";
-import { existsSync, readdirSync, mkdirSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { resolve } from "path";
 import { homedir } from "os";
 function findChromeInCache(cacheDir) {
@@ -4534,7 +4534,7 @@ function findChromeInCache(cacheDir) {
 }
 function resolveChromePath() {
   for (const candidate of CANDIDATE_PATHS) {
-    if (candidate.endsWith("/chrome") && !candidate.includes("chrome-linux64") && existsSync(candidate)) {
+    if (candidate.endsWith("/chrome") && existsSync(candidate)) {
       const found = findChromeInCache(candidate);
       if (found) return found;
       continue;
@@ -4545,17 +4545,13 @@ function resolveChromePath() {
 }
 async function ensureChrome() {
   if (resolveChromePath()) return;
-  const { execSync: execSync2 } = await import("child_process");
-  console.log(`[browser] PROJECT_ROOT: ${PROJECT_ROOT}`);
-  console.log(`[browser] CWD: ${process.cwd()}`);
-  console.log(`[browser] Running as UID: ${process.getuid?.() ?? "unknown"}`);
+  const { execSync } = await import("child_process");
   const puppeteerBin = resolve(PROJECT_ROOT, "node_modules/.bin/puppeteer");
   const puppeteerCmd = existsSync(puppeteerBin) ? `"${puppeteerBin}" browsers install chrome` : "npx puppeteer browsers install chrome";
   const cacheDir = resolve(PROJECT_ROOT, ".chrome-cache");
   console.log(`[browser] Chrome not found \u2014 auto-installing to ${cacheDir}...`);
   try {
-    mkdirSync(cacheDir, { recursive: true });
-    execSync2(puppeteerCmd, {
+    execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
       env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
@@ -4563,16 +4559,13 @@ async function ensureChrome() {
     console.log("[browser] Chrome auto-installation complete (project cache)");
     if (resolveChromePath()) return;
   } catch (err) {
-    const stderr = err?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 1 (project cache) failed:", err?.message ?? err);
-    if (stderr) console.warn("[browser] Strategy 1 stderr:", stderr.substring(0, 500));
   }
   try {
     const isRoot = process.getuid && process.getuid() === 0;
     const fallbackCacheDir = isRoot ? "/root/.cache/puppeteer" : resolve(homedir(), ".cache/puppeteer");
     console.log(`[browser] Trying fallback install to ${fallbackCacheDir}...`);
-    mkdirSync(fallbackCacheDir, { recursive: true });
-    execSync2(puppeteerCmd, {
+    execSync(puppeteerCmd, {
       stdio: "pipe",
       timeout: 3e5,
       env: { ...process.env, PUPPETEER_CACHE_DIR: fallbackCacheDir }
@@ -4580,13 +4573,11 @@ async function ensureChrome() {
     console.log("[browser] Chrome auto-installation complete (fallback cache)");
     if (resolveChromePath()) return;
   } catch (err2) {
-    const stderr = err2?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 2 (fallback cache) failed:", err2?.message ?? err2);
-    if (stderr) console.warn("[browser] Strategy 2 stderr:", stderr.substring(0, 500));
   }
   try {
     console.log("[browser] Trying apt-get install chromium-browser...");
-    execSync2("apt-get update -qq && apt-get install -y -qq chromium-browser 2>/dev/null || apt-get install -y -qq chromium 2>/dev/null", {
+    execSync("apt-get update -qq && apt-get install -y -qq chromium-browser 2>/dev/null || apt-get install -y -qq chromium 2>/dev/null", {
       stdio: "pipe",
       timeout: 3e5
     });
@@ -4595,11 +4586,11 @@ async function ensureChrome() {
   } catch (err3) {
     console.warn("[browser] Strategy 3 (apt-get) failed:", err3?.message ?? err3);
   }
-  const downloadDir = resolve(cacheDir, "chrome-direct");
   try {
     console.log("[browser] Trying direct Chrome for Testing download...");
-    mkdirSync(downloadDir, { recursive: true });
-    const result = execSync2(
+    const downloadDir = resolve(cacheDir, "chrome-direct");
+    execSync(`mkdir -p ${downloadDir}`, { stdio: "pipe" });
+    const result = execSync(
       'curl -sS "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"',
       { stdio: "pipe", timeout: 3e4 }
     ).toString();
@@ -4608,63 +4599,22 @@ async function ensureChrome() {
     const linuxDownload = stableDownloads?.find((d) => d.platform === "linux64");
     if (linuxDownload?.url) {
       console.log(`[browser] Downloading Chrome from ${linuxDownload.url}...`);
-      execSync2(
-        `cd ${downloadDir} && curl -sSL "${linuxDownload.url}" -o chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip`,
+      execSync(
+        `cd ${downloadDir} && curl -sSL "${linuxDownload.url}" -o chrome.zip && unzip -q -o chrome.zip && rm chrome.zip`,
         { stdio: "pipe", timeout: 3e5 }
       );
       const extractedBin = resolve(downloadDir, "chrome-linux64", "chrome");
       if (existsSync(extractedBin)) {
-        execSync2(`chmod +x "${extractedBin}"`, { stdio: "pipe" });
+        execSync(`chmod +x ${extractedBin}`, { stdio: "pipe" });
         console.log(`[browser] Chrome for Testing installed at ${extractedBin}`);
         CANDIDATE_PATHS.unshift(extractedBin);
         return;
       }
     }
   } catch (err4) {
-    const stderr = err4?.stderr?.toString?.() ?? "";
     console.warn("[browser] Strategy 4 (direct download) failed:", err4?.message ?? err4);
-    if (stderr) console.warn("[browser] Strategy 4 stderr:", stderr.substring(0, 500));
-  }
-  try {
-    console.log("[browser] Trying wget-based Chrome download...");
-    mkdirSync(downloadDir, { recursive: true });
-    const versionUrl = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json";
-    const versionResult = execSync2(
-      `wget -q -O - "${versionUrl}"`,
-      { stdio: "pipe", timeout: 3e4 }
-    ).toString();
-    const versionData = JSON.parse(versionResult);
-    const chromeUrl = versionData?.channels?.Stable?.downloads?.chrome?.find((d) => d.platform === "linux64")?.url;
-    if (chromeUrl) {
-      console.log(`[browser] Downloading Chrome via wget from ${chromeUrl}...`);
-      execSync2(
-        `cd "${downloadDir}" && wget -q "${chromeUrl}" -O chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip`,
-        { stdio: "pipe", timeout: 3e5 }
-      );
-      const extractedBin = resolve(downloadDir, "chrome-linux64", "chrome");
-      if (existsSync(extractedBin)) {
-        execSync2(`chmod +x "${extractedBin}"`, { stdio: "pipe" });
-        console.log(`[browser] Chrome for Testing installed via wget at ${extractedBin}`);
-        CANDIDATE_PATHS.unshift(extractedBin);
-        return;
-      }
-    }
-  } catch (err5) {
-    console.warn("[browser] Strategy 5 (wget) failed:", err5?.message ?? err5);
-  }
-  try {
-    console.log("[browser] Trying Google Chrome stable install via dpkg...");
-    execSync2(
-      'wget -q -O /tmp/google-chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && dpkg -i /tmp/google-chrome.deb 2>/dev/null || apt-get install -f -y -qq 2>/dev/null && rm -f /tmp/google-chrome.deb',
-      { stdio: "pipe", timeout: 3e5 }
-    );
-    console.log("[browser] Google Chrome stable installed via dpkg");
-    if (resolveChromePath()) return;
-  } catch (err6) {
-    console.warn("[browser] Strategy 6 (dpkg) failed:", err6?.message ?? err6);
   }
   console.error("[browser] All Chrome installation strategies failed. Sync will likely fail.");
-  console.error("[browser] Candidate paths checked:", CANDIDATE_PATHS.join(", "));
 }
 async function launchBrowser(opts = {}) {
   await ensureChrome();
@@ -4691,8 +4641,6 @@ var init_browser = __esm({
     CANDIDATE_PATHS = [
       // Project-local Puppeteer cache (persists across Manus checkpoint restores)
       resolve(PROJECT_ROOT, ".chrome-cache", "chrome"),
-      // Project-local direct download
-      resolve(PROJECT_ROOT, ".chrome-cache", "chrome-direct", "chrome-linux64", "chrome"),
       // Puppeteer cache under current user
       resolve(homedir(), ".cache/puppeteer/chrome"),
       // Puppeteer cache under root (production)
@@ -4756,7 +4704,7 @@ function getTransamericaCredentials() {
   };
 }
 function createImapConnection(credentials2) {
-  return new Promise((resolve3, reject) => {
+  return new Promise((resolve2, reject) => {
     const imap = new Imap({
       user: credentials2.email,
       password: credentials2.appPassword,
@@ -4769,7 +4717,7 @@ function createImapConnection(credentials2) {
     });
     imap.once("ready", () => {
       console.log("[OTP V2] IMAP connection ready");
-      resolve3(imap);
+      resolve2(imap);
     });
     imap.once("error", (err) => {
       console.error("[OTP V2] IMAP connection error:", err.message);
@@ -4779,11 +4727,11 @@ function createImapConnection(credentials2) {
   });
 }
 async function searchForOTPEmail(imap, sessionStartTime, platform, expectedPrefix) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve2) => {
     imap.openBox("INBOX", false, (err, box) => {
       if (err) {
         console.error("[OTP V2] Error opening inbox:", err.message);
-        resolve3({ success: false, error: `Failed to open inbox: ${err.message}` });
+        resolve2({ success: false, error: `Failed to open inbox: ${err.message}` });
         return;
       }
       const searchDate = new Date(sessionStartTime.getTime() - 5 * 60 * 1e3);
@@ -4798,12 +4746,12 @@ async function searchForOTPEmail(imap, sessionStartTime, platform, expectedPrefi
       imap.search([["SINCE", dateStr]], (searchErr, results) => {
         if (searchErr) {
           console.error("[OTP V2] Search error:", searchErr.message);
-          resolve3({ success: false, error: `Search failed: ${searchErr.message}` });
+          resolve2({ success: false, error: `Search failed: ${searchErr.message}` });
           return;
         }
         if (!results || results.length === 0) {
           console.log("[OTP V2] No emails found");
-          resolve3({ success: false, error: "No OTP emails found" });
+          resolve2({ success: false, error: "No OTP emails found" });
           return;
         }
         console.log(`[OTP V2] Found ${results.length} emails to check`);
@@ -4841,7 +4789,7 @@ async function searchForOTPEmail(imap, sessionStartTime, platform, expectedPrefi
         });
         fetch2.once("error", (fetchErr) => {
           console.error("[OTP V2] Fetch error:", fetchErr.message);
-          resolve3({ success: false, error: `Fetch failed: ${fetchErr.message}` });
+          resolve2({ success: false, error: `Fetch failed: ${fetchErr.message}` });
         });
         fetch2.once("end", () => {
           emails.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -4868,7 +4816,7 @@ async function searchForOTPEmail(imap, sessionStartTime, platform, expectedPrefi
             }
             console.log(`[OTP V2] Found valid OTP: ${otp} from email at ${email.date.toISOString()}`);
             usedOTPs.add(otp);
-            resolve3({
+            resolve2({
               success: true,
               otp,
               source: email.from,
@@ -4876,7 +4824,7 @@ async function searchForOTPEmail(imap, sessionStartTime, platform, expectedPrefi
             });
             return;
           }
-          resolve3({ success: false, error: "No valid OTP found in recent emails" });
+          resolve2({ success: false, error: "No valid OTP found in recent emails" });
         });
       });
     });
@@ -4942,7 +4890,7 @@ async function waitForOTPWithSession(credentials2, sessionId, timeoutSeconds = 1
     }
     const waitTime = attempts <= 3 ? 3e3 : Math.min(pollIntervalSeconds * 1e3 * Math.pow(1.1, attempts - 3), 15e3);
     console.log(`[OTP V2] Waiting ${Math.round(waitTime / 1e3)}s before next attempt...`);
-    await new Promise((resolve3) => setTimeout(resolve3, waitTime));
+    await new Promise((resolve2) => setTimeout(resolve2, waitTime));
   }
   endOTPSession(sessionId);
   return { success: false, error: `Timeout waiting for OTP after ${timeoutSeconds} seconds` };
@@ -5013,7 +4961,7 @@ async function loginToTransamerica(keepBrowserOpen = false) {
       page.waitForNavigation({ waitUntil: "networkidle2", timeout: 6e4 }).catch(() => {
       })
     ]);
-    await new Promise((resolve3) => setTimeout(resolve3, 3e3));
+    await new Promise((resolve2) => setTimeout(resolve2, 3e3));
     const pageContent = await page.content();
     const pageText = await page.evaluate(() => document.body.innerText);
     if (pageText.toLowerCase().includes("security question") || pageText.toLowerCase().includes("what city") || pageText.toLowerCase().includes("pet")) {
@@ -5044,7 +4992,7 @@ async function loginToTransamerica(keepBrowserOpen = false) {
           }
         }
       }
-      await new Promise((resolve3) => setTimeout(resolve3, 2e3));
+      await new Promise((resolve2) => setTimeout(resolve2, 2e3));
     }
     const pageUrl = page.url();
     const currentContent = await page.content();
@@ -5110,7 +5058,7 @@ async function loginToTransamerica(keepBrowserOpen = false) {
       }
       await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 3e4 }).catch(() => {
       });
-      await new Promise((resolve3) => setTimeout(resolve3, 2e3));
+      await new Promise((resolve2) => setTimeout(resolve2, 2e3));
     }
     const finalUrl = page.url();
     const finalContent = await page.content();
@@ -5160,7 +5108,7 @@ async function fetchPolicyAlerts(page) {
       waitUntil: "networkidle2",
       timeout: 3e4
     });
-    await new Promise((resolve3) => setTimeout(resolve3, 3e3));
+    await new Promise((resolve2) => setTimeout(resolve2, 3e3));
     const alerts = await page.evaluate(() => {
       const alertElements = document.querySelectorAll(".alert-item, .policy-alert, tr[data-alert]");
       const extractedAlerts = [];
@@ -6964,13 +6912,13 @@ function parseXcelEmailText(text2) {
   return records;
 }
 async function fetchXcelEmail(credentials2) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve2) => {
     const imap = new Imap2(createImapConfig(credentials2));
     imap.once("ready", () => {
       imap.openBox("INBOX", false, (err) => {
         if (err) {
           imap.end();
-          resolve3({ success: false, error: `Failed to open inbox: ${err.message}` });
+          resolve2({ success: false, error: `Failed to open inbox: ${err.message}` });
           return;
         }
         const sinceDate = /* @__PURE__ */ new Date();
@@ -6983,12 +6931,12 @@ async function fetchXcelEmail(credentials2) {
         imap.search(searchCriteria, (searchErr, results) => {
           if (searchErr) {
             imap.end();
-            resolve3({ success: false, error: `Search failed: ${searchErr.message}` });
+            resolve2({ success: false, error: `Search failed: ${searchErr.message}` });
             return;
           }
           if (!results || results.length === 0) {
             imap.end();
-            resolve3({ success: false, error: "No XCEL Solutions emails found in the last 7 days" });
+            resolve2({ success: false, error: "No XCEL Solutions emails found in the last 7 days" });
             return;
           }
           const latestUid = results[results.length - 1];
@@ -6997,10 +6945,10 @@ async function fetchXcelEmail(credentials2) {
             msg.on("body", (stream) => {
               simpleParser2(stream, (parseErr, parsed) => {
                 if (parseErr) {
-                  resolve3({ success: false, error: `Parse failed: ${parseErr.message}` });
+                  resolve2({ success: false, error: `Parse failed: ${parseErr.message}` });
                   return;
                 }
-                resolve3({
+                resolve2({
                   success: true,
                   html: parsed.html || void 0,
                   text: parsed.text || void 0,
@@ -7011,7 +6959,7 @@ async function fetchXcelEmail(credentials2) {
             });
           });
           fetch2.once("error", (fetchErr) => {
-            resolve3({ success: false, error: `Fetch failed: ${fetchErr.message}` });
+            resolve2({ success: false, error: `Fetch failed: ${fetchErr.message}` });
           });
           fetch2.once("end", () => {
             imap.end();
@@ -7020,7 +6968,7 @@ async function fetchXcelEmail(credentials2) {
       });
     });
     imap.once("error", (err) => {
-      resolve3({ success: false, error: `Connection failed: ${err.message}` });
+      resolve2({ success: false, error: `Connection failed: ${err.message}` });
     });
     imap.connect();
   });
@@ -7443,7 +7391,7 @@ ${failureMessages}`
           sentCount++;
           await recordAnniversaryGreetingSent2(policy.policyNumber, currentYear, clientEmail);
         }
-        await new Promise((resolve3) => setTimeout(resolve3, 500));
+        await new Promise((resolve2) => setTimeout(resolve2, 500));
       }
       console.log(`[Sync] Client anniversary greetings: ${sentCount} sent, ${skippedCount} already sent, ${noEmailCount} no email`);
     } else {
@@ -7568,28 +7516,28 @@ function createImapConfig2(credentials2) {
   };
 }
 async function verifyGmailCredentials(credentials2) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve2) => {
     const imap = new Imap3(createImapConfig2(credentials2));
     imap.once("ready", () => {
       console.log(`[Gmail] Successfully connected to ${credentials2.email}`);
       imap.end();
-      resolve3({ success: true });
+      resolve2({ success: true });
     });
     imap.once("error", (err) => {
       console.error(`[Gmail] Connection error for ${credentials2.email}:`, err.message);
-      resolve3({ success: false, error: err.message });
+      resolve2({ success: false, error: err.message });
     });
     imap.connect();
   });
 }
 async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAgeMinutes = 5) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve2) => {
     const imap = new Imap3(createImapConfig2(credentials2));
     imap.once("ready", () => {
       imap.openBox("INBOX", false, (err, box) => {
         if (err) {
           imap.end();
-          resolve3({ success: false, error: `Failed to open inbox: ${err.message}` });
+          resolve2({ success: false, error: `Failed to open inbox: ${err.message}` });
           return;
         }
         const sinceDate = /* @__PURE__ */ new Date();
@@ -7607,12 +7555,12 @@ async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAg
         imap.search(searchCriteria, (searchErr, results) => {
           if (searchErr) {
             imap.end();
-            resolve3({ success: false, error: `Search failed: ${searchErr.message}` });
+            resolve2({ success: false, error: `Search failed: ${searchErr.message}` });
             return;
           }
           if (!results || results.length === 0) {
             imap.end();
-            resolve3({ success: false, error: "No recent OTP emails found" });
+            resolve2({ success: false, error: "No recent OTP emails found" });
             return;
           }
           const latestUid = results[results.length - 1];
@@ -7621,13 +7569,13 @@ async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAg
             msg.on("body", (stream) => {
               simpleParser3(stream, (parseErr, parsed) => {
                 if (parseErr) {
-                  resolve3({ success: false, error: `Parse failed: ${parseErr.message}` });
+                  resolve2({ success: false, error: `Parse failed: ${parseErr.message}` });
                   return;
                 }
                 const body = parsed.text || parsed.html || "";
                 const otp = extractOTPFromText2(body);
                 if (otp) {
-                  resolve3({
+                  resolve2({
                     success: true,
                     otp,
                     subject: parsed.subject,
@@ -7635,7 +7583,7 @@ async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAg
                     receivedAt: parsed.date
                   });
                 } else {
-                  resolve3({
+                  resolve2({
                     success: false,
                     error: "Could not extract OTP from email",
                     subject: parsed.subject
@@ -7645,7 +7593,7 @@ async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAg
             });
           });
           fetch2.once("error", (fetchErr) => {
-            resolve3({ success: false, error: `Fetch failed: ${fetchErr.message}` });
+            resolve2({ success: false, error: `Fetch failed: ${fetchErr.message}` });
           });
           fetch2.once("end", () => {
             imap.end();
@@ -7654,7 +7602,7 @@ async function fetchRecentOTP(credentials2, senderPattern, subjectPattern, maxAg
       });
     });
     imap.once("error", (err) => {
-      resolve3({ success: false, error: `Connection failed: ${err.message}` });
+      resolve2({ success: false, error: `Connection failed: ${err.message}` });
     });
     imap.connect();
   });
@@ -7709,7 +7657,7 @@ async function waitForOTP(credentials2, senderPattern, maxWaitSeconds = 60, poll
         console.log(`[Gmail] Skipping old OTP: ${result.otp} (received at ${otpTime.toISOString()}, before wait started)`);
       }
     }
-    await new Promise((resolve3) => setTimeout(resolve3, pollIntervalSeconds * 1e3));
+    await new Promise((resolve2) => setTimeout(resolve2, pollIntervalSeconds * 1e3));
   }
   return { success: false, error: `Timeout waiting for NEW OTP after ${maxWaitSeconds} seconds` };
 }
@@ -8031,128 +7979,6 @@ var init_queryMetrics = __esm({
   }
 });
 
-// server/lib/playwright-browser.ts
-import { chromium } from "playwright";
-import { existsSync as existsSync2 } from "fs";
-import { resolve as resolve2 } from "path";
-import { execSync } from "child_process";
-async function ensurePlaywrightChromium() {
-  if (playwrightInstallAttempted) return;
-  playwrightInstallAttempted = true;
-  const cacheLocations = [
-    "/root/.cache/ms-playwright",
-    resolve2(process.env.HOME || "/root", ".cache/ms-playwright")
-  ];
-  for (const loc of cacheLocations) {
-    if (existsSync2(loc)) {
-      try {
-        const result = execSync(`find "${loc}" -name "chrome" -o -name "chrome-headless-shell" -o -name "chromium" 2>/dev/null | head -1`, {
-          stdio: "pipe",
-          timeout: 5e3
-        }).toString().trim();
-        if (result) {
-          console.log(`[playwright-browser] Chromium found at: ${result}`);
-          return;
-        }
-      } catch {
-      }
-    }
-  }
-  console.log("[playwright-browser] Chromium not found, attempting auto-install...");
-  const playwrightBin = resolve2(PROJECT_ROOT2, "node_modules/.bin/playwright");
-  if (existsSync2(playwrightBin)) {
-    try {
-      console.log("[playwright-browser] Strategy 1: Installing via node_modules/.bin/playwright...");
-      execSync(`"${playwrightBin}" install chromium`, {
-        stdio: "pipe",
-        timeout: 3e5,
-        cwd: PROJECT_ROOT2
-      });
-      console.log("[playwright-browser] Chromium installed successfully via playwright CLI");
-      try {
-        execSync(`"${playwrightBin}" install-deps chromium`, {
-          stdio: "pipe",
-          timeout: 3e5,
-          cwd: PROJECT_ROOT2
-        });
-        console.log("[playwright-browser] System dependencies installed");
-      } catch (depsErr) {
-        console.warn("[playwright-browser] System deps install failed (non-fatal):", depsErr?.message?.substring(0, 200));
-      }
-      return;
-    } catch (err) {
-      const stderr = err?.stderr?.toString?.() ?? "";
-      console.warn("[playwright-browser] Strategy 1 failed:", err?.message?.substring(0, 200));
-      if (stderr) console.warn("[playwright-browser] stderr:", stderr.substring(0, 300));
-    }
-  }
-  try {
-    console.log("[playwright-browser] Strategy 2: Installing via npx playwright...");
-    execSync("npx playwright install chromium", {
-      stdio: "pipe",
-      timeout: 3e5,
-      cwd: PROJECT_ROOT2
-    });
-    console.log("[playwright-browser] Chromium installed via npx");
-    return;
-  } catch (err2) {
-    console.warn("[playwright-browser] Strategy 2 failed:", err2?.message?.substring(0, 200));
-  }
-  try {
-    console.log("[playwright-browser] Strategy 3: Installing system Chromium...");
-    execSync(
-      "apt-get update -qq && apt-get install -y -qq chromium-browser 2>/dev/null || apt-get install -y -qq chromium 2>/dev/null",
-      { stdio: "pipe", timeout: 3e5 }
-    );
-    console.log("[playwright-browser] System Chromium installed");
-    return;
-  } catch (err3) {
-    console.warn("[playwright-browser] Strategy 3 failed:", err3?.message?.substring(0, 200));
-  }
-  console.error("[playwright-browser] All Chromium installation strategies failed. Sync will likely fail.");
-}
-async function launchPlaywrightBrowser(opts) {
-  await ensurePlaywrightChromium();
-  const systemChromePaths = [
-    "/usr/bin/chromium-browser",
-    "/usr/bin/chromium",
-    "/usr/bin/google-chrome-stable",
-    "/usr/bin/google-chrome"
-  ];
-  let executablePath;
-  for (const p of systemChromePaths) {
-    if (existsSync2(p)) {
-      executablePath = p;
-      break;
-    }
-  }
-  try {
-    const browser = await chromium.launch({
-      headless: opts?.headless ?? true,
-      ...executablePath ? { executablePath } : {}
-    });
-    return browser;
-  } catch (launchErr) {
-    if (!executablePath) {
-      console.error("[playwright-browser] Launch failed and no system chromium found:", launchErr?.message?.substring(0, 200));
-      throw launchErr;
-    }
-    console.warn("[playwright-browser] Retrying launch with system chromium at:", executablePath);
-    return chromium.launch({
-      headless: opts?.headless ?? true,
-      executablePath
-    });
-  }
-}
-var PROJECT_ROOT2, playwrightInstallAttempted;
-var init_playwright_browser = __esm({
-  "server/lib/playwright-browser.ts"() {
-    "use strict";
-    PROJECT_ROOT2 = resolve2(import.meta.dirname, "../..");
-    playwrightInstallAttempted = false;
-  }
-});
-
 // server/encryption.ts
 import crypto from "crypto";
 function getKey() {
@@ -8235,11 +8061,11 @@ var mywfg_service_v3_exports = {};
 __export(mywfg_service_v3_exports, {
   myWFGServiceV3: () => myWFGServiceV3
 });
+import { chromium } from "playwright";
 var MYWFG_URLS, RANK_MAPPING, MyWFGServiceV3, myWFGServiceV3;
 var init_mywfg_service_v3 = __esm({
   "server/mywfg-service-v3.ts"() {
     "use strict";
-    init_playwright_browser();
     init_encryption();
     MYWFG_URLS = {
       base: "https://www.mywfg.com",
@@ -8285,7 +8111,9 @@ var init_mywfg_service_v3 = __esm({
       browser = null;
       async initialize() {
         if (!this.browser) {
-          this.browser = await launchPlaywrightBrowser({ headless: true });
+          this.browser = await chromium.launch({
+            headless: true
+          });
         }
       }
       async cleanup() {
@@ -9682,7 +9510,7 @@ function mustGetEnv7(name) {
   return value;
 }
 function delay(ms) {
-  return new Promise((resolve3) => setTimeout(resolve3, ms));
+  return new Promise((resolve2) => setTimeout(resolve2, ms));
 }
 async function loginToTransamerica2(page) {
   console.log("[TA Alerts] Navigating to Transamerica login...");
@@ -10975,22 +10803,22 @@ var systemRouter = router({
   }),
   // Trigger Chrome installation (admin only)
   installChrome: adminProcedure.mutation(async () => {
-    const { execSync: execSync2 } = await import("child_process");
-    const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
-    const { resolve: resolve3 } = await import("path");
+    const { execSync } = await import("child_process");
+    const { existsSync: existsSync2, readdirSync: readdirSync2 } = await import("fs");
+    const { resolve: resolve2 } = await import("path");
     const { homedir: homedir2 } = await import("os");
     const findChrome = () => {
       const cacheDirs = [
-        resolve3(homedir2(), ".cache/puppeteer/chrome"),
+        resolve2(homedir2(), ".cache/puppeteer/chrome"),
         "/root/.cache/puppeteer/chrome"
       ];
       for (const dir of cacheDirs) {
-        if (existsSync3(dir)) {
+        if (existsSync2(dir)) {
           try {
             const versions = readdirSync2(dir).sort().reverse();
             for (const ver of versions) {
-              const bin = resolve3(dir, ver, "chrome-linux64", "chrome");
-              if (existsSync3(bin)) return bin;
+              const bin = resolve2(dir, ver, "chrome-linux64", "chrome");
+              if (existsSync2(bin)) return bin;
             }
           } catch {
           }
@@ -11001,7 +10829,7 @@ var systemRouter = router({
         "/usr/bin/chromium",
         "/usr/bin/google-chrome-stable"
       ]) {
-        if (existsSync3(p)) return p;
+        if (existsSync2(p)) return p;
       }
       return null;
     };
@@ -11014,7 +10842,7 @@ var systemRouter = router({
       };
     }
     try {
-      execSync2("npx puppeteer browsers install chrome", {
+      execSync("npx puppeteer browsers install chrome", {
         stdio: "pipe",
         timeout: 3e5
       });
@@ -11034,27 +10862,27 @@ var systemRouter = router({
   }),
   // Trigger deployment (admin only) - pulls from GitHub and restarts
   triggerDeploy: adminProcedure.mutation(async () => {
-    const { execSync: execSync2 } = await import("child_process");
+    const { execSync } = await import("child_process");
     const appDir = process.cwd();
     try {
-      execSync2("git pull origin main", {
+      execSync("git pull origin main", {
         cwd: appDir,
         stdio: "pipe",
         timeout: 6e4
       });
-      execSync2("pnpm install --frozen-lockfile", {
+      execSync("pnpm install --frozen-lockfile", {
         cwd: appDir,
         stdio: "pipe",
         timeout: 3e5
       });
-      execSync2("pnpm build", {
+      execSync("pnpm build", {
         cwd: appDir,
         stdio: "pipe",
         timeout: 3e5
       });
       setImmediate(() => {
         try {
-          execSync2("pm2 restart wfgcrm || pm2 restart all", {
+          execSync("pm2 restart wfgcrm || pm2 restart all", {
             stdio: "pipe",
             timeout: 3e4
           });
@@ -11169,10 +10997,10 @@ var dashboardRouter = router({
       const { resolveChromePath: resolveChromePath2 } = await Promise.resolve().then(() => (init_browser(), browser_exports));
       if (!resolveChromePath2()) {
         logger.info("Chrome not found, attempting auto-install before sync...");
-        const { execSync: execSync2 } = await import("child_process");
-        const { resolve: resolve3 } = await import("path");
-        const cacheDir = resolve3(process.cwd(), ".chrome-cache");
-        execSync2(`npx puppeteer browsers install chrome`, {
+        const { execSync } = await import("child_process");
+        const { resolve: resolve2 } = await import("path");
+        const cacheDir = resolve2(process.cwd(), ".chrome-cache");
+        execSync(`npx puppeteer browsers install chrome`, {
           stdio: "pipe",
           timeout: 3e5,
           env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
@@ -11712,19 +11540,19 @@ var mywfgRouter = router({
   // Self-deploy: git pull + pnpm install + pnpm build + pm2 restart
   // Allows updating the production server to the latest code without SSH access
   selfDeploy: protectedProcedure.mutation(async () => {
-    const { execSync: execSync2 } = await import("child_process");
+    const { execSync } = await import("child_process");
     const appDir = process.cwd();
     console.log("[SelfDeploy] Starting self-deploy from", appDir);
     try {
-      const pull = execSync2("git pull origin main 2>&1", { cwd: appDir, timeout: 6e4 }).toString();
+      const pull = execSync("git pull origin main 2>&1", { cwd: appDir, timeout: 6e4 }).toString();
       console.log("[SelfDeploy] git pull:", pull.trim());
-      execSync2("pnpm install --frozen-lockfile 2>&1", { cwd: appDir, timeout: 3e5 });
+      execSync("pnpm install --frozen-lockfile 2>&1", { cwd: appDir, timeout: 3e5 });
       console.log("[SelfDeploy] pnpm install done");
-      execSync2("pnpm build 2>&1", { cwd: appDir, timeout: 3e5 });
+      execSync("pnpm build 2>&1", { cwd: appDir, timeout: 3e5 });
       console.log("[SelfDeploy] pnpm build done");
       setImmediate(() => {
         try {
-          execSync2("pm2 restart wfgcrm 2>&1 || pm2 restart all 2>&1", { timeout: 3e4 });
+          execSync("pm2 restart wfgcrm 2>&1 || pm2 restart all 2>&1", { timeout: 3e4 });
         } catch {
         }
       });
@@ -11739,33 +11567,33 @@ var mywfgRouter = router({
     const { getDb: getDb3 } = await Promise.resolve().then(() => (init_db(), db_exports));
     const schema = await Promise.resolve().then(() => (init_schema(), schema_exports));
     try {
-      const { execSync: execSync2 } = await import("child_process");
-      const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
-      const { resolve: resolve3 } = await import("path");
+      const { execSync } = await import("child_process");
+      const { existsSync: existsSync2, readdirSync: readdirSync2 } = await import("fs");
+      const { resolve: resolve2 } = await import("path");
       const { homedir: homedir2 } = await import("os");
       const findChrome = () => {
-        for (const base of [resolve3(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
-          if (existsSync3(base)) {
+        for (const base of [resolve2(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
+          if (existsSync2(base)) {
             try {
               const vers = readdirSync2(base).sort().reverse();
               for (const v of vers) {
-                const bin = resolve3(base, v, "chrome-linux64", "chrome");
-                if (existsSync3(bin)) return bin;
+                const bin = resolve2(base, v, "chrome-linux64", "chrome");
+                if (existsSync2(bin)) return bin;
               }
             } catch {
             }
           }
         }
         for (const p of ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome-stable"]) {
-          if (existsSync3(p)) return p;
+          if (existsSync2(p)) return p;
         }
         return null;
       };
       if (!findChrome()) {
         console.log("[Manual Sync] Chrome not found, installing...");
         const isRoot = process.getuid && process.getuid() === 0;
-        const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve3(homedir2(), ".cache/puppeteer");
-        execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
+        const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve2(homedir2(), ".cache/puppeteer");
+        execSync(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
           stdio: "pipe",
           timeout: 3e5,
           env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
@@ -11826,15 +11654,15 @@ var mywfgRouter = router({
   }),
   // Trigger git pull + rebuild + restart for production deployments
   triggerDeploy: protectedProcedure.mutation(async () => {
-    const { execSync: execSync2 } = await import("child_process");
+    const { execSync } = await import("child_process");
     const appDir = process.cwd();
     try {
-      execSync2("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
-      execSync2("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
-      execSync2("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+      execSync("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
+      execSync("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+      execSync("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
       setImmediate(() => {
         try {
-          execSync2("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
+          execSync("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
         } catch {
         }
       });
@@ -11845,25 +11673,25 @@ var mywfgRouter = router({
   }),
   // Install Chrome for Puppeteer (fixes 'Could not find Chrome' error on production)
   installChrome: protectedProcedure.mutation(async () => {
-    const { execSync: execSync2 } = await import("child_process");
-    const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
-    const { resolve: resolve3 } = await import("path");
+    const { execSync } = await import("child_process");
+    const { existsSync: existsSync2, readdirSync: readdirSync2 } = await import("fs");
+    const { resolve: resolve2 } = await import("path");
     const { homedir: homedir2 } = await import("os");
     const findChrome = () => {
-      for (const base of [resolve3(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
-        if (existsSync3(base)) {
+      for (const base of [resolve2(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
+        if (existsSync2(base)) {
           try {
             const vers = readdirSync2(base).sort().reverse();
             for (const v of vers) {
-              const bin = resolve3(base, v, "chrome-linux64", "chrome");
-              if (existsSync3(bin)) return bin;
+              const bin = resolve2(base, v, "chrome-linux64", "chrome");
+              if (existsSync2(bin)) return bin;
             }
           } catch {
           }
         }
       }
       for (const p of ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome-stable"]) {
-        if (existsSync3(p)) return p;
+        if (existsSync2(p)) return p;
       }
       return null;
     };
@@ -11873,8 +11701,8 @@ var mywfgRouter = router({
     }
     try {
       const isRoot = process.getuid && process.getuid() === 0;
-      const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve3(homedir2(), ".cache/puppeteer");
-      execSync2(
+      const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve2(homedir2(), ".cache/puppeteer");
+      execSync(
         `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
         { stdio: "pipe", timeout: 3e5, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
       );
@@ -12804,12 +12632,12 @@ function serveStatic(app) {
 init_logger();
 init_env();
 function isPortAvailable(port) {
-  return new Promise((resolve3) => {
+  return new Promise((resolve2) => {
     const server = net.createServer();
     server.listen(port, () => {
-      server.close(() => resolve3(true));
+      server.close(() => resolve2(true));
     });
-    server.on("error", () => resolve3(false));
+    server.on("error", () => resolve2(false));
   });
 }
 async function findAvailablePort(startPort = 3e3) {
@@ -12861,6 +12689,49 @@ async function startServer() {
   app.get("/api/readyz", readyz2);
   app.get("/api/health", healthDetailed2);
   app.get("/api/health/detailed", healthDetailed2);
+  // TEMPORARY: Public endpoint to install Playwright Chromium (will be removed after use)
+  app.post("/api/setup/install-browsers", async (req2, res2) => {
+    const { execSync } = await import("child_process");
+    const appDir = process.cwd();
+    const results = [];
+    try {
+      // Install Playwright Chromium
+      const playwrightBin = appDir + "/node_modules/.bin/playwright";
+      const fs2 = await import("fs");
+      if (fs2.existsSync(playwrightBin)) {
+        try {
+          const out = execSync(playwrightBin + " install chromium 2>&1", { timeout: 300000, cwd: appDir }).toString();
+          results.push({ step: "playwright-chromium", success: true, output: out.substring(0, 500) });
+        } catch(e) {
+          results.push({ step: "playwright-chromium", success: false, error: e.message });
+        }
+        try {
+          const out2 = execSync(playwrightBin + " install-deps chromium 2>&1", { timeout: 120000, cwd: appDir }).toString();
+          results.push({ step: "playwright-deps", success: true, output: out2.substring(0, 500) });
+        } catch(e) {
+          results.push({ step: "playwright-deps", success: false, error: e.message });
+        }
+      } else {
+        results.push({ step: "playwright-chromium", success: false, error: "playwright binary not found at " + playwrightBin });
+      }
+      // Install Puppeteer Chrome
+      const puppeteerBin = appDir + "/node_modules/.bin/puppeteer";
+      if (fs2.existsSync(puppeteerBin)) {
+        try {
+          const out3 = execSync(puppeteerBin + " browsers install chrome 2>&1", { timeout: 300000, cwd: appDir }).toString();
+          results.push({ step: "puppeteer-chrome", success: true, output: out3.substring(0, 500) });
+        } catch(e) {
+          results.push({ step: "puppeteer-chrome", success: false, error: e.message });
+        }
+      } else {
+        results.push({ step: "puppeteer-chrome", success: false, error: "puppeteer binary not found at " + puppeteerBin });
+      }
+    } catch(e) {
+      results.push({ step: "general", success: false, error: e.message });
+    }
+    res2.json({ success: true, results });
+  });
+
   app.get("/api/monitoring/sync", async (req, res) => {
     try {
       const { getMonitoringReport: getMonitoringReport2 } = await Promise.resolve().then(() => (init_monitoring(), monitoring_exports));
@@ -12882,15 +12753,15 @@ async function startServer() {
       res.status(200).json({ ok: true, message: "Deploy triggered" });
       setImmediate(async () => {
         try {
-          const { execSync: execSync2 } = await import("child_process");
+          const { execSync } = await import("child_process");
           const appDir = process.cwd();
           console.log("[Webhook] Pulling latest code...");
-          execSync2("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
-          execSync2("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
-          execSync2("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+          execSync("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
+          execSync("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+          execSync("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
           setTimeout(() => {
             try {
-              execSync2("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
+              execSync("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
             } catch {
             }
           }, 1e3);
@@ -12943,29 +12814,29 @@ async function startServer() {
     try {
       const { requireCronSecret: requireCronSecret2 } = await Promise.resolve().then(() => (init_cronAuth(), cronAuth_exports));
       requireCronSecret2(req);
-      const { execSync: execSync2 } = await import("child_process");
-      const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
-      const { resolve: resolve3 } = await import("path");
+      const { execSync } = await import("child_process");
+      const { existsSync: existsSync2, readdirSync: readdirSync2 } = await import("fs");
+      const { resolve: resolve2 } = await import("path");
       const { homedir: homedir2 } = await import("os");
       const findChrome = () => {
         const cacheDirs = [
-          resolve3(homedir2(), ".cache/puppeteer/chrome"),
+          resolve2(homedir2(), ".cache/puppeteer/chrome"),
           "/root/.cache/puppeteer/chrome"
         ];
         for (const dir of cacheDirs) {
-          if (existsSync3(dir)) {
+          if (existsSync2(dir)) {
             try {
               const versions = readdirSync2(dir).sort().reverse();
               for (const ver of versions) {
-                const bin = resolve3(dir, ver, "chrome-linux64", "chrome");
-                if (existsSync3(bin)) return bin;
+                const bin = resolve2(dir, ver, "chrome-linux64", "chrome");
+                if (existsSync2(bin)) return bin;
               }
             } catch {
             }
           }
         }
         for (const p of ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome-stable"]) {
-          if (existsSync3(p)) return p;
+          if (existsSync2(p)) return p;
         }
         return null;
       };
@@ -12980,9 +12851,9 @@ async function startServer() {
       }
       console.log("[Admin] Installing Chrome for Puppeteer...");
       const isRoot = process.getuid && process.getuid() === 0;
-      const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve3(homedir2(), ".cache/puppeteer");
+      const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve2(homedir2(), ".cache/puppeteer");
       console.log(`[Admin] Using cache dir: ${cacheDir} (isRoot: ${isRoot})`);
-      execSync2(
+      execSync(
         `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
         { stdio: "pipe", timeout: 3e5, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
       );
@@ -13009,8 +12880,8 @@ async function startServer() {
     try {
       const { requireCronSecret: requireCronSecret2 } = await Promise.resolve().then(() => (init_cronAuth(), cronAuth_exports));
       requireCronSecret2(req);
-      const { execSync: execSync2 } = await import("child_process");
-      const { existsSync: existsSync3 } = await import("fs");
+      const { execSync } = await import("child_process");
+      const { existsSync: existsSync2 } = await import("fs");
       const appDir = process.cwd();
       console.log(`[Deploy] Starting deployment from ${appDir}`);
       res.status(202).json({
@@ -13021,13 +12892,13 @@ async function startServer() {
       setImmediate(async () => {
         try {
           console.log("[Deploy] Pulling latest code from GitHub...");
-          execSync2("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
+          execSync("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 });
           console.log("[Deploy] Installing dependencies...");
-          execSync2("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+          execSync("pnpm install --frozen-lockfile", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
           console.log("[Deploy] Building application...");
-          execSync2("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+          execSync("pnpm build", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
           console.log("[Deploy] Restarting application with PM2...");
-          execSync2("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
+          execSync("pm2 restart wfgcrm || pm2 restart all", { stdio: "pipe", timeout: 3e4 });
           console.log("[Deploy] Deployment completed successfully");
         } catch (err) {
           console.error("[Deploy] Deployment failed:", err.message);
