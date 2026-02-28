@@ -1,0 +1,42 @@
+{
+  "syncId": "sync-1772311091284",
+  "startedAt": "2026-02-28T20:38:11.284Z",
+  "completedAt": "2026-02-28T20:38:11.286Z",
+  "durationMs": 2,
+  "results": [
+    {
+      "platform": "MyWFG",
+      "success": false,
+      "skipped": true,
+      "error": "Core configuration missing - DATABASE_URL, JWT_SECRET, VITE_APP_ID, or OAUTH_SERVER_URL not set",
+      "data": null
+    },
+    {
+      "platform": "Transamerica",
+      "success": false,
+      "skipped": true,
+      "error": "Core configuration missing - DATABASE_URL, JWT_SECRET, VITE_APP_ID, or OAUTH_SERVER_URL not set",
+      "data": null
+    }
+  ],
+  "overallSuccess": false,
+  "environment": {
+    "hasCoreConfig": false,
+    "hasMyWFGCreds": false,
+    "hasTransamericaCreds": false,
+    "missingVars": [
+      "DATABASE_URL",
+      "JWT_SECRET",
+      "VITE_APP_ID",
+      "OAUTH_SERVER_URL",
+      "MYWFG_USERNAME",
+      "MYWFG_PASSWORD",
+      "MYWFG_EMAIL",
+      "MYWFG_APP_PASSWORD",
+      "TRANSAMERICA_USERNAME",
+      "TRANSAMERICA_PASSWORD",
+      "TRANSAMERICA_EMAIL",
+      "TRANSAMERICA_APP_PASSWORD"
+    ]
+  }
+}
