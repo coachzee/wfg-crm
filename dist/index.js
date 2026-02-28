@@ -11743,7 +11743,20 @@ var mywfgRouter = router({
       const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
       const { resolve: resolve3 } = await import("path");
       const { homedir: homedir2 } = await import("os");
+      const { fileURLToPath } = await import("url");
+      const PROJECT_ROOT_DIR = resolve3(import.meta.dirname, "../..");
       const findChrome = () => {
+        const projectCacheDir = resolve3(PROJECT_ROOT_DIR, ".chrome-cache", "chrome");
+        if (existsSync3(projectCacheDir)) {
+          try {
+            const vers = readdirSync2(projectCacheDir).sort().reverse();
+            for (const v of vers) {
+              const bin = resolve3(projectCacheDir, v, "chrome-linux64", "chrome");
+              if (existsSync3(bin)) return bin;
+            }
+          } catch {
+          }
+        }
         for (const base of [resolve3(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
           if (existsSync3(base)) {
             try {
@@ -11761,16 +11774,28 @@ var mywfgRouter = router({
         }
         return null;
       };
-      if (!findChrome()) {
+      const foundChrome = findChrome();
+      if (!foundChrome) {
         console.log("[Manual Sync] Chrome not found, installing...");
         const isRoot = process.getuid && process.getuid() === 0;
         const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve3(homedir2(), ".cache/puppeteer");
-        execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
-          stdio: "pipe",
-          timeout: 3e5,
-          env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
-        });
+        const puppeteerBin = resolve3(PROJECT_ROOT_DIR, "node_modules/.bin/puppeteer");
+        if (existsSync3(puppeteerBin)) {
+          execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} "${puppeteerBin}" browsers install chrome`, {
+            stdio: "pipe",
+            timeout: 3e5,
+            env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
+          });
+        } else {
+          execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
+            stdio: "pipe",
+            timeout: 3e5,
+            env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
+          });
+        }
         console.log("[Manual Sync] Chrome installed to", cacheDir);
+      } else {
+        console.log("[Manual Sync] Chrome found at:", foundChrome);
       }
     } catch (chromeErr) {
       console.warn("[Manual Sync] Chrome pre-install failed (will try anyway):", chromeErr?.message);
@@ -11849,7 +11874,19 @@ var mywfgRouter = router({
     const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
     const { resolve: resolve3 } = await import("path");
     const { homedir: homedir2 } = await import("os");
+    const PROJECT_ROOT_IC = resolve3(import.meta.dirname, "../..");
     const findChrome = () => {
+      const projectCacheDir = resolve3(PROJECT_ROOT_IC, ".chrome-cache", "chrome");
+      if (existsSync3(projectCacheDir)) {
+        try {
+          const vers = readdirSync2(projectCacheDir).sort().reverse();
+          for (const v of vers) {
+            const bin = resolve3(projectCacheDir, v, "chrome-linux64", "chrome");
+            if (existsSync3(bin)) return bin;
+          }
+        } catch {
+        }
+      }
       for (const base of [resolve3(homedir2(), ".cache/puppeteer/chrome"), "/root/.cache/puppeteer/chrome"]) {
         if (existsSync3(base)) {
           try {
@@ -11874,10 +11911,18 @@ var mywfgRouter = router({
     try {
       const isRoot = process.getuid && process.getuid() === 0;
       const cacheDir = isRoot ? "/root/.cache/puppeteer" : resolve3(homedir2(), ".cache/puppeteer");
-      execSync2(
-        `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
-        { stdio: "pipe", timeout: 3e5, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
-      );
+      const puppeteerBin = resolve3(PROJECT_ROOT_IC, "node_modules/.bin/puppeteer");
+      if (existsSync3(puppeteerBin)) {
+        execSync2(
+          `PUPPETEER_CACHE_DIR=${cacheDir} "${puppeteerBin}" browsers install chrome`,
+          { stdio: "pipe", timeout: 3e5, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
+        );
+      } else {
+        execSync2(
+          `PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`,
+          { stdio: "pipe", timeout: 3e5, env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir } }
+        );
+      }
       const newPath = findChrome();
       return { success: true, message: "Chrome installed successfully", chromePath: newPath };
     } catch (err) {
