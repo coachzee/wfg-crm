@@ -9,7 +9,14 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 
-const PROJECT_ROOT = resolve(import.meta.dirname, '../..');
+// Detect project root correctly in both dev (server/_core/) and production (dist/)
+const PROJECT_ROOT = (() => {
+  const oneUp = resolve(import.meta.dirname, '..');
+  const twoUp = resolve(import.meta.dirname, '../..');
+  if (existsSync(resolve(oneUp, 'package.json'))) return oneUp;
+  if (existsSync(resolve(twoUp, 'package.json'))) return twoUp;
+  return process.cwd();
+})();
 
 let playwrightInstallAttempted = false;
 

@@ -13,8 +13,25 @@ import { existsSync, readdirSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 import { homedir } from 'os';
 
-/** Resolve the project root directory (two levels up from server/lib/) */
-const PROJECT_ROOT = resolve(import.meta.dirname, '../..');
+/**
+ * Resolve the project root directory.
+ * - In development (tsx server/_core/index.ts): import.meta.dirname = /app/server/_core → '../..' = /app ✓
+ * - In production (node dist/index.js): import.meta.dirname = /app/dist → '..' = /app ✓
+ * We detect the environment by checking if package.json exists one level up (production)
+ * vs two levels up (development).
+ */
+function findProjectRoot(): string {
+  // Production: dist/index.js → import.meta.dirname is /app/dist → one level up is /app
+  const oneUp = resolve(import.meta.dirname, '..');
+  const twoUp = resolve(import.meta.dirname, '../..');
+  // If package.json exists one level up, we're in production (dist/)
+  if (existsSync(resolve(oneUp, 'package.json'))) return oneUp;
+  // Otherwise we're in development (server/_core/) → two levels up is project root
+  if (existsSync(resolve(twoUp, 'package.json'))) return twoUp;
+  // Fallback: use process.cwd() which is typically the project root
+  return process.cwd();
+}
+const PROJECT_ROOT = findProjectRoot();
 
 /** Common Chrome / Chromium paths across Linux environments */
 const CANDIDATE_PATHS = [

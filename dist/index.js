@@ -4520,6 +4520,13 @@ import puppeteer from "puppeteer";
 import { existsSync, readdirSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { homedir } from "os";
+function findProjectRoot() {
+  const oneUp = resolve(import.meta.dirname, "..");
+  const twoUp = resolve(import.meta.dirname, "../..");
+  if (existsSync(resolve(oneUp, "package.json"))) return oneUp;
+  if (existsSync(resolve(twoUp, "package.json"))) return twoUp;
+  return process.cwd();
+}
 function findChromeInCache(cacheDir) {
   if (!existsSync(cacheDir)) return null;
   try {
@@ -4687,7 +4694,7 @@ var PROJECT_ROOT, CANDIDATE_PATHS, DEFAULT_ARGS, DEFAULT_USER_AGENT;
 var init_browser = __esm({
   "server/lib/browser.ts"() {
     "use strict";
-    PROJECT_ROOT = resolve(import.meta.dirname, "../..");
+    PROJECT_ROOT = findProjectRoot();
     CANDIDATE_PATHS = [
       // Project-local Puppeteer cache (persists across Manus checkpoint restores)
       resolve(PROJECT_ROOT, ".chrome-cache", "chrome"),
@@ -8148,7 +8155,13 @@ var PROJECT_ROOT2, playwrightInstallAttempted;
 var init_playwright_browser = __esm({
   "server/lib/playwright-browser.ts"() {
     "use strict";
-    PROJECT_ROOT2 = resolve2(import.meta.dirname, "../..");
+    PROJECT_ROOT2 = (() => {
+      const oneUp = resolve2(import.meta.dirname, "..");
+      const twoUp = resolve2(import.meta.dirname, "../..");
+      if (existsSync2(resolve2(oneUp, "package.json"))) return oneUp;
+      if (existsSync2(resolve2(twoUp, "package.json"))) return twoUp;
+      return process.cwd();
+    })();
     playwrightInstallAttempted = false;
   }
 });
@@ -11744,7 +11757,13 @@ var mywfgRouter = router({
       const { resolve: resolve3 } = await import("path");
       const { homedir: homedir2 } = await import("os");
       const { fileURLToPath } = await import("url");
-      const PROJECT_ROOT_DIR = resolve3(import.meta.dirname, "../..");
+      const PROJECT_ROOT_DIR = (() => {
+        const oneUp = resolve3(import.meta.dirname, "..");
+        const twoUp = resolve3(import.meta.dirname, "../..");
+        if (existsSync3(resolve3(oneUp, "package.json"))) return oneUp;
+        if (existsSync3(resolve3(twoUp, "package.json"))) return twoUp;
+        return process.cwd();
+      })();
       const findChrome = () => {
         const projectCacheDir = resolve3(PROJECT_ROOT_DIR, ".chrome-cache", "chrome");
         if (existsSync3(projectCacheDir)) {
@@ -11874,7 +11893,13 @@ var mywfgRouter = router({
     const { existsSync: existsSync3, readdirSync: readdirSync2 } = await import("fs");
     const { resolve: resolve3 } = await import("path");
     const { homedir: homedir2 } = await import("os");
-    const PROJECT_ROOT_IC = resolve3(import.meta.dirname, "../..");
+    const PROJECT_ROOT_IC = (() => {
+      const oneUp = resolve3(import.meta.dirname, "..");
+      const twoUp = resolve3(import.meta.dirname, "../..");
+      if (existsSync3(resolve3(oneUp, "package.json"))) return oneUp;
+      if (existsSync3(resolve3(twoUp, "package.json"))) return twoUp;
+      return process.cwd();
+    })();
     const findChrome = () => {
       const projectCacheDir = resolve3(PROJECT_ROOT_IC, ".chrome-cache", "chrome");
       if (existsSync3(projectCacheDir)) {

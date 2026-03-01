@@ -96,7 +96,14 @@ export const mywfgRouter = router({
       const { resolve } = await import('path');
       const { homedir } = await import('os');
       const { fileURLToPath } = await import('url');
-      const PROJECT_ROOT_DIR = resolve(import.meta.dirname, '../..');
+      // Detect project root correctly in both dev (server/_core/) and production (dist/)
+      const PROJECT_ROOT_DIR = (() => {
+        const oneUp = resolve(import.meta.dirname, '..');
+        const twoUp = resolve(import.meta.dirname, '../..');
+        if (existsSync(resolve(oneUp, 'package.json'))) return oneUp;
+        if (existsSync(resolve(twoUp, 'package.json'))) return twoUp;
+        return process.cwd();
+      })();
       const findChrome = () => {
         // Check project .chrome-cache first (most reliable on production)
         const projectCacheDir = resolve(PROJECT_ROOT_DIR, '.chrome-cache', 'chrome');
@@ -233,7 +240,14 @@ export const mywfgRouter = router({
     const { existsSync, readdirSync } = await import('fs');
     const { resolve } = await import('path');
     const { homedir } = await import('os');
-    const PROJECT_ROOT_IC = resolve(import.meta.dirname, '../..');
+    // Detect project root correctly in both dev (server/_core/) and production (dist/)
+    const PROJECT_ROOT_IC = (() => {
+      const oneUp = resolve(import.meta.dirname, '..');
+      const twoUp = resolve(import.meta.dirname, '../..');
+      if (existsSync(resolve(oneUp, 'package.json'))) return oneUp;
+      if (existsSync(resolve(twoUp, 'package.json'))) return twoUp;
+      return process.cwd();
+    })();
     const findChrome = (): string | null => {
       // Check project .chrome-cache first (most reliable on production)
       const projectCacheDir = resolve(PROJECT_ROOT_IC, '.chrome-cache', 'chrome');
