@@ -1,5 +1,5 @@
-import { type Browser, type Page } from "playwright";
-import { launchPlaywrightBrowser } from "./lib/playwright-browser";
+import { type Browser, type Page } from "puppeteer";
+import { launchBrowser } from "./lib/browser";
 import { decryptCredential } from "./encryption";
 
 // Report URLs discovered from mywfg.com exploration
@@ -121,7 +121,8 @@ class MyWFGServiceV3 {
 
   async initialize(): Promise<void> {
     if (!this.browser) {
-      this.browser = await launchPlaywrightBrowser({ headless: true });
+      const { browser } = await launchBrowser();
+      this.browser = browser;
     }
   }
 
@@ -190,7 +191,7 @@ class MyWFGServiceV3 {
       try {
         // Navigate to mywfg.com
         console.log("[MyWFG] Navigating to mywfg.com...");
-        await page.goto(MYWFG_URLS.login, { waitUntil: "networkidle", timeout: 60000 });
+        await page.goto(MYWFG_URLS.login, { waitUntil: "networkidle0", timeout: 60000 });
 
         console.log("[MyWFG] Page loaded. Attempting login...");
 
@@ -201,7 +202,8 @@ class MyWFGServiceV3 {
         }
 
         console.log("[MyWFG] Filling username...");
-        await usernameInput.fill(username);
+        await usernameInput.click({ clickCount: 3 });
+        await usernameInput.type(username, { delay: 50 });
         await page.waitForTimeout(500);
 
         // Step 2: Fill in password
@@ -211,7 +213,8 @@ class MyWFGServiceV3 {
         }
 
         console.log("[MyWFG] Filling password...");
-        await passwordInput.fill(password);
+        await passwordInput.click({ clickCount: 3 });
+        await passwordInput.type(password, { delay: 50 });
         await page.waitForTimeout(500);
 
         // Step 3: Click login button
@@ -231,7 +234,8 @@ class MyWFGServiceV3 {
         
         if (validationField && validationCode) {
           console.log("[MyWFG] Validation code field detected. Entering validation code...");
-          await validationField.fill(validationCode);
+          await validationField.click({ clickCount: 3 });
+          await validationField.type(validationCode, { delay: 50 });
           await page.waitForTimeout(500);
 
           // Find and click submit button for validation
@@ -260,7 +264,7 @@ class MyWFGServiceV3 {
 
         // Wait for navigation
         try {
-          await page.waitForNavigation({ waitUntil: "networkidle", timeout: 30000 });
+          await page.waitForNavigation({ waitUntil: "networkidle0", timeout: 30000 });
         } catch (e) {
           console.log("[MyWFG] Navigation timeout (continuing)");
         }
@@ -371,15 +375,19 @@ class MyWFGServiceV3 {
     return inputs[0] || null;
   }
 
-  private async findButton(page: Page, texts: string[]): Promise<any> {
+   private async findButton(page: Page, texts: string[]): Promise<any> {
     for (const text of texts) {
-      const button = await page.$(`button:has-text("${text}")`);
-      if (button) return button;
-
+      // Try type attribute first
       const button2 = await page.$(`button[type="${text}"]`);
       if (button2) return button2;
+      // Try text content match using Puppeteer evaluate
+      const buttonByText = await page.evaluateHandle((t) => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.find(b => b.textContent?.trim().toLowerCase().includes(t.toLowerCase())) || null;
+      }, text);
+      const el = buttonByText.asElement();
+      if (el) return el;
     }
-
     // Fallback: get first button
     const buttons = await page.$$("button");
     return buttons[0] || null;
@@ -392,7 +400,7 @@ class MyWFGServiceV3 {
     console.log("[MyWFG] Navigating to Downline Status report...");
     
     try {
-      await page.goto(MYWFG_URLS.reports.downlineStatus, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(MYWFG_URLS.reports.downlineStatus, { waitUntil: "networkidle0", timeout: 30000 });
       await page.waitForTimeout(2000);
 
       const agents = await page.evaluate(() => {
@@ -452,7 +460,7 @@ class MyWFGServiceV3 {
     console.log("[MyWFG] Navigating to Commissions Summary report...");
     
     try {
-      await page.goto(MYWFG_URLS.reports.commissionsSummary, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(MYWFG_URLS.reports.commissionsSummary, { waitUntil: "networkidle0", timeout: 30000 });
       await page.waitForTimeout(2000);
 
       const records = await page.evaluate(() => {
@@ -509,7 +517,7 @@ class MyWFGServiceV3 {
     console.log("[MyWFG] Navigating to Payment Report...");
     
     try {
-      await page.goto(MYWFG_URLS.reports.paymentReport, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(MYWFG_URLS.reports.paymentReport, { waitUntil: "networkidle0", timeout: 30000 });
       await page.waitForTimeout(2000);
 
       const payments = await page.evaluate(() => {
@@ -569,7 +577,7 @@ class MyWFGServiceV3 {
     console.log("[MyWFG] Navigating to Total Cash Flow report...");
     
     try {
-      await page.goto(MYWFG_URLS.reports.totalCashFlow, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(MYWFG_URLS.reports.totalCashFlow, { waitUntil: "networkidle0", timeout: 30000 });
       await page.waitForTimeout(2000);
 
       const records = await page.evaluate(() => {
@@ -623,11 +631,11 @@ class MyWFGServiceV3 {
     console.log("[MyWFG] Navigating to Team Chart...");
     
     try {
-      await page.goto(MYWFG_URLS.teamChart, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(MYWFG_URLS.teamChart, { waitUntil: "networkidle0", timeout: 30000 });
       await page.waitForTimeout(2000);
 
       // Click expand button if available to show full hierarchy
-      const expandButton = await page.$('button:has-text("Expand"), [data-expand], .expand-all');
+      const expandButton = await page.$('[data-expand], .expand-all');
       if (expandButton) {
         await expandButton.click();
         await page.waitForTimeout(1000);
