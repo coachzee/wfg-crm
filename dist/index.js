@@ -12931,6 +12931,139 @@ async function startServer() {
   app.get("/api/readyz", readyz2);
   app.get("/api/health", healthDetailed2);
   app.get("/api/health/detailed", healthDetailed2);
+  app.post("/api/setup/install-chrome", async (req, res) => {
+    try {
+      const { execSync: execSync2 } = await import("child_process");
+      const { existsSync: existsSync3, readdirSync: readdirSync2, mkdirSync: mkdirSync2 } = await import("fs");
+      const { resolve: resolve3 } = await import("path");
+      const { homedir: homedir2 } = await import("os");
+      const appDir = process.cwd();
+      const findChrome = () => {
+        const cacheDirs = [
+          resolve3(appDir, ".chrome-cache", "chrome"),
+          resolve3(appDir, ".chrome-cache", "chrome-direct", "chrome-linux64"),
+          resolve3(homedir2(), ".cache/puppeteer/chrome"),
+          "/root/.cache/puppeteer/chrome"
+        ];
+        for (const dir of cacheDirs) {
+          if (existsSync3(dir)) {
+            try {
+              if (dir.endsWith("chrome-linux64")) {
+                const bin = resolve3(dir, "chrome");
+                if (existsSync3(bin)) return bin;
+              } else {
+                const versions = readdirSync2(dir).sort().reverse();
+                for (const ver of versions) {
+                  const bin = resolve3(dir, ver, "chrome-linux64", "chrome");
+                  if (existsSync3(bin)) return bin;
+                }
+              }
+            } catch {
+            }
+          }
+        }
+        for (const p of ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome-stable", "/usr/bin/google-chrome"]) {
+          if (existsSync3(p)) return p;
+        }
+        return null;
+      };
+      const existing = findChrome();
+      if (existing) {
+        return res.status(200).json({ success: true, message: "Chrome already installed", chromePath: existing });
+      }
+      console.log("[Setup] Chrome not found, installing...");
+      const results = [];
+      try {
+        const puppeteerBin = resolve3(appDir, "node_modules/.bin/puppeteer");
+        const cacheDir = resolve3(appDir, ".chrome-cache");
+        mkdirSync2(cacheDir, { recursive: true });
+        if (existsSync3(puppeteerBin)) {
+          execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} "${puppeteerBin}" browsers install chrome`, {
+            stdio: "pipe",
+            timeout: 3e5,
+            env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
+          });
+          results.push("Strategy 1 (puppeteer CLI): success");
+        } else {
+          execSync2(`PUPPETEER_CACHE_DIR=${cacheDir} npx puppeteer browsers install chrome`, {
+            stdio: "pipe",
+            timeout: 3e5,
+            env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
+          });
+          results.push("Strategy 1 (npx puppeteer): success");
+        }
+      } catch (e) {
+        results.push(`Strategy 1 failed: ${e.message?.substring(0, 200)}`);
+      }
+      let chromePath = findChrome();
+      if (chromePath) {
+        return res.status(200).json({ success: true, message: "Chrome installed", chromePath, strategies: results });
+      }
+      try {
+        const downloadDir = resolve3(appDir, ".chrome-cache", "chrome-direct");
+        mkdirSync2(downloadDir, { recursive: true });
+        const versionJson = execSync2(
+          'curl -sS "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"',
+          { stdio: "pipe", timeout: 3e4 }
+        ).toString();
+        const data = JSON.parse(versionJson);
+        const url = data?.channels?.Stable?.downloads?.chrome?.find((d) => d.platform === "linux64")?.url;
+        if (url) {
+          execSync2(
+            `cd "${downloadDir}" && curl -sSL "${url}" -o chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip && chmod +x chrome-linux64/chrome`,
+            { stdio: "pipe", timeout: 3e5 }
+          );
+          results.push("Strategy 2 (direct download): success");
+        }
+      } catch (e) {
+        results.push(`Strategy 2 failed: ${e.message?.substring(0, 200)}`);
+      }
+      chromePath = findChrome();
+      if (chromePath) {
+        return res.status(200).json({ success: true, message: "Chrome installed", chromePath, strategies: results });
+      }
+      try {
+        execSync2(
+          'wget -q -O /tmp/google-chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && dpkg -i /tmp/google-chrome.deb 2>/dev/null || apt-get install -f -y -qq 2>/dev/null && rm -f /tmp/google-chrome.deb',
+          { stdio: "pipe", timeout: 3e5 }
+        );
+        results.push("Strategy 3 (dpkg): success");
+      } catch (e) {
+        results.push(`Strategy 3 failed: ${e.message?.substring(0, 200)}`);
+      }
+      chromePath = findChrome();
+      res.status(chromePath ? 200 : 500).json({
+        success: !!chromePath,
+        message: chromePath ? "Chrome installed" : "All strategies failed",
+        chromePath,
+        strategies: results
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+  app.post("/api/setup/deploy", async (req, res) => {
+    try {
+      const { execSync: execSync2 } = await import("child_process");
+      const appDir = process.cwd();
+      console.log(`[Setup Deploy] Starting deployment from ${appDir}`);
+      const pull = execSync2("git pull origin main", { cwd: appDir, stdio: "pipe", timeout: 6e4 }).toString();
+      console.log("[Setup Deploy] git pull:", pull.trim());
+      execSync2("pnpm install --frozen-lockfile 2>&1 || pnpm install 2>&1", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+      console.log("[Setup Deploy] pnpm install done");
+      execSync2("pnpm build 2>&1", { cwd: appDir, stdio: "pipe", timeout: 3e5 });
+      console.log("[Setup Deploy] pnpm build done");
+      res.status(202).json({ success: true, message: "Deploy started, restarting...", pull: pull.trim() });
+      setImmediate(() => {
+        try {
+          execSync2("pm2 restart wfgcrm 2>&1 || pm2 restart all 2>&1", { timeout: 3e4 });
+        } catch {
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
   app.get("/api/monitoring/sync", async (req, res) => {
     try {
       const { getMonitoringReport: getMonitoringReport2 } = await Promise.resolve().then(() => (init_monitoring(), monitoring_exports));
