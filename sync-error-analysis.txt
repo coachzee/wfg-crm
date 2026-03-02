@@ -1,0 +1,20 @@
+Sync Error Analysis - 2026-03-02
+================================
+
+Previous error (first attempt):
+  "Could not find Chrome (ver. 143.0.7499.169)" - Puppeteer error
+
+Current error (second attempt, Mar 2, 2026 8:56 PM):
+  "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell"
+  "Looks like Playwright Test or Playwright was just installed or updated."
+  "Please run the following command to download new browsers: npx playwright install"
+  
+This is a PLAYWRIGHT error, not Puppeteer. This means:
+1. The deployed code uses Playwright for some sync operations
+2. The Transamerica sync likely uses Playwright (mywfg-service-v3.ts)
+3. The MyWFG sync uses Puppeteer
+
+Both browsers are missing on the production server.
+The production server needs both:
+- Chrome for Puppeteer (MyWFG sync)
+- Chromium for Playwright (Transamerica sync)

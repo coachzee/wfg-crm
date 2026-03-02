@@ -1,0 +1,58 @@
+WFG-CRM Full Sync Results - March 2, 2026
+==========================================
+
+Sync Triggered: 2026-03-02T21:03:08Z (via dashboard.triggerSync tRPC endpoint)
+Authentication: Zaid Shopeju (Team Member) - authenticated via Manus OAuth
+
+Platform Results:
+-----------------
+
+1. MyWFG Sync:
+   Status: FAILED
+   Error: Could not find Chrome (ver. 143.0.7499.169). This can occur if either
+          1. you did not perform an installation before running the script 
+             (e.g. `npx puppeteer browsers install chrome`) or
+          2. your cache path is incorrectly configured (which is: /root/.cache/puppeteer).
+
+2. Transamerica Sync:
+   Status: FAILED
+   Error: Could not find Chrome (ver. 143.0.7499.169). This can occur if either
+          1. you did not perform an installation before running the script 
+             (e.g. `npx puppeteer browsers install chrome`) or
+          2. your cache path is incorrectly configured (which is: /root/.cache/puppeteer).
+
+Root Cause Analysis:
+--------------------
+The production server (crm.wealthbuildershaven.com) is a Manus-hosted web application
+running from a checkpoint that was created WITHOUT Chrome/Chromium browsers installed.
+
+The deployed code uses Puppeteer for browser automation (MyWFG login, Transamerica login,
+data scraping). Puppeteer requires Chrome to be installed at /root/.cache/puppeteer or
+a project-local .chrome-cache directory.
+
+The .chrome-cache directory (609MB) is in .gitignore and not included in the Git repository.
+When the Manus checkpoint was created, Chrome was not bundled with it.
+
+The server's start script does `git pull origin main --ff-only` before starting, but
+the server has not been restarted since the checkpoint was restored.
+
+Resolution Steps Required:
+--------------------------
+1. The production server needs to be RESTARTED so it can:
+   a. Pull the latest code from GitHub (which includes startup.sh with Chrome install)
+   b. Run startup.sh which installs Chrome for Testing before starting the server
+   
+2. Alternatively, a new Manus checkpoint needs to be created that includes Chrome
+
+3. The user can trigger a restart by:
+   a. Going to the Manus Management UI and clicking "Publish" on a new checkpoint
+   b. Or asking Manus to redeploy the WFG-CRM app in a new task
+
+Code Changes Pushed to GitHub:
+------------------------------
+- Updated package.json start script to use startup.sh (which installs Chrome)
+- startup.sh has 3 Chrome installation strategies:
+  1. Check project-local .chrome-cache
+  2. Download Chrome for Testing from Google
+  3. Install Google Chrome Stable via dpkg
+- Also installs Playwright Chromium as fallback
