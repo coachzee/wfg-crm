@@ -1,0 +1,22 @@
+Production Server Status (2026-03-02):
+- URL: https://crm.wealthbuildershaven.com
+- Hosting: Manus-hosted (not Hostinger)
+- Server: Node v22.20.0, Linux
+- Database: Connected (pass, 4ms latency)
+- Uptime: ~290 seconds at time of check
+
+Credentials Status:
+- MyWFG Email: Configured
+- MyWFG Login: Configured
+- Transamerica Email: Configured
+- Transamerica Login: Configured
+
+Sync Trigger Result:
+- MyWFG: FAILED - Chrome not found (ver. 143.0.7499.169)
+- Transamerica: FAILED - Chrome not found (ver. 143.0.7499.169)
+- Error: Could not find Chrome. Cache path: /root/.cache/puppeteer
+
+Issue: Chrome/Puppeteer is not installed on the Manus production server.
+The ensureChrome() function with 6 strategies failed to install Chrome.
+This is likely because the Manus container doesn't have write access to system dirs
+or the Chrome download strategies all fail in that environment.

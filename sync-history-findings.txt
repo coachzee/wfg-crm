@@ -1,0 +1,7 @@
+Last successful syncs were on 2026-01-28 (Transamerica Alerts).
+The production server had Chrome working at that time.
+Since then, a checkpoint restore likely cleared the Chrome cache.
+The current production server is Manus-hosted and Chrome is missing.
+The deployed code is from an older checkpoint that doesn't have selfDeploy or installChrome tRPC endpoints.
+The dashboard.triggerSync endpoint exists (status 405 for GET = mutation only, which is correct).
+We successfully triggered it via POST and it ran but Chrome was not found.
