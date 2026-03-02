@@ -140,18 +140,18 @@ export const dashboardRouter = router({
     logger.info("Triggering full sync");
     // Ensure Chrome is installed before running sync (fixes checkpoint restore issue)
     try {
-      const { resolveChromePath } = await import("../lib/browser");
+      const { resolveChromePath, ensureChrome } = await import("../lib/browser");
       if (!resolveChromePath()) {
-        logger.info("Chrome not found, attempting auto-install before sync...");
-        const { execSync } = await import("child_process");
-        const { resolve } = await import("path");
-        const cacheDir = resolve(process.cwd(), '.chrome-cache');
-        execSync(`npx puppeteer browsers install chrome`, {
-          stdio: 'pipe',
-          timeout: 300_000,
-          env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir },
-        });
-        logger.info("Chrome auto-installed successfully");
+        logger.info("Chrome not found, running ensureChrome with all strategies...");
+        await ensureChrome();
+        const chromePath = resolveChromePath();
+        if (chromePath) {
+          logger.info(`Chrome installed successfully at ${chromePath}`);
+        } else {
+          logger.warn("Chrome installation completed but no binary found");
+        }
+      } else {
+        logger.info(`Chrome already available at ${resolveChromePath()}`);
       }
     } catch (chromeErr: any) {
       logger.warn("Chrome pre-install attempt failed (sync will try again)", { error: chromeErr?.message });

@@ -11059,18 +11059,18 @@ var dashboardRouter = router({
   triggerSync: protectedProcedure.mutation(async () => {
     logger.info("Triggering full sync");
     try {
-      const { resolveChromePath: resolveChromePath2 } = await Promise.resolve().then(() => (init_browser(), browser_exports));
+      const { resolveChromePath: resolveChromePath2, ensureChrome: ensureChrome2 } = await Promise.resolve().then(() => (init_browser(), browser_exports));
       if (!resolveChromePath2()) {
-        logger.info("Chrome not found, attempting auto-install before sync...");
-        const { execSync } = await import("child_process");
-        const { resolve: resolve2 } = await import("path");
-        const cacheDir = resolve2(process.cwd(), ".chrome-cache");
-        execSync(`npx puppeteer browsers install chrome`, {
-          stdio: "pipe",
-          timeout: 3e5,
-          env: { ...process.env, PUPPETEER_CACHE_DIR: cacheDir }
-        });
-        logger.info("Chrome auto-installed successfully");
+        logger.info("Chrome not found, running ensureChrome with all strategies...");
+        await ensureChrome2();
+        const chromePath = resolveChromePath2();
+        if (chromePath) {
+          logger.info(`Chrome installed successfully at ${chromePath}`);
+        } else {
+          logger.warn("Chrome installation completed but no binary found");
+        }
+      } else {
+        logger.info(`Chrome already available at ${resolveChromePath2()}`);
       }
     } catch (chromeErr) {
       logger.warn("Chrome pre-install attempt failed (sync will try again)", { error: chromeErr?.message });
