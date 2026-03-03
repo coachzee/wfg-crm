@@ -335,4 +335,59 @@ export const mywfgRouter = router({
   testMode: protectedProcedure.query(async () => {
     return { mode: 'tsx-live-v1', timestamp: new Date().toISOString() };
   }),
+
+  // Install Chrome via direct download (bypasses puppeteer CLI issues on Manus)
+  installChromeForce: protectedProcedure.mutation(async () => {
+    const { execSync } = await import('child_process');
+    const { existsSync, mkdirSync } = await import('fs');
+    const { resolve } = await import('path');
+    const { homedir } = await import('os');
+    const PROJECT_ROOT_DIR = (() => {
+      const oneUp = resolve(import.meta.dirname, '..');
+      const twoUp = resolve(import.meta.dirname, '../..');
+      if (existsSync(resolve(oneUp, 'package.json'))) return oneUp;
+      if (existsSync(resolve(twoUp, 'package.json'))) return twoUp;
+      return process.cwd();
+    })();
+    const results: string[] = [];
+    // Strategy 1: puppeteer CLI to default cache
+    try {
+      const cacheDir = '/root/.cache/puppeteer';
+      const puppeteerBin = resolve(PROJECT_ROOT_DIR, 'node_modules/.bin/puppeteer');
+      if (existsSync(puppeteerBin)) {
+        execSync(`PUPPETEER_CACHE_DIR=${cacheDir} "${puppeteerBin}" browsers install chrome 2>&1`, { timeout: 300000, stdio: 'pipe' });
+        results.push('Strategy 1 (puppeteer CLI): SUCCESS');
+      } else {
+        execSync(`PUPPETEER_CACHE_DIR=${cacheDir} npx --yes puppeteer browsers install chrome 2>&1`, { timeout: 300000, stdio: 'pipe' });
+        results.push('Strategy 1 (npx puppeteer): SUCCESS');
+      }
+    } catch (e: any) { results.push(`Strategy 1 failed: ${e.message?.substring(0, 100)}`); }
+    // Strategy 2: Direct download from Google
+    try {
+      const downloadDir = resolve(PROJECT_ROOT_DIR, '.chrome-cache', 'chrome-direct');
+      mkdirSync(downloadDir, { recursive: true });
+      const chromeJsonUrl = 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json';
+      const jsonOut = execSync(`curl -sS "${chromeJsonUrl}"`, { timeout: 30000 }).toString();
+      const chromeData = JSON.parse(jsonOut);
+      const chromeUrl = chromeData.channels.Stable.downloads.chrome.find((x: any) => x.platform === 'linux64')?.url;
+      if (chromeUrl) {
+        execSync(`cd "${downloadDir}" && curl -sSL "${chromeUrl}" -o chrome.zip && unzip -q -o chrome.zip && rm -f chrome.zip && chmod +x chrome-linux64/chrome`, { timeout: 300000, stdio: 'pipe' });
+        results.push(`Strategy 2 (direct download): SUCCESS - ${downloadDir}/chrome-linux64/chrome`);
+      }
+    } catch (e: any) { results.push(`Strategy 2 failed: ${e.message?.substring(0, 100)}`); }
+    // Strategy 3: System Chrome via dpkg
+    try {
+      execSync('wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && dpkg -i /tmp/google-chrome.deb 2>/dev/null || apt-get install -f -y -qq 2>/dev/null; rm -f /tmp/google-chrome.deb', { timeout: 300000, stdio: 'pipe' });
+      results.push('Strategy 3 (dpkg): SUCCESS');
+    } catch (e: any) { results.push(`Strategy 3 failed: ${e.message?.substring(0, 100)}`); }
+    // Check result
+    const { launchBrowser } = await import('../lib/browser');
+    let chromePath: string | null = null;
+    try {
+      const browser = await launchBrowser();
+      await browser.close();
+      chromePath = 'found';
+    } catch (e: any) { chromePath = null; }
+    return { success: !!chromePath, results, chromePath };
+  }),
 });
