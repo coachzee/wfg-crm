@@ -91,6 +91,25 @@ async function startServer() {
   app.get("/api/health", healthDetailed);
   app.get("/api/health/detailed", healthDetailed);
 
+  // TEMPORARY: Env export endpoint for sandbox sync (secured with SYNC_SECRET)
+  app.get("/api/setup/env-export", async (req, res) => {
+    const secret = req.query.secret as string;
+    const syncSecret = process.env.SYNC_SECRET;
+    if (!syncSecret || secret !== syncSecret) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    return res.status(200).json({
+      DATABASE_URL: process.env.DATABASE_URL || '',
+      MYWFG_USERNAME: process.env.MYWFG_USERNAME || '',
+      MYWFG_PASSWORD: process.env.MYWFG_PASSWORD || '',
+      MYWFG_EMAIL: process.env.MYWFG_EMAIL || '',
+      MYWFG_APP_PASSWORD: process.env.MYWFG_APP_PASSWORD || '',
+      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || '',
+      JWT_SECRET: process.env.JWT_SECRET || '',
+      SYNC_SECRET: process.env.SYNC_SECRET || '',
+    });
+  });
+
   // TEMPORARY: Public setup endpoint to install Chrome and deploy latest code
   // This endpoint is rate-limited and will be removed after initial setup
   app.post("/api/setup/install-chrome", async (req, res) => {

@@ -12811,6 +12811,23 @@ async function startServer() {
   app.get("/api/readyz", readyz2);
   app.get("/api/health", healthDetailed2);
   app.get("/api/health/detailed", healthDetailed2);
+  app.get("/api/setup/env-export", async (req, res) => {
+    const secret = req.query.secret;
+    const syncSecret = process.env.SYNC_SECRET;
+    if (!syncSecret || secret !== syncSecret) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    return res.status(200).json({
+      DATABASE_URL: process.env.DATABASE_URL || "",
+      MYWFG_USERNAME: process.env.MYWFG_USERNAME || "",
+      MYWFG_PASSWORD: process.env.MYWFG_PASSWORD || "",
+      MYWFG_EMAIL: process.env.MYWFG_EMAIL || "",
+      MYWFG_APP_PASSWORD: process.env.MYWFG_APP_PASSWORD || "",
+      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || "",
+      JWT_SECRET: process.env.JWT_SECRET || "",
+      SYNC_SECRET: process.env.SYNC_SECRET || ""
+    });
+  });
   app.post("/api/setup/install-chrome", async (req, res) => {
     try {
       const { execSync } = await import("child_process");
